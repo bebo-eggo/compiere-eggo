@@ -1,0 +1,18 @@
+CREATE TABLE Z_BP_PriceListByDocType
+  (
+    AD_Client_ID  NUMBER(10) NOT NULL,
+    AD_Org_ID     NUMBER(10) NOT NULL,
+    C_BPartner_ID NUMBER(10),
+    C_DocType_ID  NUMBER(10),
+    Created DATE DEFAULT SYSDATE NOT NULL,
+    CreatedBy      NUMBER(10) DEFAULT 0 NOT NULL,
+    IsActive       CHAR(1) DEFAULT 'Y' CHECK (IsActive IN ('Y','N')) NOT NULL,
+    M_PriceList_ID NUMBER(10),
+    Updated DATE DEFAULT SYSDATE NOT NULL,
+    UpdatedBy                  NUMBER(10) DEFAULT 0 NOT NULL,
+    Z_BP_PriceListByDocType_ID NUMBER(10) NOT NULL,
+    CONSTRAINT PK1003729 PRIMARY KEY (Z_BP_PriceListByDocType_ID)
+  ); 
+ALTER TABLE Z_BP_PriceListByDocType ADD CONSTRAINT FK1003729_1024234 FOREIGN KEY (AD_Org_ID) REFERENCES AD_Org (AD_Org_ID);
+ALTER  TABLE Z_BP_PriceListByDocType add constraint uk_Z_BP_PriceListByDocType unique (C_DocType_ID,C_BPartner_ID);
+ALTER TABLE Z_BP_PriceListByDocType ADD CONSTRAINT FK1003729_1024233 FOREIGN KEY (AD_Client_ID) REFERENCES AD_Client (AD_Client_ID);

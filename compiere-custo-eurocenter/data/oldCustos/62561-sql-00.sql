@@ -1,0 +1,5 @@
+UPDATE AD_Table
+SET PO_WINDOW_ID =
+  (SELECT AD_Window_ID FROM AD_Window WHERE Value ='CLOSING CASH'
+  )
+WHERE AD_Table_ID = 392;

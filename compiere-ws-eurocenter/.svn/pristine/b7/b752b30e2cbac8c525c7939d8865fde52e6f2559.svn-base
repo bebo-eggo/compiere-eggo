@@ -1,0 +1,45 @@
+package com.audaxis.erp.json;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class Movement extends Base<Movement>{
+
+	@JsonProperty("key")
+	public String key;
+	
+	@JsonProperty("POReference")
+	public String POReference;
+	
+	@JsonProperty("MAG")
+	public String MAG;
+	
+	@JsonProperty("TYPEDOC")
+	public String TYPEDOC;
+	
+	@JsonProperty("NO_MOVEMENT")
+	public String NO_MOVEMENT;
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("DOCACTION")
+	public String DOCACTION;
+	
+	@JsonProperty("DESCRIPTION")
+	public String DESCRIPTION;
+	
+	@JsonProperty("MOVEMENTDATE")
+	public String MOVEMENTDATE;
+	
+	@JsonProperty("MOVEMENT_LINES")
+	public Set<MovementLines> movementLiness_set = new LinkedHashSet<>();
+
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+}

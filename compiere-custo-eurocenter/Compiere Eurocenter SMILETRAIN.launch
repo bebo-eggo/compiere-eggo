@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<stringAttribute key="bad_container_name" value="/compiere-custo-eurocen"/>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/compiere-core-util/src/java/com/audaxis/compiere/Main.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.audaxis.compiere.Main"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="compiere-custo-eurocenter"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx512M -DPropertyFile=compeurocenterTRA.properties -Dru.compiere.report.path=./data/jasper"/>
+</launchConfiguration>

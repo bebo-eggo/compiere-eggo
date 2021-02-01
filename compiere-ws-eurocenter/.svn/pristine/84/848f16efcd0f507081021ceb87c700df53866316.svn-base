@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:ws="http://jax-ws.dev.java.net/spring/core"
+    xmlns:wss="http://jax-ws.dev.java.net/spring/servlet"
+    xmlns:mvc="http://www.springframework.org/schema/mvc" 
+    xmlns:cache="http://www.springframework.org/schema/cache"
+    xmlns:task="http://www.springframework.org/schema/task"
+   	xsi:schemaLocation=
+	   "http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://jax-ws.dev.java.net/spring/servlet http://jax-ws.java.net/spring/servlet.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+		
+
+	<!--  LOGBACK is the master of the universe --> 	
+	<bean
+    	id="compiereLogger"
+        class="com.audaxis.compiere.logging.LoggingStarter"
+        scope="singleton">
+    
+    </bean>
+
+
+	<!-- This allows to define any methods as @Async -->
+	<task:executor id="compiereExecutor" pool-size="5"/>
+
+	<task:scheduler id="compiereScheduler" pool-size="10"/>
+
+	<task:annotation-driven 
+			executor="compiereExecutor"
+			scheduler="compiereScheduler"/>
+	<!-- -->
+
+	<bean 
+		id="ehcache"
+    	class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+    	
+      	<property name="configLocation" value="WEB-INF/spring/ehcache.xml"/>
+
+    </bean>
+    
+ 	<bean 
+ 		id="cacheManager" 
+ 		class="org.springframework.cache.ehcache.EhCacheCacheManager">
+ 		
+		<property name="cacheManager" ref="ehcache" />
+		
+	</bean>
+	
+	<!-- 
+	<cache:annotation-driven key-generator="cacheKeyGenerator" />
+	 -->
+
+	<context:annotation-config/>
+	
+	<bean id="cacheKeyGenerator" class="com.audaxis.erp.cache.CacheKeyGenerator" />
+ 
+ 	<!-- Il faut qu'on migre en Guava
+ 	<bean 
+ 			id="documentationConfig" 
+ 			class="com.mangofactory.swagger.configuration.SpringSwaggerConfig" />
+  	-->
+  	
+	<!-- <context:component-scan base-package="com.audaxis"/>  -->
+
+	<context:component-scan base-package="com.audaxis.erp" />
+	<context:component-scan base-package="com.audaxis.erp.async" />
+	<context:component-scan base-package="com.audaxis.compiere.service" />
+	<context:component-scan base-package="com.audaxis.compiere.ws" />
+	<context:component-scan base-package="com.audaxis.compiere.security" />
+	<context:component-scan base-package="com.audaxis.compiere.exception" />
+	<context:component-scan base-package="com.audaxis.compiere.logging" />
+	
+	<!--  Specific OSG : the replacements -->
+
+    <import resource="classpath*:/META-INF/spring/compiere-core-api-context.xml"/>
+
+	<!-- ################################################################################################### -->
+	<!-- SPECIFIC PART                                                                                       -->
+	<!-- ################################################################################################### -->
+	
+	 <bean
+    	id="isQuickSession"
+    	class="java.lang.Boolean"
+    	scope="singleton">
+		<constructor-arg value="true"/>    
+    </bean>
+    
+    <bean
+    	id="AD_Client_ID"
+    	class="java.lang.Integer"
+    	scope="singleton">
+		<constructor-arg value="1000000"/>    
+    </bean>
+
+    <bean
+    	id="AD_Role_ID"
+    	class="java.lang.Integer"
+    	scope="singleton">
+		<constructor-arg value="1000000"/>    
+    </bean>
+    
+	<bean
+    	id="customDateFormatString"
+    	class="java.lang.String">
+		<constructor-arg value="yyyy-MM-dd" />    
+    </bean>
+    
+    <bean
+    	id="sessionIdName"
+    	class="java.lang.String">
+		<constructor-arg value="X-SessionId"/>    
+    </bean>
+    
+    <bean
+    	id="limitHardDefault"
+    	class="java.lang.Integer">
+    	<!--  Les Sync Drupal ... -->
+		<constructor-arg value="0"/>    
+    </bean>
+    
+    <!-- Valeurs par defaut à montrer dans la page de test : /test -->
+    <bean
+    	id="testDefaultValues"
+    	class="java.util.HashMap">
+    	<constructor-arg>
+        	<map
+        		key-type="java.lang.String" 
+        		value-type="java.lang.String">
+        		
+            	<entry key="date_from" 		value="2014-08-01" />
+            	<entry key="date_to" 		value="" />
+            	
+			<!-- 
+            	<entry key="login" 			value="Clareb@osg-uk.com" />
+            	<entry key="passwd" 		value="CB1002155" />
+            	<entry key="cust_id" 		value="1002243" />            	
+             -->
+             	<!-- 
+             	<entry key="login" 			value="Nina.Jelenc@bts-company.si" />
+            	<entry key="passwd" 		value="NJ1002315" />
+            	<entry key="cust_id" 		value="1002315" />            	
+            	 -->
+             	<entry key="login" 			value="GUER" />
+            	<entry key="passwd" 		value="21530" />
+            	<entry key="cust_id" 		value="1028614" />            	
+            	
+            	<entry key="role" 			value="" />
+
+            	<entry key="customer" 		value="bts" />
+            	<entry key="item_id"		value="1004181" />
+            	<entry key="price_list_id"	value="1000021" />
+            	<entry key="item_ids"		value="1004176,1004181,1008375" />
+            	
+            	<entry key="order_id" 		value="2490093" />
+            	<entry key="shipment_id"	value="5111021" />
+            	<entry key="invoice_id"		value="1332580" />
+            	
+            	<entry key="qty"			value="10"/>
+            	<entry key="currency"		value="EUR"/>
+            	<entry key="language"		value="fr_FR"/>
+            	<entry key="country"		value="302"/>
+            	
+            	<entry key="limit"			value="10"/>
+            	<entry key="offset"			value="0"/>
+            	<entry key="session_id" 	value="13738662"/>
+            	
+            	<!-- Address delete -->
+            	<entry	key="ref"			value="1014456"/>
+        	</map>
+    	</constructor-arg>
+    </bean>
+    
+    <mvc:interceptors>
+   		<bean 
+			id="securityInterceptor"
+			class="com.audaxis.erp.interceptor.SecurityInterceptor">
+			
+			<property name="securedUrls">
+            	<list>
+                	<value>/</value>
+            	</list>
+            </property>
+			<property name="unsecuredUrls">
+            	<list>
+                	<value>/authentify</value>
+                	<value>/login</value>
+                	<value>/logoff</value>
+                	<value>/application.wadl</value>
+                	<value>/isSessionValid</value>
+                	<value>/test</value>
+                	<value>/doc</value>
+                	<value>/resources</value>
+                	<value>/ressources</value>
+                	<value>/authenticate</value>
+                	<value>/getwoddet</value>
+                	<value>/createZShipScan</value>
+                	<value>/updatewoddet</value>
+                	<value>/completewo</value>
+            	</list>
+            </property>
+		</bean>
+		<bean 
+			id="loggerInterceptor"
+			class="com.audaxis.erp.interceptor.LoggerInterceptor">
+		</bean>
+
+	</mvc:interceptors>
+	
+	<!-- ################################################################################################### -->
+	<!-- GLOBAL PART THAT SHOULD NOT CHANGE                                                                  -->
+	<!-- ################################################################################################### -->
+	
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		
+		    <property name="viewClass" 	value="org.springframework.web.servlet.view.JstlView" />
+			<property name="prefix" 	value ="/WEB-INF/views/" />
+			<property name="suffix"		value=".jsp" />
+
+	</bean>
+	
+	<mvc:resources mapping="/resources/**" location="/resources/" />
+	<mvc:resources mapping="/ressources/**" location="/ressources/" />
+	
+	<mvc:annotation-driven>
+	
+		<mvc:message-converters>
+	
+			<bean class="org.springframework.http.converter.StringHttpMessageConverter" />
+	        <bean class="org.springframework.http.converter.ResourceHttpMessageConverter" />	
+	        <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+	            <property name="objectMapper" ref="customObjectMapper" />
+	        </bean>
+	
+		</mvc:message-converters>
+	
+	</mvc:annotation-driven>
+
+    <bean 
+        id="compiereConnection"
+        class="com.audaxis.compiere.api.CompiereConnection"
+        scope="singleton"
+        destroy-method="destroy">
+		<property name="AD_Client_ID" ref="AD_Client_ID" />
+		<property name="AD_Role_ID" ref="AD_Role_ID" />
+		<property name="isQuickSession" ref="isQuickSession" />
+    </bean>
+
+	<bean
+		id="customDateFormat"
+		class="java.text.SimpleDateFormat">
+		<constructor-arg ref="customDateFormatString" />
+	</bean>
+    
+    <bean
+    	id="customObjectMapper"
+    	class="com.audaxis.erp.json.util.CustomObjectMapper">
+    		<property name="dateFormat" ref="customDateFormat" />
+    </bean>
+     
+ 	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/views/" />
+        <property name="suffix" value=".jsp" />
+    </bean>
+     
+ 	<!-- Configure to plugin JSON as request and response in method handler -->
+    <bean 
+    	class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter" />
+	
+</beans>

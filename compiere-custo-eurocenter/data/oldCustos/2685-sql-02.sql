@@ -1,0 +1,1 @@
+ALTER TABLE Z_SyncPriceLog ADD FileName NVARCHAR2(100);

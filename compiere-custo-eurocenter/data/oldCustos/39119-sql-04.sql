@@ -1,0 +1,1 @@
+update ad_field set displaylogic='1=2' where  name like 'escompte' and ad_tab_id=(select ad_tab_id from ad_tab where value='Invoice_290');

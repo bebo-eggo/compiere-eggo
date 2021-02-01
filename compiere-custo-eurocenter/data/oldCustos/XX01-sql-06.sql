@@ -1,0 +1,2 @@
+UPDATE AD_MESSAGE set MSGTEXT = '2.3.0023.0' where Value = 'VersionPOS';
+UPDATE AD_MESSAGE_TRL set MSGTEXT = '2.3.0023.0' where AD_MESSAGE_ID = (Select AD_MESSAGE_ID from AD_MESSAGE where Value = 'VersionPOS');

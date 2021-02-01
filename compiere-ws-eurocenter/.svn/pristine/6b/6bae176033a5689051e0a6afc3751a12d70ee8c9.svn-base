@@ -1,0 +1,38 @@
+package com.audaxis.erp.ws;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.audaxis.erp.json.Order;
+import com.audaxis.erp.json.SetOrderResult;
+import com.audaxis.erp.service.ISetOrderService;
+
+@Controller
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+public class setOrderWs extends BaseWs<ISetOrderService>{
+
+	@Autowired
+    public setOrderWs(ISetOrderService service) {
+    	this.service = service;
+    }
+	
+	@RequestMapping(value="/setOrder", method = RequestMethod.POST)
+	@ResponseBody
+	public SetOrderResult setOrder(@RequestBody Order inout) {
+		return service.setOrder(inout);
+	}
+	
+	@RequestMapping(value="/setOAResult", method = RequestMethod.POST)
+	@ResponseBody
+	public int setOAResult(@RequestParam("c_order_id") int order_id,@RequestParam("lvendorsent") String lvendorsent, 
+			@RequestParam("msg") String msg  ) {
+		return service.setOAResult(order_id, lvendorsent, msg);
+	}
+}

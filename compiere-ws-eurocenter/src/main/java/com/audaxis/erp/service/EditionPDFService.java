@@ -1,0 +1,89 @@
+package com.audaxis.erp.service;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Locale;
+import java.util.logging.Level;
+
+import org.apache.commons.io.IOUtils;
+import org.compiere.model.MPInstance;
+import org.compiere.model.MPInstancePara;
+import org.compiere.model.MProcess;
+import org.compiere.process.ProcessInfo;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import com.audaxis.erp.json.CreateBPResult;
+
+import ru.compiere.report.RusReportStarter;
+
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.compiere.util.CompiereException;
+
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class EditionPDFService extends CompiereSessionFullService implements IEditionPDFService {
+
+	@Override
+	public  ResponseEntity<byte[]> editionPDF(int process_id,int record_id,String locale) {
+		
+		if (process_id<=0
+				|| record_id<=0
+				|| locale==null){
+			log.info(String.format("Wrong Input %s, %s", process_id, 
+					CreateBPResult.getErrorMsg(CreateBPResult.E060)));
+			return null;
+		}
+		
+		MProcess m_process=new MProcess(getCtx(), process_id, get_Trx());
+		
+		//
+		MPInstance pInstance = new MPInstance(m_process, record_id);
+		Locale.setDefault(new Locale(locale.substring(0, 2), locale.substring(3)));
+		MPInstancePara mpip = new MPInstancePara(getCtx(), pInstance.getAD_PInstance_ID(), 0);
+		mpip.setParameter("FileFormat", "PDF");
+		if (!mpip.save())
+			throw new CompiereException("@Failed@ : Error FileFormat !");
+		
+		getCtx().setContext("#AD_Language", locale);
+		
+		//
+		ProcessInfo pi = new ProcessInfo (m_process.getName(), m_process.getAD_Process_ID());
+		pi.setRecord_ID(record_id);
+		pi.setAD_User_ID(getCtx().getAD_User_ID());
+		pi.setAD_PInstance_ID(pInstance.getAD_PInstance_ID());
+
+		//	Report
+		RusReportStarter jrl = new RusReportStarter();
+		File report = jrl.startReport(getCtx(), pi, false);
+		
+		try {
+			if (report != null)
+			{
+				InputStream istream = new FileInputStream(report);
+				
+				final HttpHeaders headers = new HttpHeaders();
+			    headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+			    headers.add("Content-Disposition", "attachment;filename=" + report.getName());
+			    if (istream != null) {
+				    byte[] bytes = IOUtils.toByteArray(istream);
+				    istream.close();
+				    return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+				}
+			}
+		} catch (IOException e) {
+			log.log(Level.SEVERE, "PDF", e);
+		}
+		return null;
+	}
+	
+}

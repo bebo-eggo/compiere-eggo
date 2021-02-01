@@ -1,0 +1,2 @@
+update ad_column set readonlylogic = '@#AD_Role_ID@!1000733 & @#AD_Role_ID@!1000735' where columnname = 'Description2' and ad_table_id = (select ad_table_id from ad_table where tablename = 'C_Order');
+update ad_field set isreadonly = 'N' where ad_column_id = (select ad_column_id from ad_column where columnname = 'Description2' and ad_table_id = (select ad_table_id from ad_table where tablename = 'C_Order')) and ad_tab_id = (select ad_tab_id from ad_tab where value = 'SUIVI SAV');

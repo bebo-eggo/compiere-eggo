@@ -1,0 +1,94 @@
+package com.audaxis.erp.json;
+
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import com.audaxis.erp.json.Base;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class WSResult extends Base<WSResult>{
+
+	private static final long serialVersionUID = 1L;
+
+	@JsonProperty("auth_granted")
+	public Boolean authGranted;
+
+	@JsonProperty("key")
+	public String key;
+
+	@JsonProperty("error")
+	public String error;
+
+	@JsonProperty("error_desc")
+	public String errordesc;
+
+	@JsonInclude(JsonInclude.Include.NON_NULL) 
+	@JsonProperty("c_bpartner_ID")
+	public Integer c_bpartner_ID;
+	
+
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@JsonProperty("contact_set")
+	public Set<BPartnerContact> contact_set = new LinkedHashSet<>();
+	
+	@Override
+	public String getID() {
+		return key;
+	}
+
+	public final static HashMap<String, String> ERRORS = new HashMap<>();
+
+	public final static String E000 = "000";
+	public final static String E001 = "001";
+	public final static String E010 = "010";
+	public final static String E011 = "011";
+	public final static String E012 = "012";
+	public final static String E013 = "013"; 
+    public final static String E014 = "014";
+	public final static String E021 = "021";
+	public final static String E022 = "022";
+	public final static String E023 = "023";	
+	public final static String E024 = "024";	
+	public final static String E025 = "025";	
+	public final static String E026 = "026";	
+	public final static String E030 = "030";	
+	public final static String E031 = "031";	
+	public final static String E032 = "032";	
+	public final static String E033 = "033";
+	public final static String E051 = "051";
+	public final static String E052 = "052";
+	public final static String E053 = "053";
+	
+	static
+	{
+		ERRORS.put(E000,"");
+		ERRORS.put(E001,"ID Session inconnu ou non valide");
+		ERRORS.put(E010,"Nom tiers obligatoire");
+		ERRORS.put(E011,"Civilité non trouvée");
+		ERRORS.put(E012,"Est société inconnu, attendu Y ou N");
+		ERRORS.put(E013,"ID TVA non correct" );
+		ERRORS.put(E014,"Langue inconnue, attendu fr_FR ou nl_NL" );
+		ERRORS.put(E021,"Ligne 1 d'adresse vide" );
+		ERRORS.put(E022,"Code postal vide et obligatoire" );
+		ERRORS.put(E023,"Ville vide et obligatoire" );
+		ERRORS.put(E024,"Pays inconnu et obligatoire" );
+		ERRORS.put(E025,"Est adresse livraison, attendu Y ou N" );
+		ERRORS.put(E026,"Est adresse facturation, attendu Y ou N" );
+		ERRORS.put(E030,"Nom contact obligatoire" );
+		ERRORS.put(E031,"Civilité non trouvée" );
+		ERRORS.put(E032,"Est contact par défaut, attendu Y ou N" );
+		ERRORS.put(E033,"Est contact direct, attendu Y ou N" );
+		ERRORS.put(E051,"Tiers non sauvegardé" );
+		ERRORS.put(E052,"Adresse non sauvegardée" );
+		ERRORS.put(E053,"Contact non sauvegardé" );
+	}
+
+	public static String getErrorMsg(String key){
+		return ERRORS.get(key);
+	}
+
+
+
+}

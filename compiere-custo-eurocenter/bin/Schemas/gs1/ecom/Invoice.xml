@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<invoice:invoiceMessage xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:ecom_common="urn:gs1:ecom:ecom_common:xsd:3" xmlns:invoice="urn:gs1:ecom:invoice:xsd:3" xmlns:p="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" xmlns:p1="urn:gs1:ext:xmldsig:xsd:3" xmlns:shared_common="urn:gs1:shared:shared_common:xsd:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:gs1:ecom:invoice:xsd:3 Invoice.xsd ">
+  <p:StandardBusinessDocumentHeader>
+    <p:HeaderVersion>p:HeaderVersion</p:HeaderVersion>
+    <p:Sender>
+      <p:Identifier>p:Identifier</p:Identifier>
+    </p:Sender>
+    <p:Receiver>
+      <p:Identifier>p:Identifier</p:Identifier>
+    </p:Receiver>
+    <p:DocumentIdentification>
+      <p:Standard>p:Standard</p:Standard>
+      <p:TypeVersion>p:TypeVersion</p:TypeVersion>
+      <p:InstanceIdentifier>p:InstanceIdentifier</p:InstanceIdentifier>
+      <p:Type>p:Type</p:Type>
+      <p:CreationDateAndTime>2001-12-31T12:00:00</p:CreationDateAndTime>
+    </p:DocumentIdentification>
+  </p:StandardBusinessDocumentHeader>
+  <invoice>
+    <creationDateTime>2001-12-31T12:00:00</creationDateTime>
+    <documentStatusCode>ADDITIONAL_TRANSMISSION</documentStatusCode>
+    <invoiceIdentification>
+      <entityIdentification>entityIdentification</entityIdentification>
+    </invoiceIdentification>
+    <invoiceType>invoiceType</invoiceType>
+    <invoiceCurrencyCode>invoiceCurrencyCode</invoiceCurrencyCode>
+    <buyer/>
+    <seller/>
+    <invoiceTotals>
+      <totalInvoiceAmount currencyCode="">0.0</totalInvoiceAmount>
+    </invoiceTotals>
+    <invoiceLineItem>
+      <lineItemNumber>1</lineItemNumber>
+      <invoicedQuantity>0.0</invoicedQuantity>
+      <transactionalTradeItem>
+        <gtin>gtin</gtin>
+      </transactionalTradeItem>
+    </invoiceLineItem>
+  </invoice>
+</invoice:invoiceMessage>

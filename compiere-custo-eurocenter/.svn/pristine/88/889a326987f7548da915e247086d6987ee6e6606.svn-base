@@ -1,0 +1,1 @@
+ALTER TABLE Z_PosNumber ADD IsCashier CHAR(1) DEFAULT 'N' CHECK (IsCashier IN ('Y','N')) NOT NULL;

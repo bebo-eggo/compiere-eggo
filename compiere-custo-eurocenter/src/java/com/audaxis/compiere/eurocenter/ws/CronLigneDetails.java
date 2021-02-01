@@ -1,0 +1,151 @@
+package com.audaxis.compiere.eurocenter.ws;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+
+import org.compiere.model.MBPartner;
+import org.compiere.model.MOrder;
+import org.compiere.model.MPInstance;
+import org.compiere.model.MProcess;
+import org.compiere.model.MRefList;
+import org.compiere.process.ProcessInfo;
+import org.compiere.process.ProcessInfoParameter;
+import org.compiere.process.SvrProcess;
+import org.compiere.util.Ctx;
+import org.compiere.util.DB;
+import org.compiere.util.Msg;
+import org.compiere.util.Trx;
+
+import com.audaxis.compiere.db.Util;
+
+public class CronLigneDetails extends SvrProcess {
+
+	private int client_ID;
+	public CronLigneDetails() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	protected void prepare() {
+		ProcessInfoParameter[] para = getParameter();
+		for (ProcessInfoParameter element : para) {
+			String name = element.getParameterName();
+			if (element.getParameter() == null && element.getParameter_To() == null)
+				;
+			else if (name.equals("AD_Client_ID"))
+				client_ID = element.getParameterAsInt();
+			else
+				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+		}
+		
+	}
+
+	@Override
+	protected String doIt() throws Exception {
+		// TODO Auto-generated method stub
+		String sql = "Select xx.XT_Update_Cuis_ODV_ID,  substr(co.DocumentNo,0,3) as mag_id, substr(co.DocumentNo,5) as DocumentNo, co.Poreference "
+				+ "from XT_Update_Cuis_ODV xx inner join C_Order co on co.C_order_ID = xx.C_order_ID where xx.processed <> 'Y' and xx.AD_Client_ID = ? and xx.RUNSMAX > xx.COUNTER ";
+		CopyOnWriteArrayList<Integer> orderlinelist = new CopyOnWriteArrayList<Integer>();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		ArrayList<X_UpdateCuisODV> wses = new ArrayList<X_UpdateCuisODV>();
+		try
+		{
+			pstmt = DB.prepareStatement (sql, get_TrxName());
+			pstmt.setInt (1, client_ID);
+			rs = pstmt.executeQuery ();
+			while (rs.next ())
+			{
+				X_UpdateCuisODV wse = new X_UpdateCuisODV(getCtx(), rs.getInt(1), get_Trx());
+				wse.setMag_id(rs.getString(2));
+				wse.setDocumentNo(rs.getString(3));
+				wse.setPOReference(rs.getString(4));
+				
+				if(orderlinelist.size() == 0 || !orderlinelist.contains(wse.getC_OrderLine_ID()))
+				{
+					wses.add(wse);
+				}
+				orderlinelist.add(wse.getC_OrderLine_ID());
+			}
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, sql, e);
+			throw e;
+		} finally {
+			Util.closeCursor(pstmt, rs);
+		}
+		
+		for (int i = 0; i < wses.size(); i++) {
+			setWSEventLog(getCtx(),wses.get(i),get_Trx());
+		}
+		
+		return wses.size()+" ws updateOrderDetails créés !";
+	}
+	
+	public void setWSEventLog(Ctx ctx, X_UpdateCuisODV uco, Trx trx)
+	{
+		//Notif Insert/update Order
+		//Test MAJ 5 sec
+		
+		String REST_URI = getREST_URI(ctx, uco.getAD_Client_ID(), trx);
+		int WSID = DB.getSQLValue(trx, "Select XX_WSEggo_ID from XX_WSEggo where AD_Client_ID = ? and XX_WSName = ?  ",uco.getAD_Client_ID(), "orderDetails");
+		X_WSEggo ws = new X_WSEggo(ctx, WSID, trx);
+		
+		if(istInsertEventByID(ctx,WSID, uco.getXT_Update_Cuis_ODV_ID(),trx ))
+			return ;
+		MWSEventLog wse = new MWSEventLog(ctx, 0, trx);
+		
+		wse.setCounter(0);
+		wse.setRunsMax(ws.getRunsMax());
+		wse.setRecord_ID(uco.getXT_Update_Cuis_ODV_ID());	
+		String AccesMajWS = Msg.getMsg(ctx, "WS_MAJ_UpdateDetails");
+		String inst = "INSERT";
+		
+		if(AccesMajWS.equals("1") && REST_URI!=null){
+			wse.setXX_WSEggo_ID(WSID);
+			wse.setURLWS(REST_URI+ws.getURLWS());
+			String WSBody = "{\"c_order_id\":\""+uco.getC_Order_ID()+"\","
+					+ "\"c_orderline_id\":\""+uco.getC_OrderLine_ID()+"\","
+					+ "\"documentno\":\""+uco.getDocumentNo()+"\","
+					+ "\"mag_id\":\""+uco.getMag_id()+"\","
+					+ "\"poreference\":\""+uco.getPOReference()+"\","
+					+ "\"extradata_id\":\""+uco.getXT_Update_Cuis_ODV_ID()+"\"}";
+			wse.setWSBody(WSBody);
+		}
+		else{
+			wse.setProcessed(true);
+			wse.setCounter(ws.getRunsMax());
+			wse.setURLWS("WS WebHook update order details");
+		}
+		//update XX_TRYTIME
+		wse.set_ValueNoCheck("EventType", inst);
+		wse.save();
+	
+	}
+	
+	private static boolean istInsertEventByID(Ctx ctx, int WSEggo_ID, int record_ID, Trx trx)
+	{
+		int maxID = DB.getSQLValue(trx,"Select max(XX_WSEventLog_ID) from XX_WSEventLog where XX_WSEggo_ID = ? and Record_ID = ? and EventType = 'INSERT' ",WSEggo_ID, record_ID); 
+		if(maxID<=0)
+			return false;
+		else 
+			return true;
+	}
+	
+	private static String getREST_URI(Ctx ctx, int AD_Client_ID, Trx trx)
+	{
+		MRefList ret = null;
+		int IDS = DB.getSQLValue(trx, "Select AD_Reference_ID from AD_reference where Name = 'WS_SERVEUR' and AD_Client_ID = ? ", 0);
+		ret = MRefList.get(ctx, IDS, ""+AD_Client_ID, trx);
+		if(ret!=null)
+			return ret.getName();
+		else
+			return null;
+	}
+
+}

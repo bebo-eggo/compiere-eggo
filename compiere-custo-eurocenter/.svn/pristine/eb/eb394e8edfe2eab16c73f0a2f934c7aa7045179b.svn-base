@@ -1,0 +1,1 @@
+alter table ad_user add "NAME2" NVARCHAR2(60);

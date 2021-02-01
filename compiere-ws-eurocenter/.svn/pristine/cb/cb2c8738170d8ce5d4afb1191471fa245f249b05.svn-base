@@ -1,0 +1,11 @@
+package com.audaxis.erp.service;
+
+import java.io.IOException;
+
+import com.audaxis.erp.json.SetRequestUrbantzResult;
+
+public interface IRequestUrbantzService extends IBaseService {
+	
+	public SetRequestUrbantzResult requestUrbantz(String url, String restType, String body) throws IOException, InterruptedException;
+
+}

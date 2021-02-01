@@ -1,0 +1,167 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>audaxis</groupId>
+    <artifactId>gwtServer-custo-eurocenter</artifactId>
+    <packaging>jar</packaging>
+    <version>361.54.0-SNAPSHOT</version>
+    <name>gwtServer-custo-eurocenter - NEC</name>
+    <description />
+    <url>http://www.audaxis.com</url>
+    <inceptionYear>2015</inceptionYear>
+    
+    <properties>
+        <compiere.version>361.40.2-eurocenter</compiere.version>
+        <apps.version>361.40.2-eurocenter</apps.version>
+    </properties>
+    
+    <repositories>
+	<repository>
+           <id>audaxis</id>
+           <name>Audaxis Internal Repository</name>
+           <url>http://support.audaxis.com/maven2/</url>
+        </repository>
+     <repository>
+	<snapshots>
+    	    <enabled>true</enabled>
+      	</snapshots>
+   	<id>audaxis.repo.snapshots</id>
+   	<name>Audaxis Internal Repository</name>
+   	<url>http://support.audaxis.com/m2-snapshots/</url>
+     </repository>
+    </repositories>
+    <dependencies>
+    	<dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+        </dependency>
+		
+    	<dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>compiere-custo-eurocenter</artifactId>
+            <version>361.54.0-SNAPSHOT</version>
+            <exclusions>
+            	<exclusion>
+            		<groupId>javax.servlet</groupId>
+                	<artifactId>servlet-api</artifactId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+	<dependency>
+		<groupId>audaxis</groupId>
+		<artifactId>gwtServer-custo</artifactId>
+		<version>${compiere.version}</version>
+		<exclusions>
+			<exclusion>
+				<groupId>compiere</groupId>
+				<artifactId>gwtServer</artifactId>
+			</exclusion>
+		</exclusions>
+	</dependency>
+	<dependency>
+		<groupId>compiere</groupId>
+		<artifactId>gwtServer</artifactId>
+		<version>361.40.2-eurocenter</version>
+	</dependency>
+        
+        <dependency>
+            <groupId>compiere</groupId>
+            <artifactId>apps</artifactId>
+            <version>${apps.version}</version>
+            <type>ear</type>
+            <scope>runtime</scope>
+        </dependency>
+        
+      </dependencies>
+    <developers>
+        <developer>
+          <id>vha</id>
+          <name>Vincent Harcq</name>
+          <email>vha@audaxis.com</email>
+        </developer>
+      </developers>
+     <scm>
+        <connection>scm:svn:http://svn.audaxis.com/svn/repos/gwtServer-custo-eurocenter/branches/361.40.2-EC/gwtServer-custo-eurocenter</connection>
+        <developerConnection>scm:svn:http://svn.audaxis.com/svn/repos/gwtServer-custo-eurocenter/branches/361.40.2-EC/gwtServer-custo-eurocenter</developerConnection>
+        <url>http://svn.audaxis.com/svn/repos/gwtServer-custo-eurocenter/branches/361.40.2-EC/gwtServer-custo-eurocenter</url>
+    </scm>
+    <issueManagement>
+        <system>Scarab</system>
+        <url>http://www.audaxis.com/scarab</url>
+    </issueManagement>
+    <ciManagement>
+        <system>cruisecontrol</system>
+        <url />
+    </ciManagement>
+    <organization>
+        <name>Audaxis</name>
+        <url>http://www.audaxis.com</url>
+    </organization>
+	<distributionManagement>
+        <site>
+            <id>audaxis</id>
+            <url>scp://mail.audaxis.lu/home/forge/gwtServer-custo-eurocenter</url>
+        </site>
+        <!--  
+        
+        THIS IS NOT STANDARD !
+        WE COMMIT TO THE RELEASE REPO FOR CUSTOS
+        SO THAT AT COMPIERE PLUGIN INSTALLER WE ONLY REFERENCE RELEASE REPO
+         -->
+		<repository>
+          <id>audaxis.repo</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/maven2</url>
+        </repository>
+        <!--
+        <snapshotRepository>
+          <id>audaxis.repo.snapshots</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/m2-snapshots</url>
+        </snapshotRepository>
+         -->
+    </distributionManagement>
+    <build>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>2.2</version>
+            </extension>
+        </extensions>
+        <sourceDirectory>src/java</sourceDirectory>
+        <resources>
+	        <resource>
+	        	<directory>.</directory>
+	        	<filtering>false</filtering>
+	        	<includes>
+	        		<include>data/custos/**</include>
+	        		<include>data/jasper/**</include>
+	        		<include>data/excel/**/*.xls</include>
+	        		<include>scripts/**</include>
+	        	</includes>
+	        	<excludes>
+	        		<exclude>src/**</exclude>
+	        	</excludes>
+	        </resource>
+			<resource>
+                <directory>src/main/resources</directory>
+				<filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <source>1.6</source>
+                <target>1.6</target>
+                <debug>true</debug>
+                <encoding>ISO8859_1</encoding>
+              </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

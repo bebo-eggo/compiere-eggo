@@ -1,0 +1,13 @@
+package com.audaxis.erp.service;
+
+import com.audaxis.compiere.api.CompiereAPIApplicationException;
+import com.audaxis.erp.json.ProcessRecordIDObj;
+import com.audaxis.erp.json.SetProcessRecordIDResult;
+import com.audaxis.erp.security.AuthorizationException;
+import com.audaxis.erp.service.IBaseService;
+
+public interface IProcessRecordID extends IBaseService {
+	
+	public SetProcessRecordIDResult processRecordID(ProcessRecordIDObj processDoc) throws CompiereAPIApplicationException, AuthorizationException;
+
+}

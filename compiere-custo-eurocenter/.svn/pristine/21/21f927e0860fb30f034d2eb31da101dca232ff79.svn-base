@@ -1,0 +1,1 @@
+ALTER TABLE Z_OrderPaymSchedule ADD IsForceToInvoice CHAR(1) DEFAULT 'N' CHECK (IsForceToInvoice IN ('Y','N')) NOT NULL;

@@ -1,0 +1,1 @@
+update ad_column set  isselectioncolumn='Y'   where columnname='I_IsImported'  and  ad_table_id=(select ad_table_id from ad_table where tablename='I_Invoice');

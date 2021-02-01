@@ -1,0 +1,12 @@
+package com.audaxis.erp.service;
+import java.io.InputStream;
+
+import org.springframework.http.ResponseEntity;
+
+import com.audaxis.erp.service.IBaseService;
+
+public interface IeditionPDFService extends IBaseService {
+	
+	public ResponseEntity<byte[]> editionPDF(int process_id,int record_id,String locale);
+
+}

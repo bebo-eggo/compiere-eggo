@@ -1,0 +1,299 @@
+package com.audaxis.erp.service;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.compiere.model.MBPartner;
+import org.compiere.model.MInterventions;
+import org.compiere.model.MOrder;
+import org.compiere.model.MOrg;
+import org.compiere.util.DB;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.Intervention;
+import com.audaxis.erp.json.SetInterventionResult;
+
+import Util.WSUtil;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class SetInterventionService extends CompiereSessionFullService implements ISetInterventionService{
+
+	@Override
+	public SetInterventionResult setIntervention(Intervention inter) {
+		
+		SetInterventionResult ret = new SetInterventionResult();
+		ret.error = SetInterventionResult.E000;
+		int client_ID = getCtx().getAD_Client_ID();
+		MOrder mo = null;
+		MOrg org = null;
+		MBPartner vendor_id = null;
+		
+		try{
+		
+			if(client_ID == 0)
+			{
+				ret.error = SetInterventionResult.E002;
+				ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E002);
+				ret.Z_Intervention_ID = 0;
+				log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E002), "", ret.errordesc));
+				return ret;
+			}
+			
+			if(inter.ORDER_ID!=null && inter.ORDER_ID.length()>0 && !inter.ORDER_ID.equals("0"))
+			{
+				int v_order_ID = 0;
+				try
+			    {
+					v_order_ID = Integer.parseInt(inter.ORDER_ID.trim());
+
+			    }
+			    catch (NumberFormatException nfe)
+			    {
+			    	ret.error = SetInterventionResult.E011;
+			    	ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E011)+" : "+nfe.toString();
+					ret.Z_Intervention_ID = 0;
+					log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E011), "", ret.errordesc));
+					nfe.printStackTrace();
+					return ret;
+			    }
+				
+				mo = new MOrder(getCtx(), v_order_ID, get_Trx());
+				if(mo==null || mo.get_ID()<=0)
+				{
+					ret.error = SetInterventionResult.E011;
+					ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E011);
+					ret.Z_Intervention_ID = 0;
+					log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E011), "", ret.errordesc));
+					return ret;
+				}
+			}
+			
+			if((mo==null || mo.get_ID()<=0) && inter.ORDERNO !=null && inter.ORDERNO.length()>0 )
+			{
+				mo =  WSUtil.getOrderByDocNo(getCtx(), inter.ORDERNO,"Y", get_Trx());
+				if(mo==null)
+				{
+					ret.error = SetInterventionResult.E011;
+					ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E011);
+					ret.Z_Intervention_ID = 0;
+					log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E011), "", ret.errordesc));
+					return ret;
+				}
+			}
+			
+			if(inter.MAG != null && inter.MAG.length()>0 && !inter.MAG.equals("0")){
+				org = WSUtil.getOrgByValue(getCtx(),client_ID,inter.MAG);
+			}
+				
+			if((inter.MAG == null || inter.MAG.length()>0 || org == null) && mo!=null)	
+			{
+				org = new MOrg(getCtx(), mo.getAD_Org_ID(), get_Trx());
+			}
+			else
+			{
+				org = WSUtil.getOrgByValue(getCtx(),client_ID,"0");
+			}
+			Timestamp f = null;
+			Timestamp t = null;
+			if(inter.DATEFROM == null || inter.DATEFROM.length()==0)
+			{
+				ret.error = SetInterventionResult.E031;
+				ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E031);
+				ret.Z_Intervention_ID = 0;	
+				log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E031), "", ret.errordesc));
+				return ret;
+			}
+			try {
+				SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
+				Date date = null;
+				date = simpleDateFormat.parse(inter.DATEFROM);
+				long time = date.getTime();
+				f = new Timestamp(time);
+				
+				date = simpleDateFormat.parse(inter.DATETO);
+				long time2 = date.getTime();
+				t = new Timestamp(time2);
+			}
+			catch (Exception e) {
+				// TODO: handle exception
+				ret.error = SetInterventionResult.E031;
+				ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E031)+" : "+e.toString();
+				ret.Z_Intervention_ID = 0;	
+				log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E031), "", ret.errordesc));
+				e.printStackTrace();
+				return ret;
+			}	
+			
+			if((inter.VENDOR_ID == null || inter.VENDOR_ID .length()==0) && inter.VENDORVALUE != null && inter.VENDORVALUE.length()>0){
+				int vendor_ID = 0;
+				try
+			    {
+					vendor_ID = Integer.parseInt(inter.VENDOR_ID.trim());
+
+			    }
+			    catch (NumberFormatException nfe)
+			    {
+			    	ret.error = SetInterventionResult.E030;
+			    	ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E030)+" : "+nfe.toString();
+					ret.Z_Intervention_ID = -1;
+					log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E030), "", ret.errordesc));
+					nfe.printStackTrace();
+					return ret;
+			    }
+				vendor_id = new MBPartner(getCtx(), vendor_ID, get_Trx());
+				if(vendor_id == null || vendor_id.get_ID()<=0)
+				{
+					ret.error = SetInterventionResult.E030;
+					ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E030);
+					ret.Z_Intervention_ID = -1;
+					log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E030), "", ret.errordesc));
+					return ret;
+				}
+			}
+			
+			if((vendor_id == null || vendor_id.get_ID()<=0) && inter.VENDORVALUE != null && inter.VENDORVALUE.length()>0){
+				vendor_id = MBPartner.get(getCtx(), inter.VENDORVALUE);
+				if(vendor_id == null)
+				{
+					ret.error = SetInterventionResult.E030;
+					ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E030);
+					ret.Z_Intervention_ID = -1;
+					log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E030), "", ret.errordesc));
+					return ret;
+				}
+			}
+			
+			String typeValue = "M,E,C,P,R,S,D";
+			
+			if(inter.TASK_TYPE == null || inter.TASK_TYPE.length() == 0)
+			{
+				ret.error = SetInterventionResult.E050;
+				ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E050);
+				ret.Z_Intervention_ID = -1;
+				log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E050), "", ret.errordesc));
+				return ret;
+			}else
+				if(typeValue.contains(inter.TASK_TYPE))
+				{
+					ret.error = SetInterventionResult.E050;
+					ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E050);
+					ret.Z_Intervention_ID = -1;
+					log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E050), "", ret.errordesc));
+					return ret;
+				}
+			
+			MInterventions mi = new MInterventions(getCtx(),0,get_Trx());
+			mi.setC_Order_ID(mo.getC_Order_ID());
+			mi.setVendor_ID(vendor_id.getC_BPartner_ID());
+			mi.setDateFrom(f);
+			mi.setDateTo(t);
+			mi.setAD_Org_ID(org.getAD_Org_ID());
+			mi.set_ValueNoCheck("XX_AM", inter.XX_AM);
+			mi.set_ValueNoCheck("XX_PM", inter.XX_PM);
+			mi.set_ValueNoCheck("XX_HOURS", Integer.parseInt(inter.XX_HOURS));
+			mi.setDescription(inter.DESCRIPTION);
+			mi.set_ValueNoCheck("XX_Ressource", inter.RESSOURCE);
+			mi.setTaskType(inter.TASK_TYPE);
+			if(!mi.save())
+			{
+				ret.error = SetInterventionResult.E051;
+				ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E051);
+				ret.Z_Intervention_ID = -1;
+				log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E051), "", ret.errordesc));
+				return ret;
+			}
+			
+			ret.C_Order_ID = mo.getC_Order_ID();
+			ret.Z_Intervention_ID = mi.getZ_Interventions_ID();
+			
+				
+		}catch(Exception ex)
+		{
+			ret.error = SetInterventionResult.E999;
+			ret.errordesc = SetInterventionResult.getErrorMsg(SetInterventionResult.E999)+" : "+ex.toString();
+			ret.Z_Intervention_ID = 0;	
+			log.info(String.format(SetInterventionResult.getErrorMsg(SetInterventionResult.E999), "", ret.errordesc));
+			ex.printStackTrace();
+			return ret;
+		}
+			
+		return ret;
+	}
+
+	@Override
+	public Intervention getIntervention(int intervention_id) {
+		
+		Intervention inter = new Intervention();
+		String sql = "select zi.C_Order_ID, zi.vendor_id, TO_CHAR(zi.datefrom,'DD/MM/YYYY') as datefrom, TO_CHAR(zi.dateto,'DD/MM/YYYY') as dateto, "
+				+ "zi.xx_am, zi.xx_pm, zi.xx_hours, zi.description,zi.XX_RESSOURCE, " + 
+				"co.documentno, co.poreference, cb.value,(select Name from AD_ref_list where Value = zi.tasktype and AD_REFERENCE_ID = 1001639 ) as TaskType " + 
+				"from z_interventions zi " + 
+				"inner join C_order co on co.C_order_ID = zi.C_order_ID " + 
+				"inner join C_BPartner cb on cb.C_BPartner_ID = zi.Vendor_ID " + 
+				"where zi.Z_interventions_ID = ?";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			int i=1;
+			pstmt = DB.prepareStatement(sql,get_Trx());
+			pstmt.setInt(i++, intervention_id);
+			rs = pstmt.executeQuery();
+			if (rs.next ())
+			{
+				inter.ORDER_ID =  rs.getString("C_Order_ID");
+				inter.VENDOR_ID = rs.getString("vendor_id");
+				inter.DATEFROM = rs.getString("datefrom");
+				inter.DATETO = rs.getString("dateto");
+				inter.XX_AM = rs.getString("xx_am");
+				inter.XX_PM = rs.getString("xx_pm");
+				inter.XX_HOURS = rs.getString("xx_hours");
+				inter.DESCRIPTION = rs.getString("description");
+				inter.ORDERNO = rs.getString("documentno");
+				inter.CODEPROJET = rs.getString("poreference");
+				inter.VENDORVALUE = rs.getString("value");
+				inter.RESSOURCE = rs.getString("XX_RESSOURCE");
+				inter.TASK_TYPE = rs.getString("TaskType");
+				
+			}else
+			{
+				inter.ORDER_ID = "-1";
+				inter.INTERVENTION_ID = ""+intervention_id;
+				
+				return inter;
+				
+			}
+		}catch (SQLException ex) {
+			inter.ORDER_ID = ""+-1;
+			ex.printStackTrace();
+			return inter;
+		}
+		finally {
+			DB.closeResultSet(rs);
+			DB.closeStatement(pstmt);
+		}
+		
+		return inter;
+	}
+
+	@Override
+	public boolean deleteIntervention(int intervention_id) {
+
+		MInterventions mi = new MInterventions(getCtx(), intervention_id, get_Trx());
+		if(mi.delete(true, get_Trx()))
+			return true;
+		else
+			return false;
+	}
+
+}

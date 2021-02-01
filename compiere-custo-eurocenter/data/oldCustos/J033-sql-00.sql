@@ -1,0 +1,1 @@
+ALTER TABLE Z_Sync_Database ADD LastSynchronizationUP DATE DEFAULT sysdate - 2000;

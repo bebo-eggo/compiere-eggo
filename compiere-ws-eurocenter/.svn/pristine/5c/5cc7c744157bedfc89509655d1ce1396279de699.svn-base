@@ -1,0 +1,23 @@
+package com.audaxis.erp.json;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class SetUpdateArcoResult extends Base<SetUpdateArcoResult>{
+
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	private static final long serialVersionUID = 1L;
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("c_invoice_id")
+	public String invoice_id;
+	
+	@JsonInclude(JsonInclude.Include.NON_NULL) 
+	@JsonProperty("error")
+	public String error;
+}

@@ -1,0 +1,2 @@
+ALTER TABLE I_PosOrderLine ADD MarqueTxt NVARCHAR2(22);
+ALTER TABLE Z_TransactionMsg ADD MarqueTxt NVARCHAR2(22);

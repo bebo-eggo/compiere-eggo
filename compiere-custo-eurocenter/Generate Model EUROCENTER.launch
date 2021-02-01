@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<stringAttribute key="bad_container_name" value="\compiere-custo-eurocen"/>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/compiere-all2-aj/WORKSPACE-compiere-all2-ad-src/org/compiere/tools/GenerateModel.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.compiere.tools.GenerateModel"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="c:\tmp org.compiere.model 'E857'"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="compiere-custo-eurocenter"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-DPropertyFile=compeurocentercental.properties"/>
+</launchConfiguration>

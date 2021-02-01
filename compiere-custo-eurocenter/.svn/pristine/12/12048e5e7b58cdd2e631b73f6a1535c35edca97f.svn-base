@@ -1,0 +1,120 @@
+/*
+All parts are Copyright (C) 2002-2007 Audaxis S.A.  All Rights Reserved.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+package com.audaxis.compiere.process;
+
+import org.compiere.acct.Doc_Invoice;
+import org.compiere.model.MDocType;
+import org.compiere.model.MInvoice;
+import org.compiere.model.MInvoiceLine;
+import org.compiere.model.MPeriod;
+import org.compiere.process.ProcessInfoParameter;
+import org.compiere.process.SvrProcess;
+
+import org.compiere.util.DB;
+import org.compiere.util.Trx;
+
+import com.audaxis.compiere.util.CompiereException;
+
+import java.util.ArrayList;
+import java.util.logging.Level;
+
+
+public class ZChargeChange extends SvrProcess
+{
+    private int p_c_Charge_ID = 0;
+    private int p_C_InvoiceLine_ID = 0;
+    private MInvoice mi = null;
+    private MInvoiceLine invoiceline = null;
+    
+    protected void prepare()
+    {
+        ProcessInfoParameter[] para = getParameter();
+
+        for (int i = 0; i < para.length; i++)
+        {
+            String name = para[i].getParameterName();
+
+            if (para[i].getParameter() == null)
+            {
+                ;
+            }
+            else if (name.equals("C_Charge_ID"))
+            {
+                p_c_Charge_ID = para[i].getParameterAsInt();
+            }
+
+            else
+            {
+                log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+            }
+        }
+
+        p_C_InvoiceLine_ID = getRecord_ID();
+        MInvoiceLine invoiceline = new MInvoiceLine(getCtx(),
+                p_C_InvoiceLine_ID, get_TrxName());
+        MInvoice mi = invoiceline.getParent();
+        MDocType md = new MDocType(getCtx(), mi.getC_DocTypeTarget_ID(), get_Trx());
+        ArrayList<Integer> orgs = new ArrayList<Integer>();
+		orgs.add(mi.getAD_Org_ID());
+		String test = MPeriod.isOpen(getCtx(), getAD_Client_ID(), orgs, mi.getDateAcct(), md.getDocBaseType());
+		
+		if(test!=null)
+		{
+			throw new CompiereException(test);
+		}
+    }
+    
+    private int deleteAcct(int record_ID, Trx trx)
+	{
+		String sql = "DELETE FROM Fact_Acct WHERE AD_Table_ID=? AND Record_ID=?";
+		int no = DB.executeUpdate(sql, new Object[]{MInvoice.Table_ID, record_ID}, trx);
+		if (no != 0)
+			log.info("#=" + no);
+		return no;
+	}	//	deleteAcct
+
+    protected String doIt() throws Exception
+    {
+       
+        int oldcharge = invoiceline.getC_Charge_ID();
+        int result = 0;
+
+        if (oldcharge != p_c_Charge_ID)
+        {
+            StringBuffer upd = new StringBuffer(
+                    "update c_invoiceline set c_charge_id = ").append(p_c_Charge_ID)
+                                                                                          .append(" where c_invoiceline_id = ")
+                                                                                          .append(p_C_InvoiceLine_ID);
+            result = DB.executeUpdate(get_Trx(), upd.toString());
+        }
+
+        if (result > 0)
+        {
+        	MInvoice mi = invoiceline.getParent();
+        	if(mi.isPosted())
+        		deleteAcct(mi.getC_Invoice_ID(), get_Trx());
+        	mi.setPosted(false);
+        	mi.save();
+            return "Success";
+        }
+        else
+        {
+            throw new Exception("Failure");
+        }
+    }
+}

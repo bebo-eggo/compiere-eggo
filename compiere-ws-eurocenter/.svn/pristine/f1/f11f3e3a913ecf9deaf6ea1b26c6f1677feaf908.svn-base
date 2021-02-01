@@ -1,0 +1,67 @@
+package com.audaxis.erp.json;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class Intervention extends Base<Intervention> {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7850830832839014341L;
+
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	
+	@JsonProperty("dateFrom")
+	public String DATEFROM;
+	
+	@JsonProperty("dateTo")
+	public String DATETO;
+	
+	@JsonProperty("xx_hours")
+	public String XX_HOURS;
+	
+	@JsonProperty("xx_am")
+	public String XX_AM;
+	
+	@JsonProperty("xx_pm")
+	public String XX_PM;
+	
+	@JsonProperty("xx_ressource")
+	public String RESSOURCE;
+	
+	@JsonProperty("ad_org_id")
+	public String ORG_ID;
+	
+	@JsonProperty("mag")
+	public String MAG;
+			
+	@JsonProperty("description")
+	public String DESCRIPTION;
+	
+	@JsonProperty("task_type")
+	public String TASK_TYPE;
+	
+	@JsonProperty("vendor_id")
+	public String VENDOR_ID;
+	
+	@JsonProperty("vendorvalue")
+	public String VENDORVALUE;
+	
+	@JsonProperty("c_order_id")
+	public String ORDER_ID;
+	
+	@JsonProperty("orderno")
+	public String ORDERNO;
+	
+	@JsonProperty("codeprojet")
+	public String CODEPROJET;
+	
+	@JsonProperty("intervention_id")
+	public String INTERVENTION_ID;
+
+}

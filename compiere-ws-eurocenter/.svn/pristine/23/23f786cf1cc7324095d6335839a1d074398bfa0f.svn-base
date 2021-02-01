@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="ws">
+        <wb-resource deploy-path="/" source-path="/target/m2e-wtp/web-resources"/>
+        <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
+        <dependent-module archiveName="erp-service-core-1.4.2-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/erp-service-core/erp-service-core">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="erp-json-core-1.4.2-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/erp-json-core/erp-json-core">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="erp-ws-core-1.4.2-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/erp-ws-core/erp-ws-core">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="erp-ws-tool-1.4.2-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/erp-ws-tool/erp-ws-tool">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="compiere-service-core-1.4.3-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/compiere-service-core/compiere-service-core">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="compiere-ws-core-1.4.3-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/compiere-ws-core/compiere-ws-core">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <property name="java-output-path" value="/compiere-ws-osg/target/classes"/>
+        <property name="context-root" value="ws"/>
+    </wb-module>
+</project-modules>

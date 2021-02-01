@@ -1,0 +1,1 @@
+ALTER TABLE C_Order ADD ConsignReturn CHAR(1) DEFAULT 'N';

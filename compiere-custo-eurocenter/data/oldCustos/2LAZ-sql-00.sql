@@ -1,0 +1,1 @@
+ALTER TABLE I_Invoice ADD Z_ProductTax NVARCHAR2(255);

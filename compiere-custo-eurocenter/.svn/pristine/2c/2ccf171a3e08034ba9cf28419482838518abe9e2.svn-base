@@ -1,0 +1,6 @@
+ALTER TABLE C_Order ADD IsDevis CHAR(1) DEFAULT 'N' CHECK (IsDevis IN ('Y','N'))NOT NULL;
+ALTER TABLE C_Order ADD IsEggo CHAR(1) DEFAULT 'N' CHECK (IsEggo IN ('Y','N')) NOT NULL;
+UPDATE C_ORDER set ISDEVIS = ISDEVIS(C_DOCTYPETARGET_ID),  ISEGGO = ISEGGO(C_DOCTYPETARGET_ID) 
+where exists (SELECT 1 from C_DOCTYPEINFO where C_DOCTYPEINFO.C_DOCTYPE_ID =C_ORDER.C_DOCTYPETARGET_ID  ); 
+UPDATE AD_TAB set WHERECLAUSE = 'C_Order.IsSOTrx=''Y'' AND C_Order.IsReturnTrx=''N'' AND C_Order.ISEGGO = ''Y'' and C_Order.ISDEVIS = ''N''   and C_Order.IsActive=''Y''' where AD_TAB_ID = 1002605;
+UPDATE AD_TAB set WHERECLAUSE = 'C_Order.IsSOTrx=''Y'' AND C_Order.IsReturnTrx=''N'' AND  C_Order.ISEGGO = ''N'' and C_Order.IsActive=''Y''' where AD_TAB_ID = 186;

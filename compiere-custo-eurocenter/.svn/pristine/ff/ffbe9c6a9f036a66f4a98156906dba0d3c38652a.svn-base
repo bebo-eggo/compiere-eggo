@@ -1,0 +1,1 @@
+drop index M_PRODUCT_PO_VENDORPRODNO;

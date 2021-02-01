@@ -1,0 +1,1 @@
+UPDATE AD_TABLE set ISDELETEABLE = 'N', updated = sysdate, updatedBy = 100 where AD_TABLE_ID = 323;

@@ -1,0 +1,28 @@
+CREATE TABLE I_ECHFIN
+  (
+    AD_Client_ID NUMBER(10) NOT NULL,
+    AD_Org_ID    NUMBER(10) NOT NULL,
+    C_Order_ID   NUMBER(10),
+    Created      DATE DEFAULT SYSDATE NOT NULL,
+    CreatedBy    NUMBER(10) DEFAULT 0 NOT NULL,
+    DocumentNo NVARCHAR2(50),
+    I_EchFin_ID NUMBER(10) NOT NULL,
+    I_ErrorMsg NVARCHAR2(255),
+    IsActive   CHAR(1) DEFAULT 'Y' CHECK (IsActive  IN ('Y','N')) NOT NULL,
+    IsPaid     CHAR(1) DEFAULT 'N' CHECK (IsPaid    IN ('Y','N')) NOT NULL,
+    Processed  CHAR(1) DEFAULT 'N' CHECK (Processed IN ('Y','N')) NOT NULL,
+    Processing CHAR(1),
+    Updated    DATE DEFAULT SYSDATE NOT NULL,
+    UpdatedBy  NUMBER(10) DEFAULT 0 NOT NULL,
+    ValueTypeEch NVARCHAR2(2),
+    Z_Complet CHAR(1) DEFAULT 'N' CHECK (Z_Complet IN ('Y','N')) NOT NULL,
+    Z_DateEnvAtt NVARCHAR2(20),
+    Z_DateEnvCont NVARCHAR2(20),
+    Z_NumAccept NVARCHAR2(50),
+    Z_OrderPaymSchedule_ID NUMBER(10),
+    Z_DateEnvAttD DATE,
+    Z_DateEnvContD DATE,
+    Z_TYPEECHEANCE_ID NUMBER,  
+    I_ISIMPORTED CHAR(1) DEFAULT 'N' NOT NULL,
+    CONSTRAINT PK1007567 PRIMARY KEY (I_EchFin_ID)
+  );

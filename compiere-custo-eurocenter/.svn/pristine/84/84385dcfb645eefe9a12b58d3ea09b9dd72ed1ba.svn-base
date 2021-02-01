@@ -1,0 +1,1 @@
+call syncposdatabase('ALTER TABLE C_DocTypeInfo ADD IsEggo CHAR(1) DEFAULT ''N'' CHECK (IsEggo IN (''Y'',''N'')) NOT NULL');

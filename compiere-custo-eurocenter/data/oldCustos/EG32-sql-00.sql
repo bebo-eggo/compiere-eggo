@@ -1,0 +1,1 @@
+ALTER TABLE C_OrderLine ADD isToShip CHAR(1) DEFAULT 'N' CHECK (isToShip IN ('Y','N')) NOT NULL;

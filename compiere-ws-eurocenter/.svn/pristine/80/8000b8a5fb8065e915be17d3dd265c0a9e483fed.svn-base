@@ -1,0 +1,15 @@
+package com.audaxis.erp.json;
+
+public class MovementConfirm extends Base<MovementConfirm>{
+
+	public MovementConfirm() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

@@ -1,0 +1,12 @@
+CREATE OR REPLACE VIEW RV_PRODUCT_PRICE ("M_PRODUCT_ID", "PRICESTD")
+AS
+SELECT M_Product_ID, PriceStd
+    FROM M_ProductPrice pp
+    INNER JOIN M_PRICELIST_VERSION plv
+    ON (PP.M_PRICELIST_VERSION_ID = PLV.M_PRICELIST_VERSION_ID)
+    WHERE plv.isactive            = 'Y'
+    AND pp.isactive               = 'Y'
+    ORDER BY PLV.VALIDFROM,
+      PLV.M_PRICELIST_VERSION_ID
+    ;
+/

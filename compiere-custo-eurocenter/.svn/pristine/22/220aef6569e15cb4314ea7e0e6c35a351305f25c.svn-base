@@ -1,0 +1,305 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>audaxis</groupId>
+    <artifactId>compiere-custo-eurocenter</artifactId>
+    <packaging>jar</packaging>
+    <version>361.53.1</version>
+    <name>compiere-custo-eurocenter</name>
+    <description />
+    <url>http://www.audaxis.com</url>
+    <inceptionYear>2015</inceptionYear>
+    
+    <properties>
+        <compiere.version>361.40.2-eurocenter</compiere.version>
+    </properties>
+    
+    <repositories>
+		<repository>
+           <id>audaxis</id>
+           <name>Audaxis Internal Repository</name>
+           <url>http://support.audaxis.com/maven2/</url>
+        </repository>
+        <repository>
+			<snapshots>
+    	    <enabled>true</enabled>
+      		</snapshots>
+   			<id>audaxis.repo.snapshots</id>
+   			<name>Audaxis Internal Repository</name>
+   			<url>http://support.audaxis.com/m2-snapshots/</url>
+        </repository>
+	</repositories>
+    <dependencies>
+    	<dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+        </dependency>
+        <!-- Module FAIA -->
+		 <!--
+		<dependency>
+		    <groupId>audaxis</groupId>
+    		<artifactId>compiere-core-faia</artifactId>
+    		<version>0.1-SNAPSHOT</version>
+		</dependency>
+		-->
+        <!-- Production 
+	
+    	<dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>compiere-core-production</artifactId>
+            <version>1.1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                   <groupId>audaxis</groupId>
+                   <artifactId>compiere-core-util</artifactId>
+                </exclusion>
+                <exclusion>
+                   <groupId>audaxis</groupId>
+                   <artifactId>compiere-custo</artifactId>
+                </exclusion>
+	    	</exclusions>
+		</dependency>
+		-->
+
+        <!-- Comptabilite -->
+
+    	<dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>compiere-custo</artifactId>
+            <version>${compiere.version}</version>
+            <exclusions>
+                <exclusion>
+                   <groupId>audaxis</groupId>
+                   <artifactId>compiere-core-util</artifactId>
+                </exclusion>
+            	<exclusion>
+            		<groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Developement -->
+
+    	<dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>compiere-core-util</artifactId>
+            <version>${compiere.version}</version>
+            <exclusions>
+            	<exclusion>
+            		<groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- #35148 Besoin pour le ReplyHeaderFilter -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>compile</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
+        </dependency>
+          
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.6</version>
+        </dependency>
+        
+        <!-- JasperReports Extensions : XPath -->
+        <dependency>
+            <groupId>jasperreports</groupId>
+            <artifactId>jasperreports-extensions</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        
+        <!--  Intégration du module IMMO test  -->
+        <dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>compiere-core-fixedassets</artifactId>
+            <version>361.1</version>
+            <exclusions>
+			     <exclusion>
+				    <groupId>audaxis</groupId>
+				    <artifactId>compiere-custo</artifactId>
+			     </exclusion>
+            </exclusions>    
+        </dependency>
+        <dependency>
+         	<groupId>oracle</groupId>
+         	<artifactId>oracle</artifactId>
+         	<version>18.3.0.0.0</version>
+      	</dependency>
+       	<dependency>
+         	<groupId>oracle</groupId>
+         	<artifactId>ucp</artifactId>
+         	<version>18.3.0.0.0</version>
+       	</dependency>
+       <!--  
+        <dependency>
+            <groupId>oracle</groupId>
+            <artifactId>oracle</artifactId>
+            <version>11.2.0.4</version>
+        </dependency>
+  	-->
+          <!-- Bean Shell BSH -->
+        <dependency>
+            <groupId>bsh</groupId>
+            <artifactId>bsh</artifactId>
+            <version>1.3.0</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- PARSER HTML TO DOM -->
+		<dependency>
+		   <groupId>org.jsoup</groupId>
+		   <artifactId>jsoup</artifactId>
+		   <version>1.10.2</version>
+		</dependency>
+		<dependency>
+   			<groupId>org.codehaus.jackson</groupId>
+   			<artifactId>jackson-mapper-asl</artifactId>
+   			<version>1.9.13</version>
+		</dependency>
+ 		<dependency>
+   			<groupId>org.codehaus.jackson</groupId>
+   			<artifactId>jackson-core-asl</artifactId>
+   			<version>1.9.13</version>
+		</dependency>        
+        <!-- PARSER HTML TO DOM -->
+  		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-client</artifactId>
+			<version>2.6</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-common -->
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+    		<artifactId>jersey-common</artifactId>
+    		<version>2.6</version>
+		</dependency>
+		
+		<dependency>
+    		<groupId>org.glassfish.hk2</groupId>
+    		<artifactId>hk2-api</artifactId>
+    		<version>2.2.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.glassfish.hk2/hk2-locator -->
+		<dependency>
+    		<groupId>org.glassfish.hk2</groupId>
+    		<artifactId>hk2-locator</artifactId>
+    		<version>2.2.0</version>
+		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/org.glassfish.hk2/hk2-utils -->
+		<dependency>
+    		<groupId>org.glassfish.hk2</groupId>
+    		<artifactId>hk2-utils</artifactId>
+    		<version>2.2.0</version>
+		</dependency>
+		
+		<dependency>
+    		<groupId>org.glassfish.jersey.bundles.repackaged</groupId>
+    		<artifactId>jersey-guava</artifactId>
+    		<version>2.6</version>
+		</dependency>
+				<!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
+		<dependency>
+		    <groupId>javax.ws.rs</groupId>
+		    <artifactId>javax.ws.rs-api</artifactId>
+		    <version>2.0</version>
+		</dependency>
+		<dependency>
+    		<groupId>org.apache.httpcomponents</groupId>
+   			<artifactId>httpclient</artifactId>
+    		<version>4.5.6</version>
+		</dependency>
+		<dependency>
+    		<groupId>com.google.code.gson</groupId>
+    		<artifactId>gson</artifactId>
+    		<version>2.3.1</version>
+		</dependency>
+    </dependencies>
+    <scm>
+        <connection>scm:svn:http://svn.audaxis.com/svn/repos/compiere-custo-eurocenter/branches/361.40.2-EC/compiere-custo-eurocenter</connection>
+        <developerConnection>scm:svn:http://svn.audaxis.com/svn/repos/compiere-custo-eurocenter/branches/361.40.2-EC/compiere-custo-eurocenter</developerConnection>
+        <url>http://svn.audaxis.com/svn/repos/compiere-custo-eurocenter/branches/361.40.2-EC/compiere-custo-eurocenter</url>
+    </scm>
+	<distributionManagement>
+        <site>
+            <id>audaxis</id>
+            <url>scp://mail.audaxis.lu/home/forge/compiere-custo-eurocenter</url>
+        </site>
+        <!--  
+        
+        THIS IS NOT STANDARD !
+        WE COMMIT TO THE RELEASE REPO FOR CUSTOS
+        SO THAT AT COMPIERE PLUGIN INSTALLER WE ONLY REFERENCE RELEASE REPO
+         -->
+		<repository>
+          <id>audaxis.repo</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/maven2</url>
+        </repository>
+        <!--
+        <snapshotRepository>
+          <id>audaxis.repo.snapshots</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/m2-snapshots</url>
+        </snapshotRepository>
+         -->
+    </distributionManagement>
+    <build>
+    	<extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>2.2</version>
+            </extension>
+        </extensions>
+        <sourceDirectory>src/java</sourceDirectory>
+        <resources>
+	        <resource>
+	        	<directory>.</directory>
+	        	<filtering>false</filtering>
+	        	<includes>
+	        		<include>data/custos/**</include>
+	        		<include>data/jasper/**</include>
+	        		<include>utils/**</include>
+	        		<include>data/POS/**</include>
+	        		<include>data/excel/**/*.xls</include>
+	        		<include>scripts/**</include>
+	        	</includes>
+	        	<excludes>
+	        		<exclude>src/**</exclude>
+	        	</excludes>
+	        </resource>
+			<resource>
+                <directory>src/main/resources</directory>
+				<filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <source>1.6</source>
+                <target>1.6</target>
+                <debug>true</debug>
+                <encoding>ISO8859_1</encoding>
+              </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+

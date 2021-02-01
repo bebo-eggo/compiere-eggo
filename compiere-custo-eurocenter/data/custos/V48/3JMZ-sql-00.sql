@@ -1,0 +1,1 @@
+ALTER TABLE ZSubPaymentRule ADD XX_IsRounded CHAR(1) DEFAULT 'N' CHECK (XX_IsRounded IN ('Y','N')) NOT NULL;

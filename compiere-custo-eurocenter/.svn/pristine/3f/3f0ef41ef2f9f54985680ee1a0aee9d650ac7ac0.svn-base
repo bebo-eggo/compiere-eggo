@@ -1,0 +1,1 @@
+ALTER TABLE C_DocType ADD IsConsignation CHAR(1) DEFAULT 'N' CHECK (IsConsignation IN ('Y','N')) NOT NULL;

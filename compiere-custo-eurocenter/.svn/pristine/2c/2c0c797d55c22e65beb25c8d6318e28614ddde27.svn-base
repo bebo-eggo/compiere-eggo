@@ -1,0 +1,1 @@
+ALTER TABLE I_GLJournal ADD User1Value NVARCHAR2(40) ;

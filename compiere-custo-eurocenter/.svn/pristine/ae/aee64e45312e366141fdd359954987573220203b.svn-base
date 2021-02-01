@@ -1,0 +1,1 @@
+UPDATE AD_COLUMN set ISSELECTIONCOLUMN = 'N', SELECTIONSEQNO = 0 where ColumnName in ('C_ArcoValidator_ID','Z_ValidationInvoiceID','Z_UrlARCO') and AD_Table_ID = (Select AD_Table_ID from AD_Table where AD_Table.TABLENAME = 'C_Invoice');

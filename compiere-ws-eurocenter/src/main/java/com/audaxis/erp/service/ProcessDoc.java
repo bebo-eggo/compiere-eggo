@@ -1,0 +1,262 @@
+package com.audaxis.erp.service;
+
+import org.compiere.model.MInOut;
+import org.compiere.model.MInvoice;
+import org.compiere.model.MMovement;
+import org.compiere.model.MOrder;
+import org.compiere.process.DocumentEngine;
+import org.compiere.util.QueryUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.ProcessDocObj;
+import com.audaxis.erp.json.SetInOutResult;
+import com.audaxis.erp.json.SetProcessDocResult;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class ProcessDoc  extends CompiereSessionFullService implements IProcessDoc {
+
+	@Autowired
+	protected ISessionService sessionService;
+	
+	private int client_ID = 0;
+	
+	@Override
+	public SetProcessDocResult processDoc(ProcessDocObj processDoc) {
+		SetProcessDocResult ret = new SetProcessDocResult();
+		ret.error = SetProcessDocResult.E000;
+		
+		client_ID = getCtx().getAD_Client_ID();
+		if(client_ID == 0)
+		{
+			ret.error = SetProcessDocResult.E002;
+			ret.errordesc = SetProcessDocResult.getErrorMsg(SetProcessDocResult.E002);
+			log.info(String.format(SetProcessDocResult.getErrorMsg(SetProcessDocResult.E002), "", ret.errordesc));
+			return ret;
+		}
+		
+		if(processDoc.DOCNO == null || processDoc.DOCNO.length()==0)
+		{
+			ret.error = "DocNo obligatoire !";
+			ret.documentNo ="";
+			return ret;
+		}
+		
+		if(processDoc.TYPEDOC == null || processDoc.TYPEDOC.length()==0)
+		{
+			ret.error = "TYPE DOC obligatoire !";
+			ret.documentNo ="";
+			return ret;
+		}
+		if(processDoc.DOCACTION == null || processDoc.DOCACTION.length()==0)
+		{
+			ret.error = "Action sur document obligatoire !";
+			ret.documentNo ="";
+			return ret;
+		}
+		
+		String DocAction = "CO,VO,CL";
+		if(!DocAction.contains(processDoc.DOCACTION))
+		{
+			ret.error = "Action sur document non gérée !";
+			ret.errordesc = "Action attendue : CO(Achévé), VO(Annulé), CL(Cloturé)";
+			ret.documentNo ="";
+			return ret;
+		}
+		
+		//INOUT, MOVEMENT, ORDER, INVOICE
+		String TypeDoc = "INOUT, MOVEMENT, ORDER, INVOICE";
+		if(!TypeDoc.contains(processDoc.TYPEDOC))
+		{
+			ret.error = "Type de document non géré !";
+			ret.errordesc = "Type document attendu : INOUT, MOVEMENT, ORDER, INVOICE";
+			ret.documentNo ="";
+			return ret;
+		}
+		
+		if((processDoc.TYPEDOC).equals("ORDER"))
+		{
+			int Order_ID = QueryUtil.getSQLValue(get_Trx(), "Select Max(C_Order_ID) from C_order where DocumentNo = ? and AD_Client_ID = ? ", processDoc.DOCNO, client_ID);
+			if(Order_ID<=0)
+			{
+				ret.error = "Order non trouvé";
+				ret.errordesc = "";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			MOrder mo = new MOrder(getCtx(), Order_ID, get_Trx());
+			if(mo == null || mo.getC_Order_ID()<=0)
+			{
+				ret.error = "Order non trouvé";
+				ret.errordesc = "";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			
+			if(mo.getDocStatus().equals(processDoc.DOCACTION))
+			{
+				ret.error = "Action document Impossible";
+				ret.errordesc = "Action voulue = Statut document";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			
+			mo.setDocAction(processDoc.DOCACTION);
+			mo.save();
+			if(!DocumentEngine.processIt(mo, processDoc.DOCACTION))
+			{
+				ret.error = "Action document Impossible : Statut "+mo.getDocStatus();
+				ret.errordesc = ""+mo.getProcessMsg();
+				ret.documentNo = mo.getDocumentNo();			
+				return ret;
+			}else{
+				mo.save();
+				ret.error = "Document traité avec succes !";
+				ret.errordesc = "";
+				ret.documentNo = mo.getDocumentNo();			
+				return ret;
+			}
+		}
+		
+		if((processDoc.TYPEDOC).equals("INOUT"))
+		{
+			int InOut_ID = QueryUtil.getSQLValue(get_Trx(), "Select Max(M_InOut_ID) from M_InOut where DocumentNo = ? and AD_Client_ID = ? ", processDoc.DOCNO, client_ID);
+			if(InOut_ID<=0)
+			{
+				ret.error = "InOut non trouvé";
+				ret.errordesc = "";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			MInOut mo = new MInOut(getCtx(), InOut_ID, get_Trx());
+			if(mo == null || mo.getM_InOut_ID()<=0)
+			{
+				ret.error = "Réception/Expédition non trouvé";
+				ret.errordesc = "";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			
+			if(mo.getDocStatus().equals(processDoc.DOCACTION))
+			{
+				ret.error = "Action document Impossible";
+				ret.errordesc = "Action voulue = Statut document";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			
+			mo.setDocAction(processDoc.DOCACTION);
+			mo.save();
+			if(!DocumentEngine.processIt(mo, processDoc.DOCACTION))
+			{
+				ret.error = "Action document Impossible : Statut "+mo.getDocStatus();
+				ret.errordesc = ""+mo.getProcessMsg();
+				ret.documentNo = mo.getDocumentNo();			
+				return ret;
+			}else{
+				mo.save();
+				ret.error = "Document traité avec succes !";
+				ret.errordesc = "";
+				ret.documentNo = mo.getDocumentNo();			
+				return ret;
+			}
+		}
+		
+		if((processDoc.TYPEDOC).equals("INVOICE"))
+		{
+			int Invoice_ID = QueryUtil.getSQLValue(get_Trx(), "Select Max(C_Invoice_ID) from C_Invoice where DocumentNo = ? and AD_Client_ID = ? ", processDoc.DOCNO, client_ID);
+			if(Invoice_ID<=0)
+			{
+				ret.error = "Facture non trouvé";
+				ret.errordesc = "";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			MInvoice mo = new MInvoice(getCtx(), Invoice_ID, get_Trx());
+			if(mo == null || mo.getC_Invoice_ID()<=0)
+			{
+				ret.error = "Facture non trouvée";
+				ret.errordesc = "";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			
+			if(mo.getDocStatus().equals(processDoc.DOCACTION))
+			{
+				ret.error = "Action document Impossible";
+				ret.errordesc = "Action voulue = Statut document";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			
+			mo.setDocAction(processDoc.DOCACTION);
+			mo.save();
+			if(!DocumentEngine.processIt(mo, processDoc.DOCACTION))
+			{
+				ret.error = "Action document Impossible : Statut "+mo.getDocStatus();
+				ret.errordesc = ""+mo.getProcessMsg();
+				ret.documentNo = mo.getDocumentNo();			
+				return ret;
+			}else{
+				mo.save();
+				ret.error = "Document traité avec succes !";
+				ret.errordesc = "";
+				ret.documentNo = mo.getDocumentNo();			
+				return ret;
+			}
+		}
+		
+		if((processDoc.TYPEDOC).equals("MOVEMENT"))
+		{
+			int Movement_ID = QueryUtil.getSQLValue(get_Trx(), "Select Max(M_Movement_ID) from M_Movement where DocumentNo = ? and AD_Client_ID = ? ", processDoc.DOCNO, client_ID);
+			if(Movement_ID<=0)
+			{
+				ret.error = "Facture non trouvé";
+				ret.errordesc = "";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			MMovement mo = new MMovement(getCtx(), Movement_ID, get_Trx());
+			if(mo == null || mo.getM_Movement_ID()<=0)
+			{
+				ret.error = "Transfert non trouvé";
+				ret.errordesc = "";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			
+			if(mo.getDocStatus().equals(processDoc.DOCACTION))
+			{
+				ret.error = "Action document Impossible";
+				ret.errordesc = "Action voulue = Statut document";
+				ret.documentNo =""+processDoc.DOCNO;
+				return ret;
+			}
+			
+			mo.setDocAction(processDoc.DOCACTION);
+			mo.save();
+			if(!DocumentEngine.processIt(mo, processDoc.DOCACTION))
+			{
+				ret.error = "Action document Impossible : Statut "+mo.getDocStatus();
+				ret.errordesc = ""+mo.getProcessMsg();
+				ret.documentNo = mo.getDocumentNo();			
+				return ret;
+			}else{
+				mo.save();
+				ret.error = "Document traité avec succes !";
+				ret.errordesc = "";
+				ret.documentNo = mo.getDocumentNo();			
+				return ret;
+			}
+		}
+		
+		return null;
+	}
+
+}

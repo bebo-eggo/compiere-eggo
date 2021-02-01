@@ -1,0 +1,28 @@
+CREATE TABLE I_Inout
+  (
+    AD_Client_ID NUMBER(10) NOT NULL,
+    AD_Org_ID    NUMBER(10),
+    BPartnerValue NVARCHAR2(22),
+    C_BPartner_ID NUMBER(10),
+    C_Order_ID    NUMBER(10),
+    Created       DATE DEFAULT SYSDATE NOT NULL,
+    CreatedBy     NUMBER(10) DEFAULT 0 NOT NULL,
+    I_ErrorMsg NVARCHAR2(2000),
+    I_Inout_ID   NUMBER(10) NOT NULL,
+    I_IsImported CHAR(1) DEFAULT 'N' NOT NULL,
+    IsActive     CHAR(1) DEFAULT 'Y' CHECK (IsActive IN ('Y','N')) NOT NULL,
+    M_InOut_ID   NUMBER(10),
+    M_Product_ID NUMBER(10),
+    OrgValue NVARCHAR2(22),
+    Processed  CHAR(1) DEFAULT 'N' CHECK (Processed IN ('Y','N')) NOT NULL,
+    Processing CHAR(1) DEFAULT 'N',
+    ProductValue NVARCHAR2(22),
+    PurchaseOrderNO NVARCHAR2(22),
+    QtyOrdered NUMBER DEFAULT 0,
+    Updated    DATE DEFAULT SYSDATE NOT NULL,
+    UpdatedBy  NUMBER(10) DEFAULT 0 NOT NULL,
+    CONSTRAINT PK1006551 PRIMARY KEY (I_Inout_ID)
+  );
+ALTER TABLE I_Inout ADD CONSTRAINT FK1006551_1032493 FOREIGN KEY (AD_Org_ID) REFERENCES AD_Org (AD_Org_ID) ;
+
+ALTER TABLE I_Inout ADD CONSTRAINT FK1006551_1032492 FOREIGN KEY (AD_Client_ID) REFERENCES AD_Client (AD_Client_ID);

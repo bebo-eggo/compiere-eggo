@@ -1,0 +1,1 @@
+ALTER TABLE Z_OrderPayment ADD GenerateSOPayment2 CHAR(1);

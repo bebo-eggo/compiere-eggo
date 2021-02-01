@@ -1,0 +1,1 @@
+ALTER TABLE Z_TvaAEncaissement ADD Z_GenFrancePDF CHAR(1);

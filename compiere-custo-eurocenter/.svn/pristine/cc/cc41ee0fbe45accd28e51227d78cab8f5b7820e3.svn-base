@@ -1,0 +1,1 @@
+ALTER TABLE C_BankStatementLine ADD ZChargeChange CHAR(1) DEFAULT NULL;

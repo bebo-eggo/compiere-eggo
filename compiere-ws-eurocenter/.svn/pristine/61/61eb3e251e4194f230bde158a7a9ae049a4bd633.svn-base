@@ -1,0 +1,166 @@
+package com.audaxis.erp.service;
+
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.compiere.model.MOrder;
+import org.compiere.model.MOrg;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.model.MOrderDownload;
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.OrderDownload;
+import com.audaxis.erp.json.SetOrderDownloadResult;
+
+import Util.WSUtil;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class SetOrderDownloadService extends CompiereSessionFullService implements IOrderDownloadService {
+
+	private int client_ID = 0;
+	
+	private MOrg org = null;
+	private MOrder mo = null;
+	private MOrderDownload mod = null;
+	
+	@Override
+	public SetOrderDownloadResult setOrderDownload(OrderDownload ordDown) {
+		// TODO Auto-generated method stub
+		SetOrderDownloadResult ret = new SetOrderDownloadResult();
+		ret.error = SetOrderDownloadResult.E000;
+		client_ID = getCtx().getAD_Client_ID();
+		
+		try{
+		
+		if(client_ID == 0)
+		{
+			ret.error = SetOrderDownloadResult.E002;
+			ret.errordesc = SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E002);
+			ret.c_OrderDownload_ID = 0;
+			log.info(String.format(SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E002), "", ret.errordesc));
+			return ret;
+		}
+		if(ordDown.MAG != null && ordDown.MAG.length()>0 && !ordDown.MAG.equals("0")){
+			org = WSUtil.getOrgByValue(getCtx(),client_ID,ordDown.MAG);
+		}else
+			if(ordDown.MAG == null || ordDown.MAG.length()>0 || org == null)
+			{
+				org = WSUtil.getOrgByValue(getCtx(),client_ID,"0");
+			}
+		
+		if(ordDown.ORDERNO != null && ordDown.ORDERNO.length()>0)
+		{
+			mo =  WSUtil.getOrderByDocNo(getCtx(), ordDown.ORDERNO,"Y", get_Trx());
+			if(mo==null)
+			{
+				ret.error = SetOrderDownloadResult.E011;
+				ret.errordesc = SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E011);
+				ret.c_OrderDownload_ID = 0;
+				log.info(String.format(SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E011), "", ret.errordesc));
+				return ret;
+			}
+		}
+		
+		if(ordDown.FROMEXTSOURCE==null)
+			ordDown.FROMEXTSOURCE = "Y";
+		else
+			if(!((ordDown.FROMEXTSOURCE.equals("N") || ( ordDown.FROMEXTSOURCE.equals("Y")))))
+			{
+				ordDown.FROMEXTSOURCE = "Y";
+			}
+		
+		Timestamp ti = null;
+		if(ordDown.DATECREATED == null)
+		{
+			ti = new Timestamp(System.currentTimeMillis());
+		}else
+		{
+			try {
+				SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
+				Date date = null;
+				date = simpleDateFormat.parse(ordDown.DATECREATED);
+				long time = date.getTime();
+				ti = new Timestamp(time);
+			}
+			catch (Exception e) {
+				// TODO: handle exception
+				ret.error = SetOrderDownloadResult.E031;
+				ret.errordesc = SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E031)+" : "+e.toString();
+				ret.c_OrderDownload_ID = 0;	
+				log.info(String.format(SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E031), "", ret.errordesc));
+				e.printStackTrace();
+				return ret;
+			}
+			
+		}
+		
+		
+
+		
+		if(mo != null && mo.getC_Order_ID() >0)
+		{
+			MOrderDownload mod = new MOrderDownload(getCtx(), 0, get_Trx());
+			mod.setAD_Org_ID(org.getAD_Org_ID());
+			mod.setDownloadURL(ordDown.DOWNLOADURL);
+			mod.setC_Order_ID(mo.getC_Order_ID());
+			mod.setZ_FileType(ordDown.Z_FILETYPE);
+			mod.setDescription(ordDown.DESCRIPTION);
+			mod.set_ValueNoCheck("Z_FromExtSource", ordDown.FROMEXTSOURCE);
+			mod.set_ValueNoCheck("DateCreated",ti);
+			mod.setName(ordDown.NAME);
+			if(!mod.save())
+			{
+				ret.error = SetOrderDownloadResult.E051;
+				ret.errordesc = SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E051);
+				log.info(String.format(SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E051), "", ret.errordesc));
+				return ret;
+			}
+		}else
+			if(ordDown.POREF!=null)
+			{
+				//Pour tous les OA/OV du POREF
+				CopyOnWriteArrayList<Integer> OrderIdList = WSUtil.getOrdersByPoRef(getCtx(), ordDown.POREF, "Y", get_Trx());
+				for (int i = 0; i < OrderIdList.size(); i++) {
+					MOrderDownload mod = new MOrderDownload(getCtx(), 0, get_Trx());
+					mod.setAD_Org_ID(org.getAD_Org_ID());
+					mod.setDownloadURL(ordDown.DOWNLOADURL);
+					mod.setC_Order_ID(OrderIdList.get(i));
+					mod.setZ_FileType(ordDown.Z_FILETYPE);
+					mod.setDescription(ordDown.DESCRIPTION);
+					mod.set_ValueNoCheck("Z_FromExtSource", ordDown.FROMEXTSOURCE);
+					mod.set_ValueNoCheck("DateCreated",ti);
+					mod.setName(ordDown.NAME);
+					if(!mod.save())
+					{
+						ret.error = SetOrderDownloadResult.E051;
+						ret.errordesc = SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E051);
+						log.info(String.format(SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E051), "", ret.errordesc));
+						return ret;
+					}
+				}
+			}
+
+		
+		
+		}
+		catch(Exception ex)
+		{
+			ret.error = SetOrderDownloadResult.E999;
+			ret.errordesc = SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E999)+" : "+ex.toString();
+			ret.c_OrderDownload_ID = 0;	
+			log.info(String.format(SetOrderDownloadResult.getErrorMsg(SetOrderDownloadResult.E999), "", ret.errordesc));
+			ex.printStackTrace();
+			return ret;
+		}
+		
+		return ret;
+	}
+
+}

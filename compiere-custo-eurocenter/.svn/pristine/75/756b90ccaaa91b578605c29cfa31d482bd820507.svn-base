@@ -1,0 +1,4 @@
+ALTER TABLE C_DocTypeInfo ADD IsTrxBackSAV CHAR(1) DEFAULT 'N' CHECK (IsTrxBackSAV IN ('Y','N')) NOT NULL;
+ALTER TABLE C_DocTypeInfo ADD IsOpenOV CHAR(1) DEFAULT 'N' CHECK (IsOpenOV IN ('Y','N'));
+ALTER TABLE C_DocTypeInfo ADD IsLimitDocAction CHAR(1) DEFAULT 'N' CHECK (IsLimitDocAction IN ('Y','N')) NOT NULL;
+ALTER TABLE AD_Role ADD IsLimitDocAction CHAR(1) DEFAULT 'N' CHECK (IsLimitDocAction IN ('Y','N')) NOT NULL;

@@ -1,0 +1,2 @@
+UPDATE AD_Column set AD_VAL_RULE_ID = (Select AD_VAL_RULE_ID from AD_VAL_RULE where NAME = 'Greeting BPartner') where AD_Column_ID = 4291;
+UPDATE AD_Column set AD_VAL_RULE_ID = (Select AD_VAL_RULE_ID from AD_VAL_RULE where NAME = 'Greeting Users') where AD_Column_ID = 8743;

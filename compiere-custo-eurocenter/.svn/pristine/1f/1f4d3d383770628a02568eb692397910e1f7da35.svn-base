@@ -1,0 +1,1 @@
+ALTER TABLE Z_S_Famille ADD IsTaxUpdatable CHAR(1) DEFAULT 'Y' CHECK (IsTaxUpdatable IN ('Y','N')) NOT NULL;

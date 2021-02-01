@@ -1,0 +1,232 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>audaxis</groupId>
+    <artifactId>compiere-ws-eurocenter</artifactId>
+    <packaging>war</packaging>
+    <version>1.10.WS-SNAPSHOT</version>
+    <name>compiere-ws-eurocenter - Compiere Web Services</name>
+    <description />
+    <url>http://www.audaxis.com</url>
+    <inceptionYear>2014</inceptionYear>
+    
+    <properties>
+        <erp-ws.version>1.4.2-EC</erp-ws.version>
+        <compiere-ws.version>1.4.3-EC</compiere-ws.version>
+        <!-- Pour les Release
+        <fatjar.version>[1.9,300)</fatjar.version>
+         -->
+        <!-- Pour le Dev -->
+        <fatjar.version>1.10.WS-SNAPSHOT</fatjar.version>
+        
+        
+    </properties>
+    
+    <repositories>
+		<repository>
+           	<id>audaxis</id>
+           	<name>Audaxis Internal Repository</name>
+           	<url>http://support.audaxis.com/maven2/</url>
+        </repository>
+        <repository>
+        	<snapshots>
+        		<enabled>true</enabled>
+        	</snapshots>
+           	<id>audaxis-snapshot</id>
+           	<name>Audaxis Internal Repository</name>
+           	<url>http://support.audaxis.com/m2-snapshots/</url>
+        </repository>
+    </repositories>
+    
+    <dependencies>
+    	<dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>erp-service-core</artifactId>
+            <version>${erp-ws.version}</version>
+		</dependency>
+		
+		<dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>erp-ws-core</artifactId>
+            <version>${erp-ws.version}</version>
+        </dependency>
+		         
+        <dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>compiere-service-core</artifactId>
+            <version>${compiere-ws.version}</version>
+            <exclusions>
+            	<exclusion>
+            		<groupId>audaxis</groupId>
+            		<artifactId>compiere-all</artifactId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+      	
+      	<dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>compiere-ws-core</artifactId>
+            <version>${compiere-ws.version}</version>
+            <exclusions>
+            	<exclusion>
+            		<groupId>audaxis</groupId>
+            		<artifactId>compiere-all</artifactId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+        
+      	<dependency>
+        	<groupId>audaxis</groupId>
+        	<artifactId>fatjar-custo-eurocenter</artifactId>
+        	<version>${fatjar.version}</version>
+        	<exclusions>
+        		<!-- Cree des erreurs systeme ???  -->
+        		<exclusion>
+        			<groupId>net.bull.javamelody</groupId>
+        			<artifactId>javamelody-core</artifactId>
+        		</exclusion>
+        		<!-- Pour Swagger quand Guava sera là
+        		<exclusion>
+        			<groupId>google</groupId>
+        			<artifactId>google-collect</artifactId>
+        		</exclusion>
+        		-->
+        	</exclusions>
+        </dependency>
+        
+        <!-- Servlet -->
+         
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+            <version>2.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <version>1.2</version>
+            <!-- Apache Tomcat ne le fourit pas par defaut -->
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+        	<groupId>org.neo4j</groupId>
+        	<artifactId>neo4j-cypher-compiler-2.1</artifactId>
+        	<version>2.1.2</version>
+        </dependency>
+    	<!--  
+    	TODO pas beau
+    	Si on veut mettre en place du cache on le fait via Spring Cache qui embarquera lui meme le ehvcache dont il a besoin
+    	-->
+    	<dependency>
+			<groupId>net.sf.ehcache</groupId>
+			<artifactId>ehcache-core</artifactId>
+			<version>2.6.11</version>
+		</dependency>
+    	<!-- https://mvnrepository.com/artifact/jboss/jbossall-client -->
+<dependency>
+    <groupId>jboss</groupId>
+    <artifactId>jbossall-client</artifactId>
+    <version>4.2.2.GA</version>
+</dependency>
+    	
+    
+    
+    </dependencies>
+    
+    
+    
+    <scm>
+        <connection>scm:svn:http://svn.audaxis.com/svn/repos/compiere-ws-eurocenter/trunk/compiere-ws-eurocenter</connection>
+        <developerConnection>scm:svn:http://svn.audaxis.com/svn/repos/compiere-ws-eurocenter/trunk/compiere-ws-eurocenter</developerConnection>
+        <url>http://svn.audaxis.com/svn/repos/compiere-ws-eurocenter/trunk/compiere-ws-eurocenter</url>
+    </scm>
+	<distributionManagement>
+        <site>
+            <id>audaxis</id>
+            <url>scp://mail.audaxis.lu/home/forge/compiere-ws-eurocenter</url>
+        </site>
+		<repository>
+          <id>audaxis.repo</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/maven2</url>
+        </repository>
+        <snapshotRepository>
+          <id>audaxis.repo.snapshots</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/m2-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+    <build>
+        <finalName>ws</finalName>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>2.2</version>
+            </extension>
+        </extensions>
+
+        <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+                <debug>true</debug>
+                <encoding>ISO8859_1</encoding>
+              </configuration>
+            </plugin>
+			<plugin>
+    			<groupId>org.apache.maven.plugins</groupId>
+    			<artifactId>maven-release-plugin</artifactId>
+				<version>2.4.1</version>
+    			<dependencies>
+        			<dependency>
+            			<groupId>com.google.code.maven-scm-provider-svnjava</groupId>
+            			<artifactId>maven-scm-provider-svnjava</artifactId>
+            			<version>2.1.1</version>
+        			</dependency>
+    			</dependencies>
+    			<configuration>
+        			<providerImplementations>
+            			<svn>javasvn</svn>
+        			</providerImplementations>
+    			</configuration>
+			</plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-war-plugin</artifactId>
+              <version>2.4</version>
+              <configuration>
+              	<warName>ws</warName>
+              	<attachClasses>true</attachClasses>
+            	<classesClassifier>classes</classesClassifier>
+            	<packagingExcludes>
+				WEB-INF/lib/compiere-all-aj-*.jar,
+				WEB-INF/lib/compiere-core-util-*.jar,
+				WEB-INF/lib/compiere-custo-300-3.0.1.jar,
+				WEB-INF/lib/compiere-custo-361.40.1.jar,
+				WEB-INF/lib/compiere-custo-eurocenter-*.jar,
+				</packagingExcludes>
+              </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

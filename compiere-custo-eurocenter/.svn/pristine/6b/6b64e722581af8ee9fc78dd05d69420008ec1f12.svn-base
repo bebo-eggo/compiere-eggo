@@ -1,0 +1,1 @@
+ALTER TABLE C_Order ADD Z_DocType_ID NUMBER DEFAULT null;

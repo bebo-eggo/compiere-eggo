@@ -1,0 +1,12 @@
+package com.audaxis.erp.json;
+
+public class SetMovementResult extends Base<SetMovementResult>{
+
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	
+}

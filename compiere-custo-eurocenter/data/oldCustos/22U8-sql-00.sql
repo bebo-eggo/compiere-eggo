@@ -1,0 +1,1 @@
+ALTER TABLE C_PaySelection ADD OnlyActive CHAR(1) DEFAULT 'N' CHECK (OnlyActive IN ('Y','N'));

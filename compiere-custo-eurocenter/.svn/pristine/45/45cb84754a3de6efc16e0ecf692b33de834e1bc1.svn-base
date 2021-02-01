@@ -1,0 +1,88 @@
+package com.audaxis.compiere.eurocenter.ws;
+
+import org.compiere.model.MOrder;
+import org.compiere.process.SvrProcess;
+import org.compiere.util.DB;
+import org.compiere.util.Msg;
+import org.compiere.util.QueryUtil;
+
+import com.audaxis.compiere.process.SvrProcessExtended;
+import com.audaxis.compiere.util.CompiereException;
+
+public class SendEmailEvent extends SvrProcessExtended {
+
+	int Order_ID = 0;		
+	String EventType = null;
+	
+	
+	@Override
+	protected void prepare() {
+		// TODO Auto-generated method stub
+		Order_ID = getRecord_ID();
+		EventType = getParameterAsString("EventType");
+		
+	}
+
+	@Override
+	protected String doIt() throws Exception {
+		// TODO Auto-generated method stub
+		String returnMsg = Msg.getMsg(getCtx(), "EGGO_SENDMAIL_EVENT");
+		MOrder mo = new MOrder(getCtx(), Order_ID, get_Trx());
+		if(EventType.equals("05") && (mo.get_ValueAsTimestamp("DatePose") == null || mo.get_ValueAsTimestamp("Z_DATELIVRCLI")==null))
+		{
+			return Msg.getMsg(getCtx(), "EGGO_SENDMAIL_ERR");
+		}
+		//SI
+		//XX_no_solde_inv_gest
+		
+		
+		if(EventType.equals("05")) {
+			String role = ""+getCtx().getAD_Role_ID();
+			String XX_Gest_roles = Msg.getMsg(getCtx(), "XX_Gest_roles");
+			String XX_Gest_rolesXX = Msg.getMsg(getCtx(), "XX_Gest_roles++");
+			String XX_no_solde_inv_gest = Msg.getMsg(getCtx(), "XX_no_solde_inv_gest");
+			String XX_no_solde_inv_gestXX = Msg.getMsg(getCtx(), "XX_no_solde_inv_gest++");
+			String XX_no_ech_05_gest = Msg.getMsg(getCtx(), "XX_no_ech_05_gest");
+			String XX_no_ech_05_gestXX = Msg.getMsg(getCtx(), "XX_no_ech_05_gest++");
+			if(XX_Gest_roles.contains(role))
+			{
+				//No 05 ?
+				int nbECH05 = QueryUtil.getSQLValue(get_Trx(), "Select count(1) from z_orderpaymschedule where C_order_ID = ? and exists (select 1 from z_typeecheance "
+					+ "where z_typeecheance.z_typeecheance_ID = z_orderpaymschedule.z_typeecheance_ID and value = '05')", Order_ID);
+				if(nbECH05 <= 0)
+					returnMsg = XX_no_ech_05_gest;
+				else {
+					int inv_id = QueryUtil.getSQLValue(get_Trx(), "Select max(C_Invoice_ID) from z_orderpaymschedule where C_order_ID = ? and exists (select 1 from z_typeecheance "
+						+ "where z_typeecheance.z_typeecheance_ID = z_orderpaymschedule.z_typeecheance_ID and value = '05')", Order_ID);
+					if(inv_id<=0)
+					{
+						throw new CompiereException(XX_no_solde_inv_gest);
+					}
+				}
+			}
+		
+			if(XX_Gest_rolesXX.contains(role))
+			{
+				int nbECH05 = QueryUtil.getSQLValue(get_Trx(), "Select count(1) from z_orderpaymschedule where C_order_ID = ? and exists (select 1 from z_typeecheance "
+						+ "where z_typeecheance.z_typeecheance_ID = z_orderpaymschedule.z_typeecheance_ID and value = '05')", Order_ID);
+					if(nbECH05 <= 0)
+						returnMsg = XX_no_ech_05_gestXX;
+					else {
+						int inv_id = QueryUtil.getSQLValue(get_Trx(), "Select max(C_Invoice_ID) from z_orderpaymschedule where C_order_ID = ? and exists (select 1 from z_typeecheance "
+							+ "where z_typeecheance.z_typeecheance_ID = z_orderpaymschedule.z_typeecheance_ID and value = '05')", Order_ID);
+						if(inv_id<=0)
+						{
+							returnMsg = XX_no_solde_inv_gestXX;
+						}
+					}
+			}
+		}
+		String ret = WSUtil.SendEmailEvent(getCtx(), mo,  EventType,getAD_PInstance_ID(), get_Trx());
+		if(ret == null)
+		{
+			return "Event Type not supported";
+		}
+		return returnMsg;
+	}
+
+}

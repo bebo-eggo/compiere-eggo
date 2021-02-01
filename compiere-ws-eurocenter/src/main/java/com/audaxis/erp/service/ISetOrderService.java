@@ -1,0 +1,16 @@
+package com.audaxis.erp.service;
+
+import com.audaxis.erp.json.Order;
+import com.audaxis.erp.json.OrderLinesDetails;
+import com.audaxis.erp.json.SetOrderResult;
+
+public interface ISetOrderService extends IBaseService {
+
+	public SetOrderResult setOrder(Order order);
+	
+	public int setOAResult(int order_ID, String lvendorsent, String msg);
+
+	public long oaFilesSize(int order_ID);
+	
+	public SetOrderResult setExtraDatas(OrderLinesDetails datas);
+}

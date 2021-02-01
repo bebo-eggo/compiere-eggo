@@ -1,0 +1,6 @@
+ALTER TABLE AD_OrgInfo ADD TelMag NVARCHAR2(15);
+call syncposdatabase('ALTER TABLE AD_OrgInfo ADD TelMag NVARCHAR2(15)');
+ALTER TABLE AD_OrgInfo ADD TelSAV NVARCHAR2(15);
+call syncposdatabase('ALTER TABLE AD_OrgInfo ADD TelSAV NVARCHAR2(15)');
+ALTER TABLE AD_OrgInfo ADD TelGest NVARCHAR2(15);
+call syncposdatabase('ALTER TABLE AD_OrgInfo ADD TelGest NVARCHAR2(15)');

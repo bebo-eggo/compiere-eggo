@@ -1,0 +1,29 @@
+package com.audaxis.erp.json;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class OrderLinesDetails {
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("C_OrderLine_ID")
+	public String C_OrderLine_ID;
+	
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("C_Order_ID")
+	public String C_Order_ID;
+	
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("soc")
+	public String soc;
+	
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("order_no")
+	public String order_no;
+	
+	@JsonProperty("datas")
+	public Set<OrderLineDatas> OrderLineDatas_set = new LinkedHashSet<>();
+}

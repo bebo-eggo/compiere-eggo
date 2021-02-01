@@ -1,0 +1,1 @@
+ALTER TABLE C_ElementValue ADD IsSOTrx CHAR(1) DEFAULT 'N' CHECK (IsSOTrx IN ('Y','N')) NOT NULL; 

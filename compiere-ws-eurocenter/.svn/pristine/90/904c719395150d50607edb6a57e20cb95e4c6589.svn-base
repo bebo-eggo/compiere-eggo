@@ -1,0 +1,10 @@
+package com.audaxis.erp.service;
+
+import com.audaxis.erp.json.Order;
+import com.audaxis.erp.json.SetOrderResult;
+
+public interface ISetOrderService extends IBaseService {
+
+	public SetOrderResult setOrder(Order order);
+
+}

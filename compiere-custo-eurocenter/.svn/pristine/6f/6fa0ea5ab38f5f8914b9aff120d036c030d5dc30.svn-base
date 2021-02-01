@@ -1,0 +1,339 @@
+/******************************************************************************
+ * The contents of this file are subject to the   Compiere License  Version 1.1
+ * ("License"); You may not use this file except in compliance with the License
+ * You may obtain a copy of the License at http://www.compiere.org/license.html
+ * Software distributed under the License is distributed on an  "AS IS"  basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ * The Original Code is Compiere ERP & CRM Smart Business Solution. The Initial
+ * Developer of the Original Code is Jorg Janke. Portions created by Jorg Janke
+ * are Copyright (C) 1999-2005 Jorg Janke.
+ * All parts are Copyright (C) 1999-2005 ComPiere, Inc.  All Rights Reserved.
+ * Contributor(s): ______________________________________.
+ *****************************************************************************/
+package com.audaxis.compiere.process;
+
+import java.sql.Timestamp;
+
+import org.compiere.model.MAcctSchema;
+import org.compiere.model.MClient;
+import org.compiere.model.MWarehouse;
+import org.compiere.process.ProcessInfoParameter;
+import org.compiere.process.SvrProcess;
+import org.compiere.util.CLogger;
+import org.compiere.util.DB;
+
+/**
+ *  Inventory Valuation.
+ *  Process to fill T_InventoryValue
+ *  
+ *  VERSION : 2008-02-06 : Add a plugin method to allow easy overwrite
+ *  ZCOM916 - VERSION : 2007-10-25
+ *
+ *  @author     Audaxis
+ */
+public class InventoryValue extends SvrProcess
+{
+	/** Price List Used         */
+	private int         p_M_PriceList_Version_ID;
+	/** Valuation Date          */
+	private Timestamp   p_DateValue;
+	/** Currency                */
+	private int         p_C_Currency_ID;
+	/** Optional Cost Element	*/
+	private int			p_M_CostElement_ID;
+
+	private static CLogger log = CLogger.getCLogger(InventoryValue.class); //ZCOM916
+	
+	/**
+	 *  Prepare - get Parameters.
+	 */
+	protected void prepare()
+	{
+		ProcessInfoParameter[] para = getParameter();
+		for (int i = 0; i < para.length; i++)
+		{
+			String name = para[i].getParameterName();
+			if (para[i].getParameter() == null)
+				;
+			else if (name.equals("M_PriceList_Version_ID"))
+				p_M_PriceList_Version_ID = para[i].getParameterAsInt();
+			else if (name.equals("DateValue"))
+				p_DateValue = (Timestamp)para[i].getParameter();
+			else if (name.equals("C_Currency_ID"))
+				p_C_Currency_ID = para[i].getParameterAsInt();
+			else if (name.equals("M_CostElement_ID"))
+				p_M_CostElement_ID = para[i].getParameterAsInt();
+		}
+		if (p_DateValue == null)
+			p_DateValue = new Timestamp (System.currentTimeMillis());
+	}   //  prepare
+
+	/**
+	 *  Perform process.
+	 *  <pre>
+	 *  - Fill Table with QtyOnHand for Warehouse and Valuation Date
+	 *  - Perform Price Calculations
+	 *  </pre>
+	 * @return Message
+	 * @throws Exception
+	 */
+	protected String doIt() throws Exception
+	{
+		log.info(",C_Currency_ID=" + p_C_Currency_ID
+			+ ",DateValue=" + p_DateValue
+			+ ",M_PriceList_Version_ID=" + p_M_PriceList_Version_ID
+			+ ",M_CostElement_ID=" + p_M_CostElement_ID);
+		MClient c = MClient.get(getCtx(), getAD_Client_ID());
+		MAcctSchema as = c.getAcctSchema();
+		
+		//  Delete (just to be sure)
+		StringBuffer sql = new StringBuffer ("DELETE T_InventoryValue WHERE AD_PInstance_ID=");
+		sql.append(getAD_PInstance_ID());
+		int no = DB.executeUpdate(sql.toString(), get_TrxName());
+
+		//	Insert Standard Costs the same method costing as AcctSchema  
+		sql = new StringBuffer ("INSERT INTO T_InventoryValue "
+			+ "(AD_PInstance_ID, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID,"
+			+ " M_Product_Category_ID, " 
+			+ " AD_Client_ID, AD_Org_ID, CostStandard) " //ZCOM916
+			+ "SELECT ").append(getAD_PInstance_ID())
+			.append(", w.M_Warehouse_ID, c.M_Product_ID, c.M_AttributeSetInstance_ID,"
+			+ " pr.M_Product_Category_ID, "		
+			+ " w.AD_Client_ID, w.AD_Org_ID, c.CurrentCostPrice" //ZCOM916
+			+ " FROM M_Warehouse w"
+			+ " INNER JOIN AD_ClientInfo ci ON (w.AD_Client_ID=ci.AD_Client_ID)"
+			+ " INNER JOIN C_AcctSchema acs ON (ci.C_AcctSchema1_ID=acs.C_AcctSchema_ID)"
+			+ " INNER JOIN M_Cost c ON (acs.C_AcctSchema_ID=c.C_AcctSchema_ID AND acs.M_CostType_ID=c.M_CostType_ID AND c.AD_Org_ID IN (0, w.AD_Org_ID))"
+			+ " INNER JOIN M_Product pr on (pr.M_Product_ID=c.M_Product_ID) " 
+			+ " INNER JOIN M_CostElement ce ON (c.M_CostElement_ID=ce.M_CostElement_ID AND ce.CostingMethod=acs.CostingMethod AND ce.CostElementType='M') ");
+		int noInsertStd = DB.executeUpdate(sql.toString(), get_TrxName());
+		log.fine("Inserted Std=" + noInsertStd);
+		if (noInsertStd == 0)
+			return "No Standard Costs found";
+
+		//ZCOM916 Insert costElement if not exists in M_COST
+		// Le Standard ne prendra les articles que si ils ont un M_COST lié au Cost Element défini sur l'AcctSchema et si cette méthode possède le même 
+		// Costing Method que le M_Cost
+		// C'est complètement foireux car on devrait être obligé de créer ces tables de couts pour chaque nouveaux articles, 
+		// on va oublier, on va mal valorisé les stocks 
+		// NON!
+		// On crée ici autant de ligne manquante que nécessaire en repartant tout simplement de M_StorageDetail
+		// Sans regarder M_Cost
+		// TODO Attention on ne fait pas attention au Lots sinon on dédouble des lignes
+			sql = new StringBuffer ("INSERT INTO T_InventoryValue "
+					+ "(AD_PInstance_ID, M_Product_ID, M_AttributeSetInstance_ID,"
+					+ " M_Product_Category_ID, " 
+					+ " AD_Client_ID, AD_Org_ID, CostStandard, Cost) "
+					+ " SELECT UNIQUE ").append(getAD_PInstance_ID())
+					.append(" , s.M_Product_ID, 0,"
+							+" p.M_Product_Category_ID"
+							+" , s.AD_Client_ID, s.AD_Org_ID, 0, 0"
+							+" FROM M_storageDetail s "
+							+" INNER JOIN M_PRODUCT p on p.M_PRODUCT_ID = s.M_PRODUCT_ID"
+							+" WHERE s.m_locator_ID in (select l.m_locator_id from m_locator l where NOT EXISTS (SELECT * FROM T_InventoryValue iv "
+							+ "WHERE iv.AD_PInstance_ID=").append(getAD_PInstance_ID())
+							.append(" AND iv.M_Product_ID=s.M_Product_ID"
+							+ " AND iv.M_AttributeSetInstance_ID=0))");
+			log.info(sql.toString());
+			int noInserted=DB.executeUpdate(sql.toString(), get_TrxName());
+			log.fine("Inserted Cost if not Existing Cost Element=" + noInserted);
+			noInsertStd += noInserted;
+		
+		
+		//	Insert the other Costs where existing in M_COST
+		int noInsertCost = 0;
+		if (p_M_CostElement_ID != 0)
+		{
+			sql = new StringBuffer ("INSERT INTO T_InventoryValue "
+				+ "(AD_PInstance_ID, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID,"
+				+ " M_Product_Category_ID, " 
+				+ " AD_Client_ID, AD_Org_ID, CostStandard, Cost, M_CostElement_ID) " //ZCOM916
+				+ "SELECT ").append(getAD_PInstance_ID())
+				.append(", w.M_Warehouse_ID, c.M_Product_ID, c.M_AttributeSetInstance_ID,"
+				+ " pr.M_Product_Category_ID, "		
+				+ " w.AD_Client_ID, w.AD_Org_ID, 0, c.CurrentCostPrice, c.M_CostElement_ID" +
+						"" //ZCOM916
+				+ " FROM M_Warehouse w"
+				+ " INNER JOIN AD_ClientInfo ci ON (w.AD_Client_ID=ci.AD_Client_ID)"
+				+ " INNER JOIN C_AcctSchema acs ON (ci.C_AcctSchema1_ID=acs.C_AcctSchema_ID)"
+				+ " INNER JOIN M_Cost c ON (acs.C_AcctSchema_ID=c.C_AcctSchema_ID AND acs.M_CostType_ID=c.M_CostType_ID AND c.AD_Org_ID IN (0, w.AD_Org_ID)) "
+				+ " INNER JOIN M_Product pr on (pr.M_Product_ID=c.M_Product_ID) " 
+				+ "WHERE c.M_CostElement_ID=").append(p_M_CostElement_ID)
+				.append(" AND NOT EXISTS (SELECT * FROM T_InventoryValue iv "
+					+ "WHERE iv.AD_PInstance_ID=").append(getAD_PInstance_ID())
+					.append(" AND iv.M_Warehouse_ID=w.M_Warehouse_ID"
+					+ " AND iv.M_Product_ID=c.M_Product_ID"
+					+ " AND iv.M_AttributeSetInstance_ID=c.M_AttributeSetInstance_ID)");
+			noInsertCost = DB.executeUpdate(sql.toString(), get_TrxName());
+			log.fine("Inserted Cost=" + noInsertCost);
+			//	Update Std Cost Records
+			sql = new StringBuffer ("UPDATE T_InventoryValue iv "
+				+ "SET (Cost, M_CostElement_ID)="
+					+ "(SELECT c.CurrentCostPrice, c.M_CostElement_ID "
+					+ "FROM M_Warehouse w"
+					+ " INNER JOIN AD_ClientInfo ci ON (w.AD_Client_ID=ci.AD_Client_ID)"
+					+ " INNER JOIN C_AcctSchema acs ON (ci.C_AcctSchema1_ID=acs.C_AcctSchema_ID)"
+					+ " INNER JOIN M_Cost c ON (acs.C_AcctSchema_ID=c.C_AcctSchema_ID"
+						+ " AND acs.M_CostType_ID=c.M_CostType_ID AND c.AD_Org_ID IN (0, w.AD_Org_ID)) "
+					+ "WHERE c.M_CostElement_ID=" + p_M_CostElement_ID
+					+ " AND iv.M_Warehouse_ID=w.M_Warehouse_ID"
+					+ " AND iv.M_Product_ID=c.M_Product_ID"
+					+ " AND iv.M_AttributeSetInstance_ID=c.M_AttributeSetInstance_ID) "
+				+ "WHERE EXISTS (SELECT * FROM T_InventoryValue ivv "
+					+ "WHERE ivv.AD_PInstance_ID=" + getAD_PInstance_ID()
+					+ " AND ivv.M_CostElement_ID IS NULL)");
+			int noUpdatedCost = DB.executeUpdate(sql.toString(), get_TrxName());
+			log.fine("Updated Cost=" + noUpdatedCost);
+		}		
+
+		if ((noInsertStd+noInsertCost) == 0)
+			return "No Costs found";
+		
+		//  Update Constants
+		//  YYYY-MM-DD HH24:MI:SS.mmmm  JDBC Timestamp format
+		String myDate = p_DateValue.toString();
+		sql = new StringBuffer ("UPDATE T_InventoryValue SET ")
+			.append("DateValue=TO_DATE('").append(myDate.substring(0,10))
+			.append(" 23:59:59','YYYY-MM-DD HH24:MI:SS'),")
+			.append("M_PriceList_Version_ID=").append(p_M_PriceList_Version_ID).append(",")
+			.append("C_Currency_ID=").append(p_C_Currency_ID);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		log.fine("Constants=" + no);
+
+		//ZCOM916 COALESCE Ajouté
+		//  Get current QtyOnHand with ASI
+		sql = new StringBuffer ("UPDATE T_InventoryValue iv SET QtyOnHand = "
+				+ "COALESCE( (SELECT SUM(Qty) FROM M_StorageDetail s"
+				+ " INNER JOIN M_Locator l ON (l.M_Locator_ID=s.M_Locator_ID) "
+				+ "WHERE s.QtyType = 'H' iv.M_Product_ID=s.M_Product_ID"
+				+ " AND iv.M_Warehouse_ID=l.M_Warehouse_ID"
+				+ " AND iv.M_AttributeSetInstance_ID=s.M_AttributeSetInstance_ID),0) "
+			+ "WHERE AD_PInstance_ID=").append(getAD_PInstance_ID())
+			.append(" AND iv.M_AttributeSetInstance_ID<>0");
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		log.fine("QtHand with ASI=" + no);
+		//ZCOM916 COALESCE Ajouté
+		//  Get current QtyOnHand without ASI
+		sql = new StringBuffer ("UPDATE T_InventoryValue iv SET QtyOnHand = "
+				+ " COALESCE( (SELECT SUM(Qty) FROM M_StorageDetail s"
+				+ " INNER JOIN M_Locator l ON (l.M_Locator_ID=s.M_Locator_ID) "
+				+ "WHERE s.QtyType = 'H' AND iv.M_Product_ID=s.M_Product_ID"
+				+ " AND iv.M_Warehouse_ID=l.M_Warehouse_ID),0) "
+			+ "WHERE AD_PInstance_ID=").append(getAD_PInstance_ID())
+			.append(" AND iv.M_AttributeSetInstance_ID=0");
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		log.fine("QtHand w/o ASI=" + no);
+		
+		//  Adjust for Valuation Date
+		sql = new StringBuffer("UPDATE T_InventoryValue iv "
+			+ "SET QtyOnHand="
+				+ "(SELECT iv.QtyOnHand - NVL(SUM(t.MovementQty), 0) "
+				+ "FROM M_Transaction t"
+				+ " INNER JOIN M_Locator l ON (t.M_Locator_ID=l.M_Locator_ID) "
+				+ "WHERE t.M_Product_ID=iv.M_Product_ID"
+				+ " AND t.M_AttributeSetInstance_ID=iv.M_AttributeSetInstance_ID"
+				+ " AND t.MovementDate > iv.DateValue"
+				+ " AND l.M_Warehouse_ID=iv.M_Warehouse_ID) "
+				+ "WHERE AD_PInstance_ID=").append(getAD_PInstance_ID() //ZCOM999
+			+ " AND iv.M_AttributeSetInstance_ID<>0");
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		log.fine("Update with ASI=" + no);
+		//
+		sql = new StringBuffer("UPDATE T_InventoryValue iv "
+			+ "SET QtyOnHand="
+				+ "(SELECT iv.QtyOnHand - NVL(SUM(t.MovementQty), 0) "
+				+ "FROM M_Transaction t"
+				+ " INNER JOIN M_Locator l ON (t.M_Locator_ID=l.M_Locator_ID) "
+				+ "WHERE t.M_Product_ID=iv.M_Product_ID"
+				+ " AND t.MovementDate > iv.DateValue"
+				+ " AND l.M_Warehouse_ID=iv.M_Warehouse_ID) "
+				+ "WHERE AD_PInstance_ID=").append(getAD_PInstance_ID() //ZCOM999
+			+ " AND iv.M_AttributeSetInstance_ID=0");
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		log.fine("Update w/o ASI=" + no);
+		
+		//  Delete Records w/o OnHand Qty
+		sql = new StringBuffer("DELETE T_InventoryValue "
+			+ "WHERE (QtyOnHand=0 OR QtyOnHand IS NULL) AND AD_PInstance_ID=").append(getAD_PInstance_ID());
+		int noQty = DB.executeUpdate (sql.toString(), get_TrxName());
+		log.fine("NoQty Deleted=" + noQty);
+	
+		plugin(); //SONL63
+		
+		//  Update Prices
+		no = DB.executeUpdate ("UPDATE T_InventoryValue iv "
+			+ "SET PricePO = "
+				+ "(SELECT currencyConvert (po.PriceList,po.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, po.AD_Client_ID,po.AD_Org_ID)"
+				+ " FROM M_Product_PO po WHERE po.M_Product_ID=iv.M_Product_ID"
+				+ " AND po.IsCurrentVendor='Y' AND RowNum=1), "
+			+ "PriceList = "
+				+ "(SELECT currencyConvert(pp.PriceList,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)"
+				+ " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp"
+				+ " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID"
+				+ " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID"
+				+ " AND plv.M_PriceList_ID=pl.M_PriceList_ID), "
+			+ "PriceStd = "
+				+ "(SELECT currencyConvert(pp.PriceStd,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)"
+				+ " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp"
+				+ " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID"
+				+ " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID"
+				+ " AND plv.M_PriceList_ID=pl.M_PriceList_ID), "
+			+ "PriceLimit = "
+				+ "(SELECT currencyConvert(pp.PriceLimit,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)"
+				+ " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp"
+				+ " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID"
+				+ " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID"
+				+ " AND plv.M_PriceList_ID=pl.M_PriceList_ID)"
+				, get_TrxName());
+		String msg = "";
+		if (no == 0)
+			msg = "No Prices";
+
+		//	Convert if different Currency
+		if (as.getC_Currency_ID() != p_C_Currency_ID)
+		{
+			sql = new StringBuffer ("UPDATE T_InventoryValue iv "
+				+ "SET CostStandard= "
+					+ "(SELECT currencyConvert(iv.CostStandard,acs.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, iv.AD_Client_ID,iv.AD_Org_ID) "
+					+ "FROM C_AcctSchema acs WHERE acs.C_AcctSchema_ID=" + as.getC_AcctSchema_ID() + "),"
+				+ "	Cost= "
+					+ "(SELECT currencyConvert(iv.Cost,acs.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, iv.AD_Client_ID,iv.AD_Org_ID) "
+					+ "FROM C_AcctSchema acs WHERE acs.C_AcctSchema_ID=" + as.getC_AcctSchema_ID() + ") "
+				+ "WHERE AD_PInstance_ID=" + getAD_PInstance_ID());
+			no = DB.executeUpdate (sql.toString(), get_TrxName());
+			log.fine("Convered=" + no);
+		}
+		
+		//  Update Values
+		no = DB.executeUpdate("UPDATE T_InventoryValue SET "
+			+ "PricePOAmt = QtyOnHand * PricePO, "
+			+ "PriceListAmt = QtyOnHand * PriceList, "
+			+ "PriceStdAmt = QtyOnHand * PriceStd, "
+			+ "PriceLimitAmt = QtyOnHand * PriceLimit, "
+			+ "CostStandardAmt = QtyOnHand * CostStandard, "
+			+ "CostAmt = QtyOnHand * Cost "
+			+ "WHERE AD_PInstance_ID=" + getAD_PInstance_ID()
+			, get_TrxName());
+		log.fine("Calculation=" + no);
+
+		if (p_M_CostElement_ID > 0) {
+			no = DB.executeUpdate("UPDATE T_InventoryValue SET M_CostElement_ID = " + p_M_CostElement_ID
+				+ " WHERE AD_PInstance_ID=" + getAD_PInstance_ID()
+				, get_TrxName());
+			log.fine("Calculation=" + no);
+		}
+
+		
+		//
+		return msg;
+	}   //  doIt
+	
+	/**
+	 * SONL63
+	 */
+	protected void plugin() {
+		
+	}
+
+}   //  InventoryValue

@@ -1,0 +1,11 @@
+package com.audaxis.erp.service;
+
+import com.audaxis.erp.json.OrderDownload;
+import com.audaxis.erp.json.SetOrderDownloadResult;
+
+public interface ISetOrderDownloadService extends IBaseService {
+
+	public SetOrderDownloadResult setOrderDownload(OrderDownload ordDown);
+	
+	public OrderDownload getOrderDownloadByName(String Name, int order_id);
+}

@@ -1,0 +1,2 @@
+UPDATE AD_Column SET AD_Val_Rule_ID = (SELECT AD_Val_Rule_ID FROM AD_Val_Rule WHERE Name = 'ZSubPayment BankDoc Cheque')
+WHERE columnname IN ('SubPaymentRule_ID','ZSubPaymentRule_ID') AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName='Z_CheckDelivery');

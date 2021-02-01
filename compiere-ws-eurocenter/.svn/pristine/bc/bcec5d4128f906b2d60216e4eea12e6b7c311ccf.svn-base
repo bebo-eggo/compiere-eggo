@@ -1,0 +1,30 @@
+package com.audaxis.erp.json;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class CA_MagDetail extends Base<CA_MagDetail> {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	@JsonProperty("magvalue")
+	public String magvalue;
+	
+	@JsonProperty("magname")
+	public String magname;
+	
+	@JsonProperty("pa_amt")
+	public String pa_amt;
+	
+	@JsonProperty("pv_amt")
+	public String pv_amt;
+	
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

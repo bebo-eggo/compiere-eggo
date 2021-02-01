@@ -1,0 +1,9 @@
+package com.audaxis.erp.service;
+
+import com.audaxis.erp.json.AR_OA;
+import com.audaxis.erp.json.SetARResult;
+
+public interface ISetAR_OAService extends IBaseService {
+
+	public SetARResult setAR_OA(AR_OA oar_oa);
+}

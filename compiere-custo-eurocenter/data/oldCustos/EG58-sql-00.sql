@@ -1,0 +1,1 @@
+ALTER TABLE C_Order ADD LVendorSent CHAR(1) DEFAULT 'N'; 

@@ -1,0 +1,12 @@
+package com.audaxis.erp.json;
+
+public class SetMovementConfirmResult extends Base<SetMovementConfirmResult>{
+
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	
+}

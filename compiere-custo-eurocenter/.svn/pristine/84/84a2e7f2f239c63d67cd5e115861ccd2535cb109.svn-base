@@ -1,0 +1,1 @@
+ALTER TABLE C_Order ADD Z_UbiSoftUrl NVARCHAR2(60);

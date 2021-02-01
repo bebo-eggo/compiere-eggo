@@ -1,0 +1,21 @@
+DELETE FROM AD_Process_ACCESS where AD_PROCESS_ID = (SELECT AD_PROCESS_ID FROM AD_Process WHERE value='Mail Gestionnaire');
+insert into AD_Process_ACCESS ("AD_CLIENT_ID","AD_ORG_ID","AD_ROLE_ID","CREATED",
+"CREATEDBY","AD_PROCESS_ID","ISREADWRITE","ISACTIVE","UPDATED","UPDATEDBY") SELECT 
+rol.AD_CLIENT_ID,rol.AD_ORG_ID,rol.AD_ROLE_ID,sysdate,rol.CREATEDBY,(SELECT AD_PROCESS_ID FROM AD_Process WHERE value='Mail Gestionnaire'),'Y',rol.ISACTIVE,sysdate,rol.UPDATEDBY
+from AD_Role rol 
+where (rol.name like '%Admin%' OR rol.name like '%Gest%' OR rol.name like '%gest%' )and  rol.AD_ROLE_ID != 0 ;
+
+CREATE OR REPLACE VIEW XRV_ORDEREVENTLOG as
+Select AD_CLIENT_ID,
+AD_ORG_ID,
+AD_USER_ID,
+CREATED,
+CREATEDBY,
+CREATED as DATEACTION,
+EVENTTYPE,
+ISACTIVE,
+RECORD_ID as C_Order_ID,
+UPDATED,
+UPDATEDBY,
+DESCRIPTION from XX_ORDEREVENTLOG where AD_Table_ID = 259;
+/

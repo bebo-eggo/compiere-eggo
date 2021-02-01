@@ -1,0 +1,11 @@
+ALTER TABLE C_BPartner ADD Discount NUMBER;
+ALTER TABLE C_BPartner ADD DiscountDays NUMBER(10);
+ALTER TABLE C_BPartner ADD DiscountDays2 NUMBER(10);
+ALTER TABLE C_BPartner ADD NetDays NUMBER(10);
+ALTER TABLE C_Invoice ADD DueDate DATE;
+ALTER TABLE C_Invoice ADD DiscountDate DATE;
+ALTER TABLE C_PaySelectionLine ADD DiscountDate DATE;
+ALTER TABLE C_PaySelectionLine ADD DueDate DATE;
+update ad_column set isupdateable='Y',iscallout='Y' where columnname  like 'escompte' and ad_table_id=(select ad_table_id from ad_table where tablename like 'C_Invoice');
+ALTER TABLE C_PaySelectionCheck ADD DiscountDate DATE;
+ALTER TABLE C_PaySelectionCheck ADD DueDate DATE;

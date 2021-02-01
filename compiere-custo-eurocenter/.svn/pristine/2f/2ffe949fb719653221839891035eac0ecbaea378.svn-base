@@ -1,0 +1,1 @@
+ALTER TABLE Z_PosWfAction ADD IsTftFrom CHAR(1) DEFAULT 'N' CHECK (IsTftFrom IN ('Y','N')) NOT NULL;

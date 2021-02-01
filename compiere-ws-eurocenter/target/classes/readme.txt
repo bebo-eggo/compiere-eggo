@@ -1,0 +1,1 @@
+Le Log4j ne devraient pas être déployé dans le WAR pour pouvoir être manipule dans Tomcat

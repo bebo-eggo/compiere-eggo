@@ -1,0 +1,245 @@
+package com.audaxis.erp.service;
+
+import java.math.BigDecimal;
+
+import org.compiere.model.MInOut;
+import org.compiere.model.MMovement;
+import org.compiere.model.MMovementConfirm;
+import org.compiere.model.MMovementLineConfirm;
+import org.compiere.process.DocumentEngine;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.InOutLines;
+import com.audaxis.erp.json.MovementConfirm;
+import com.audaxis.erp.json.MovementLinesConfirm;
+import com.audaxis.erp.json.SetInOutResult;
+import com.audaxis.erp.json.SetMovementConfirmResult;
+import com.audaxis.erp.json.SetMovementResult;
+
+import Util.WSUtil;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class SetMovementConfirmService extends CompiereSessionFullService implements ISetMovementConfirmService{
+
+	private MMovementConfirm mmc = null;
+	private MMovement mm = null;
+	private MMovementLineConfirm [] mmcls = null;
+	
+	@Autowired
+	protected ISessionService sessionService;
+	
+	private int client_ID = 0;
+	@Override
+	public SetMovementConfirmResult setMovementConfirm(MovementConfirm movc) {
+		SetMovementConfirmResult ret = new SetMovementConfirmResult();
+		ret.error = SetMovementConfirmResult.E000;
+		//validate IDsession
+		//ret = validateSession(inout);
+		client_ID = getCtx().getAD_Client_ID();
+		if(client_ID == 0)
+		{
+			ret.error = SetMovementConfirmResult.E002;
+			ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E002);
+			ret.M_MovementConfirm_ID = 0;
+			log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E002), "", ret.errordesc));
+			return ret;
+		}
+		
+		if(movc.NO_MCONFIRM !=null && movc.NO_MCONFIRM.length()>0)
+		{
+			mmc = WSUtil.getMovementConfirmByDocNo(getCtx(), movc.NO_MCONFIRM, get_Trx());
+			if(mmc == null)
+			{
+				ret.error = SetMovementConfirmResult.E010;
+				ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E010)+" : "+movc.NO_MCONFIRM;
+				ret.M_MovementConfirm_ID = 0;
+				log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E010), "", ret.errordesc));
+				return ret;
+			}
+		}
+		
+		if(movc.NO_MOVEMENT !=null && movc.NO_MOVEMENT.length()>0 && mmc == null)
+		{
+			mm = WSUtil.getMovementByDocNo(getCtx(), movc.NO_MOVEMENT, get_Trx());
+			if(mm == null)
+			{
+				ret.error = SetMovementConfirmResult.E011;
+				ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E011)+" : "+movc.NO_MOVEMENT;
+				ret.M_MovementConfirm_ID = 0;
+				log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E011), "", ret.errordesc));
+				return ret;
+			}
+			
+			mmc = WSUtil.getMovementConfirmByMov_ID(getCtx(), mm.getM_Movement_ID(), get_Trx());
+			if(mmc == null)
+			{
+				ret.error = SetMovementConfirmResult.E010;
+				ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E010)+" : "+movc.NO_MCONFIRM;
+				ret.M_MovementConfirm_ID = 0;
+				log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E010), "", ret.errordesc));
+				return ret;
+			}
+			
+		}
+		
+		if(mmc == null)
+		{
+			ret.error = SetMovementConfirmResult.E010;
+			ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E010)+" : "+movc.NO_MCONFIRM;
+			ret.M_MovementConfirm_ID = 0;
+			log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E010), "", ret.errordesc));
+			return ret;
+		}
+		
+		if(movc.DOCACTION.equals("VO") && mmc!=null)
+		{
+			mmc.setDocAction("VO");
+			mmc.save();
+			if(!DocumentEngine.processIt(mmc, MInOut.DOCACTION_Void))
+			{
+				ret.error = SetMovementConfirmResult.E502;
+				ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E502);
+				ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+				ret.documentNo = mmc.getDocumentNo();			
+				log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E502), "", ret.errordesc));
+				return ret;
+			}
+			mmc.save();
+			ret.error = SetMovementConfirmResult.E503;
+			ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E503);
+			ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+			ret.documentNo = mmc.getDocumentNo();		
+			log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E503), "", ret.errordesc));
+			return ret;
+		}
+		
+		mmcls = mmc.getLines(true);
+		if(movc.CONFIRM_ALL.equals("Y"))
+		{
+			mmcls = mmc.getLines(true);
+			for (int i = 0; i < mmcls.length; i++) {
+				mmcls[i].setConfirmedQty(mmcls[i].getTargetQty());
+				mmcls[i].save();
+			}
+			
+			if(movc.DOCACTION.equals("CO"))
+			{
+				mmc.setDocAction("CO");
+				mmc.save();
+				if(!DocumentEngine.processIt(mmc, MInOut.DOCSTATUS_Completed))
+				{
+					ret.error = SetMovementConfirmResult.E506;
+					ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E506);
+					ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+					ret.documentNo = mmc.getDocumentNo();			
+					log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E506), "", ret.errordesc));
+					return ret;
+				}
+				mmc.save();
+				ret.error = SetMovementConfirmResult.E503;
+				ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E503);
+				ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+				ret.documentNo = mmc.getDocumentNo();		
+				log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E503), "", ret.errordesc));
+				return ret;
+			}				
+		}
+		
+		if(movc.movementCLines_set.size()>0 && mmc != null)
+		{
+			for( MovementLinesConfirm ioutline : movc.movementCLines_set){
+				if(ioutline.QTY.equals("0"))
+				{
+					ret.error = SetMovementConfirmResult.E104;
+					ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E104);
+					ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+					ret.documentNo = mmc.getDocumentNo();
+					log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E104), "", ret.errordesc));
+					return ret;
+				}
+			}
+			
+			for (int i = 0; i < mmcls.length; i++) {
+				boolean exist = false;
+				
+				String line = null;
+				
+				for( MovementLinesConfirm ioutline : movc.movementCLines_set){
+					if(ioutline.LINE!=null && ioutline.LINE.length()>0)
+					{
+						exist = ioutline.LINE.equals(""+mmcls[i].getLine());
+						line = ioutline.LINE;
+						if(exist)
+						{
+							mmcls[i].setConfirmedQty(new BigDecimal(ioutline.QTY));
+							mmcls[i].save();
+						}
+							break;
+					}
+					else{
+						ret.error = SetMovementConfirmResult.E508;
+						ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E508);
+						ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+						ret.documentNo = mmc.getDocumentNo();
+						log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E508), "", ret.errordesc));
+						return ret;
+					}
+				}
+				if(!exist)
+				{
+					ret.error = SetInOutResult.E101;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E101)+" : "+line;
+					ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+					ret.documentNo = mmc.getDocumentNo();
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E101), "", ret.errordesc));
+					return ret;
+				}
+			}
+			//VERIF LINENO de MovementLine
+			for( MovementLinesConfirm ioutline : movc.movementCLines_set){
+				if(ioutline.QTY.equals("0"))
+				{
+					ret.error = SetMovementConfirmResult.E104;
+					ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E104);
+					ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+					ret.documentNo = mmc.getDocumentNo();
+					log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E104), "", ret.errordesc));
+					return ret;
+				}
+			}
+			
+		}
+		if(movc.DOCACTION.equals("CO"))
+		{
+			mmc.setDocAction("CO");
+			mmc.save();
+			if(!DocumentEngine.processIt(mmc, MInOut.DOCSTATUS_Completed))
+			{
+				ret.error = SetMovementConfirmResult.E506;
+				ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E506);
+				ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+				ret.documentNo = mmc.getDocumentNo();			
+				log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E506), "", ret.errordesc));
+				return ret;
+			}
+			mmc.save();
+			ret.error = SetMovementConfirmResult.E503;
+			ret.errordesc = SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E503);
+			ret.M_MovementConfirm_ID = mmc.getM_MovementConfirm_ID();
+			ret.documentNo = mmc.getDocumentNo();		
+			log.info(String.format(SetMovementConfirmResult.getErrorMsg(SetMovementConfirmResult.E503), "", ret.errordesc));
+			return ret;
+		}
+		
+		
+		return ret;
+	}
+
+}

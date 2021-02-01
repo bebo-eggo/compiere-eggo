@@ -1,0 +1,58 @@
+package com.audaxis.erp.json;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class OrderPaySch extends Base<OrderPaySch> {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 9113045373454929244L;
+
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@JsonProperty("codeProjet")
+	public String POREF;
+	
+	@JsonProperty("magasin")
+	public String MAG;
+	
+	@JsonProperty("c_order_id")
+	public String ORDER_ID;
+	
+	@JsonProperty("orderno")
+	public String ORDERNO;
+	
+	@JsonProperty("z_orderpaymschedule_id")
+	public String ODERPAYMENTSCHEDULE_ID;
+	
+	@JsonProperty("totalamt")
+	public String TOTALAMT;
+
+	@JsonProperty("seqno")
+	public String SEQNO;
+	
+	@JsonProperty("z_typeecheance_id")
+	public String  TypeEcheance_ID;
+	
+	@JsonProperty("typeecheance")
+	public String  TYPEECHEANCE;
+	
+	@JsonProperty("duedate")
+	public String DUEDATE;
+	
+	@JsonProperty("isfinancement")
+	public String FINANCEMENT;
+	
+	@JsonProperty("ispromoteur")
+	public String PROMOTEUR;
+	
+	@JsonProperty("isajustement")
+	public String AJUSTEMENT;
+	 
+
+}

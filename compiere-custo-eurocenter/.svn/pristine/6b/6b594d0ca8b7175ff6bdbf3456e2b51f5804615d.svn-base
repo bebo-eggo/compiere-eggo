@@ -1,0 +1,3 @@
+update ad_column set defaultvalue='@SQL=SELECT AD_Window_ID AS DefaulValue FROM AD_Window WHERE Value = ''Remise_Cheque_Financement''' where columnname='TChequeFinancement_Zoom' and ad_table_id=(select ad_table_id from ad_table where tablename='C_BankStatement');
+update ad_column set defaultvalue='@SQL=SELECT AD_Window_ID AS DefaulValue FROM AD_Window WHERE Value = ''Depotenbanque''' where columnname='Depotenbanque_Zoom' and ad_table_id=(select ad_table_id from ad_table where tablename='C_BankStatement');
+UPDATE AD_Column SET DefaultValue='@SQL=SELECT AD_Window_ID AS DefaulValue FROM AD_Window WHERE Value = ''Depotenbanque''' WHERE ColumnName LIKE 'EtatCaisse_Zoom' and ad_table_id=(select ad_table_id from ad_table where tablename='C_BankStatement');

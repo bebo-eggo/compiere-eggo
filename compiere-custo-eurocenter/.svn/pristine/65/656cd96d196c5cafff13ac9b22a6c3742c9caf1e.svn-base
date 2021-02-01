@@ -1,0 +1,1 @@
+update AD_menu set ISActive = 'N' where Value = 'Synchro prix articles';

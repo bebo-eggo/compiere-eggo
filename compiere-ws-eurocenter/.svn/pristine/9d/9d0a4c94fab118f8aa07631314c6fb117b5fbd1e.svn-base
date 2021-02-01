@@ -1,0 +1,21 @@
+package com.audaxis.erp.json;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class MovementLinesConfirm extends Base<MovementLinesConfirm>{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	@JsonProperty("NO_MCONFIRM")
+	public String NO_MOVEMENT;
+
+
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

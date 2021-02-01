@@ -1,0 +1,3 @@
+Insert into AD_IMPFORMAT_ROW (AD_IMPFORMAT_ROW_ID,AD_CLIENT_ID,AD_ORG_ID,ISACTIVE,CREATED,CREATEDBY,UPDATED,UPDATEDBY,AD_IMPFORMAT_ID,SEQNO,NAME,AD_COLUMN_ID,STARTNO,ENDNO,DATATYPE,DATAFORMAT,DECIMALPOINT,DIVIDEBY100,CONSTANTVALUE,CALLOUT,SCRIPT) 
+values ( (select max (AD_IMPFORMAT_ROW_ID+1 ) from AD_IMPFORMAT_ROW),0,0,'Y',sysdate,100,sysdate,100,(select AD_IMPFORMAT_ID from AD_IMPFORMAT where name like 'Import Replenish'),50,'Utiliser colisage',(select AD_COLUMN_ID from AD_COLUMN where columnname like 'IsUseOrder_Pack'  and ad_table_id = ( select ad_table_id from ad_table where tablename like 'I_Replenish')),5,0,'S',null,'.','N',null,null,null);
+

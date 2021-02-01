@@ -1,0 +1,62 @@
+package com.audaxis.erp.json;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class OrderDownload extends Base<OrderDownload>{
+
+	
+	public OrderDownload() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6845922258799763362L;
+
+	@Override
+	public String getID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@JsonProperty("codeProjet")
+	public String POREF;
+	
+	@JsonProperty("magasin")
+	public String MAG;
+	
+	@JsonProperty("c_order_id")
+	public String ORDER_ID;
+	
+	@JsonProperty("orderno")
+	public String ORDERNO;
+	
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("downloadurl")
+	public String DOWNLOADURL;
+	
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("name")
+	public String NAME;
+	
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("fileType")
+	public String Z_FILETYPE;
+	
+	@JsonProperty("description")
+	public String DESCRIPTION;
+	
+	@JsonProperty("dateCreated")
+	public String DATECREATED;
+	
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@JsonProperty("fromExtSource")
+	public String FROMEXTSOURCE;
+	
+	@JsonProperty("c_orderdownload_id")
+	public String ORDERDOWNLOAD_ID;
+
+}

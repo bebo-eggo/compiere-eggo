@@ -1,0 +1,23 @@
+package com.audaxis.erp.service;
+
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.ObjArco;
+import com.audaxis.erp.json.SetUpdateArcoResult;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class ArcoService extends CompiereSessionFullService implements IArcoService {
+
+	@Override
+	public SetUpdateArcoResult updateArco(ObjArco objarco) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

@@ -1,0 +1,1 @@
+ALTER TABLE I_Product ADD CodeDouanier NVARCHAR2(50);

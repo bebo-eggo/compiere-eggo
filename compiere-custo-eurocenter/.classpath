@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/java"/>
+	<classpathentry kind="src" path="src/main/resources"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/compiere-custo"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/compiere-core-intervat"/>
+	<classpathentry kind="var" path="M2_REPO/org/jsoup/jsoup/1.10.2/jsoup-1.10.2.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.9.13/jackson-mapper-asl-1.9.13.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/codehaus/jackson/jackson-core-asl/1.9.13/jackson-core-asl-1.9.13.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

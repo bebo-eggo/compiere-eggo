@@ -1,0 +1,696 @@
+package com.audaxis.erp.service;
+
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import org.compiere.util.DB;
+import org.compiere.util.Trx;
+import org.compiere.model.MBPartner;
+import org.compiere.model.MDocType;
+import org.compiere.model.MInOut;
+import org.compiere.model.MInOutLine;
+import org.compiere.model.MInOutLineMA;
+import org.compiere.model.MLocator;
+import org.compiere.model.MOrder;
+import org.compiere.model.MOrderLine;
+import org.compiere.model.MOrg;
+import org.compiere.model.MWarehouse;
+import org.compiere.process.DocumentEngine;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.db.Util;
+import com.audaxis.compiere.model.MDocTypeInfo;
+import com.audaxis.compiere.model.MInOutProxy;
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.BPartner;
+import com.audaxis.erp.json.BPartnerAddress;
+import com.audaxis.erp.json.BPartnerContact;
+import com.audaxis.erp.json.CreateBPResult;
+import com.audaxis.erp.json.InOut;
+import com.audaxis.erp.json.InOutLines;
+import com.audaxis.erp.json.SetInOutResult;
+import com.ecenter.compiere.model.MInOutWS;
+
+import Util.WSUtil;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class SetInOutService extends CompiereSessionFullService implements ISetInOutService {
+
+	@Autowired
+	protected ISessionService sessionService;
+	
+	private int client_ID = 0;
+	
+	private MOrg org = null;
+	private MWarehouse mw = null;
+	private MDocType md = null;
+	private MBPartner mb;
+	private MOrder mo;
+	private MOrderLine[] mols =null;
+	private MLocator [] mls = null;
+
+	@Override
+	public SetInOutResult setInOut(InOut inout) {
+		SetInOutResult ret = new SetInOutResult();
+		ret.error = SetInOutResult.E000;
+		//validate IDsession
+		//ret = validateSession(inout);
+		client_ID = getCtx().getAD_Client_ID();
+		if(client_ID == 0)
+		{
+			ret.error = SetInOutResult.E002;
+			ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E002);
+			ret.m_InOut_ID = 0;
+			log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E002), "", ret.errordesc));
+			return ret;
+		}
+		
+		if(inout.ISSOTRX == null || inout.ISSOTRX.length() != 1 || (!inout.ISSOTRX.equals("N") && !inout.ISSOTRX.equals("Y"))){
+			ret.error = SetInOutResult.E003;
+			ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E003);
+			ret.m_InOut_ID = 0;
+			log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E003), "", ret.errordesc));
+			return ret;
+		}
+		
+		if(inout.MAG != null && inout.MAG.length()>0){
+			org = WSUtil.getOrgByValue(getCtx(),client_ID,inout.MAG);
+			if(org == null)
+			{
+				ret.error = SetInOutResult.E040;
+				ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E040);
+				ret.m_InOut_ID = 0;
+				log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E040), "", ret.errordesc));
+				return ret;
+			}
+		}
+		if(inout.ENTREPOT != null && inout.ENTREPOT.length()>0){
+			mw = WSUtil.getWarehouseByValue(getCtx(), org.getAD_Org_ID(), inout.ENTREPOT);
+			if(mw == null)
+			{
+				ret.error = SetInOutResult.E041;
+				ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E041);
+				ret.m_InOut_ID = 0;
+				log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E041), "", ret.errordesc));
+				return ret;
+			}else
+				mls = WSUtil.getWithWhereClause(getCtx(), mw.getM_Warehouse_ID(),null);
+		}
+		
+		if(inout.TYPEDOC != null && inout.TYPEDOC.length()>0){
+			md = WSUtil.getDocTypeByName(getCtx(), client_ID, inout.TYPEDOC);
+			if(md == null)
+			{
+				ret.error = SetInOutResult.E020;
+				ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E020);
+				ret.m_InOut_ID = 0;
+				log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E020), "", ret.errordesc));
+				return ret;
+			}
+		}
+		
+		if(inout.BPARTNER != null && inout.BPARTNER.length()>0){
+			mb = MBPartner.get(getCtx(), inout.BPARTNER);
+			if(mb == null)
+			{
+				ret.error = SetInOutResult.E030;
+				ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E030);
+				ret.m_InOut_ID = 0;
+				log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E030), "", ret.errordesc));
+				return ret;
+			}
+		}
+		if(inout.ORDERNO != null && inout.ORDERNO.length()>0)
+		{
+			mo =  WSUtil.getOrderByDocNo(getCtx(), inout.ORDERNO, get_Trx());
+			if(mo==null || (!mo.isSOTrx() && inout.ISSOTRX.equals("Y")) || (mo.isSOTrx() && inout.ISSOTRX.equals("N")))
+			{
+				ret.error = SetInOutResult.E004;
+				ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E004);
+				ret.m_InOut_ID = 0;
+				ret.documentNo = "";
+				log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E004), "", ret.errordesc));
+				return ret;
+			}
+		}
+		
+		//CONTROLE LIGNE 
+		
+		if(inout.inoutlines_set.size()>0 && mo != null)
+		{
+			mols = mo.getLines();
+			for (int i = 0; i < mols.length; i++) {
+				boolean exist = false;
+				
+				String line = null;
+				
+				for( InOutLines ioutline : inout.inoutlines_set){
+					if(ioutline.ORDERLINE!=null && ioutline.ORDERLINE.length()>0)
+					{
+						exist = ioutline.ORDERLINE.equals(""+mols[i].getLine());
+						line = ioutline.ORDERLINE;
+						if(exist)
+							break;
+					}
+					else{
+						ret.error = SetInOutResult.E508;
+						ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E508);
+						ret.m_InOut_ID = 0;
+						ret.documentNo = "";
+						log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E508), "", ret.errordesc));
+						return ret;
+					}
+				}
+				if(!exist)
+				{
+					ret.error = SetInOutResult.E101;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E101)+" : "+line;
+					ret.m_InOut_ID = 0;
+					ret.documentNo = "";
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E101), "", ret.errordesc));
+					return ret;
+				}
+			}
+			for( InOutLines ioutline : inout.inoutlines_set){
+					if(ioutline.QTY.equals("0"))
+					{
+						ret.error = SetInOutResult.E104;
+						ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E104);
+						ret.m_InOut_ID = 0;
+						ret.documentNo = "";
+						log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E104), "", ret.errordesc));
+						return ret;
+					}
+			}
+			for( InOutLines ioutline : inout.inoutlines_set){
+				boolean exist2 = false;
+				String line2 = null;
+					if(ioutline.EMPL!=null && ioutline.EMPL.length()>0 && mo==null)
+					{
+						
+						for (int j = 0; j < mls.length; j++) {
+							exist2 = ioutline.EMPL.equals(""+mls[j].getValue());
+							line2 = ioutline.EMPL;
+							if(exist2)
+								break;
+						}
+					}else
+						exist2 = true;
+					if(!exist2)
+					{
+						ret.error = SetInOutResult.E103;
+						ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E103+" : "+line2);
+						ret.m_InOut_ID = 0;
+						ret.documentNo = "";
+						log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E103), "", ret.errordesc));
+						return ret;
+					}
+			}
+				
+		}
+		
+		if(inout.inoutlines_set.size()>0 && mo == null)
+		{
+				boolean exist = false;
+				String line = null;
+				for( InOutLines ioutline : inout.inoutlines_set){
+					if(ioutline.QTY.equals("0"))
+					{
+						ret.error = SetInOutResult.E104;
+						ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E104);
+						ret.m_InOut_ID = 0;
+						ret.documentNo = "";
+						log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E104), "", ret.errordesc));
+						return ret;
+					}
+				}
+				for( InOutLines ioutline : inout.inoutlines_set){
+					if(ioutline.PRODUCT==null && ioutline.PRODUCT.length()==0 && ioutline.ORDERLINE==null && ioutline.ORDERLINE.length()==0 )
+					{
+						ret.error = SetInOutResult.E102;
+						ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E102);
+						ret.m_InOut_ID = 0;
+						ret.documentNo = "";
+						log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E102), "", ret.errordesc));
+						return ret;
+					}
+				}
+				for( InOutLines ioutline : inout.inoutlines_set){
+					boolean exist2 = false;
+					String line2 = null;
+						if(ioutline.EMPL!=null && ioutline.EMPL.length()>0 && mls.length>0)
+						{
+							
+							for (int j = 0; j < mls.length; j++) {
+								exist2 = ioutline.EMPL.equals(""+mls[j].getValue());
+								line2 = ioutline.EMPL;
+								if(exist2)
+									break;
+							}
+						}
+						if(!exist2 && ioutline.EMPL.length()>0)
+						{
+							ret.error = SetInOutResult.E103;
+							ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E103+" : "+line2);
+							ret.m_InOut_ID = 0;
+							ret.documentNo = "";
+							log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E103), "", ret.errordesc));
+							return ret;
+						}
+				}
+				for( InOutLines ioutline : inout.inoutlines_set){
+					if(ioutline.PRODUCT!=null && ioutline.PRODUCT.length()>0 
+							&& WSUtil.isProductExist(getCtx(), client_ID, ioutline.PRODUCT) == null)
+					{
+						ret.error = SetInOutResult.E102;
+						ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E102)+" : "+ioutline.PRODUCT;
+						ret.m_InOut_ID = 0;
+						ret.documentNo = "";
+						log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E102), "", ret.errordesc));
+						return ret;
+					}
+				}
+		}
+		//Controle InOut
+		if(inout.NO_INOUT == null || inout.NO_INOUT.length()==0)
+		{
+			if((inout.ORDERNO == null || inout.ORDERNO.length()==0 ) && inout.ISSOTRX.equals("Y"))
+			{
+				ret.error = SetInOutResult.E504;
+				ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E504);
+				ret.m_InOut_ID = 0;
+				ret.documentNo = "";
+				log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E504), "", ret.errordesc));
+				return ret;
+			}
+			if(inout.ORDERNO != null && inout.ORDERNO.length()>0 && inout.ISSOTRX.equals("Y"))
+			{
+				//Livraison
+				if(!mo.isSOTrx() && inout.ISSOTRX.equals("Y"))
+				{
+					ret.error = SetInOutResult.E004;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E004);
+					ret.m_InOut_ID = 0;
+					ret.documentNo = "";
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E004), "", ret.errordesc));
+					return ret;
+				}
+				MInOutWS mi = new MInOutWS(getCtx(), 0, get_Trx());
+				mi.setClientOrg(client_ID, mo.getAD_Org_ID());
+				mi.setOrder(mo);
+				mi.setC_DocType_ID(md.getC_DocType_ID());
+				if(inout.MAG != null)
+					mi.setAD_Org_ID(org.getAD_Org_ID());
+				if(inout.ENTREPOT != null)
+					mi.setM_Warehouse_ID(mw.getM_Warehouse_ID());
+				mi.setDocStatus(MInOut.DOCSTATUS_Drafted);
+				mi.setDocAction(MInOut.DOCACTION_Complete);
+				mi.setMovementDate(WSUtil.parsedate(inout.MOVEMENTDATE));
+				if(!mi.save())
+				{
+					ret.error = SetInOutResult.E051;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E051);
+					ret.m_InOut_ID = 0;
+					ret.documentNo = "";
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E051), "", ret.errordesc));
+					return ret;
+				}
+				for (int i = 0; i < mols.length; i++) {
+					for( InOutLines ioutline : inout.inoutlines_set){
+						if(ioutline.ORDERLINE.equals(""+mols[i].getLine()))
+						{
+							MInOutLine mil = new MInOutLine(mi);
+							if(ioutline.EMPL!=null && ioutline.EMPL.length()>0 && mls.length>0){
+								for (int j = 0; j < mls.length; j++) {
+									if(ioutline.EMPL.equals(""+mls[j].getValue()))
+									{
+										mil.setM_Locator_ID(mls[j].getM_Locator_ID());
+									}
+								}
+							}
+							mil.setOrderLine(mols[i], 0, mols[i].getQtyOrdered());
+							mil.setQty(new BigDecimal(ioutline.QTY));
+							mil.save();
+						}
+					}
+				}
+				if(inout.DOCACTION.equals("CO"))
+				{
+					mi.setDocAction("CO");
+					mi.save();
+					if(!DocumentEngine.processIt(mi, MInOut.DOCSTATUS_Completed))
+					{
+						ret.error = SetInOutResult.E506;
+						ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E506);
+						ret.m_InOut_ID = mi.getM_InOut_ID();
+						ret.documentNo = mi.getDocumentNo();			
+						log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E506), "", ret.errordesc));
+						return ret;
+					}
+					ret.error = SetInOutResult.E503;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E503);
+					ret.m_InOut_ID = mi.getM_InOut_ID();
+					ret.documentNo = mi.getDocumentNo();		
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E503), "", ret.errordesc));
+					return ret;
+				}
+				
+			}
+			if((inout.ORDERNO == null || inout.ORDERNO.length()==0) && inout.ISSOTRX.equals("N"))
+			{
+				//Réception sans OA
+				MInOutWS mi = new MInOutWS(getCtx(), 0, get_Trx());
+				mi.setClientOrg(client_ID, org.getAD_Org_ID());
+				mi.setC_DocType_ID(md.getC_DocType_ID());
+				if(inout.ENTREPOT != null)
+					mi.setM_Warehouse_ID(mw.getM_Warehouse_ID());
+				mi.setDocStatus(MInOut.DOCSTATUS_Drafted);
+				mi.setDocAction(MInOut.DOCACTION_Complete);
+				mi.setMovementDate(WSUtil.parsedate(inout.MOVEMENTDATE));
+				mi.setBPartner(mb);
+				mi.setIsSOTrx(inout.ISSOTRX.equals("Y"));
+				mi.setMovementType(inout.ISSOTRX.equals("Y")?MInOut.MOVEMENTTYPE_CustomerShipment:MInOut.MOVEMENTTYPE_VendorReceipts);
+				mi.setIsReturnTrx(false);
+				mi.setDeliveryRule(MInOut.DELIVERYRULE_Force);
+				mi.setDescription(inout.DESCRIPTION);
+				if(!mi.save())
+				{
+					ret.error = SetInOutResult.E051;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E051);
+					ret.m_InOut_ID = 0;
+					ret.documentNo = "";
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E051), "", ret.errordesc));
+					return ret;
+				}
+				for( InOutLines ioutline : inout.inoutlines_set){
+						MInOutLine mil = new MInOutLine(mi);
+						mil.setDescription(ioutline.DESCRIPTION);
+						mil.setProduct(WSUtil.isProductExist(getCtx(), client_ID, ioutline.PRODUCT));
+						if(ioutline.EMPL!=null && ioutline.EMPL.length()>0 && mls.length>0){
+							for (int j = 0; j < mls.length; j++) {
+								if(ioutline.EMPL.equals(""+mls[j].getValue()))
+								{
+									mil.setM_Locator_ID(mls[j].getM_Locator_ID());
+									mil.setQty(new BigDecimal(ioutline.QTY));
+								}else
+								{
+									mil.setM_Locator_ID(new BigDecimal(ioutline.QTY));
+									mil.setQty(new BigDecimal(ioutline.QTY));
+								}
+							}
+						}else{
+							mil.setM_Locator_ID(new BigDecimal(ioutline.QTY));
+							mil.setQty(new BigDecimal(ioutline.QTY));
+						}
+						mil.save();
+				}
+				if(inout.DOCACTION.equals("CO"))
+				{
+					mi.setDocAction("CO");
+					mi.save();
+					if(!DocumentEngine.processIt(mi, MInOut.DOCSTATUS_Completed))
+					{
+						ret.error = SetInOutResult.E506;
+						ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E506);
+						ret.m_InOut_ID = mi.getM_InOut_ID();
+						ret.documentNo = mi.getDocumentNo();			
+						log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E506), "", ret.errordesc));
+						return ret;
+					}
+					mi.save();
+					ret.error = SetInOutResult.E503;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E503);
+					ret.m_InOut_ID = mi.getM_InOut_ID();
+					ret.documentNo = mi.getDocumentNo();		
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E503), "", ret.errordesc));
+					return ret;
+				}
+
+				if(inout.DOCACTION.equals("DR")){
+					//CONTINUER LE DOCUMENT
+					//Ajout de lignes
+					ret.error = SetInOutResult.E507;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E507);
+					ret.m_InOut_ID = mi.getM_InOut_ID();
+					ret.documentNo = mi.getDocumentNo();			
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E507), "", ret.errordesc));
+					return ret;
+				}
+			}
+			if(inout.ORDERNO != null && inout.ORDERNO.length()>0 && inout.ISSOTRX.equals("N"))
+			{
+				//Reception Achat avec OA
+				if(mo.isSOTrx() && inout.ISSOTRX.equals("N"))
+				{
+					ret.error = SetInOutResult.E004;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E004);
+					ret.m_InOut_ID = 0;
+					ret.documentNo = "";
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E004), "", ret.errordesc));
+					return ret;
+				}
+				MInOutWS mi = new MInOutWS(getCtx(), 0, get_Trx());
+				mi.setClientOrg(client_ID, mo.getAD_Org_ID());
+				mi.setOrder(mo);
+				mi.setC_DocType_ID(md.getC_DocType_ID());
+				if(inout.ENTREPOT != null)
+					mi.setM_Warehouse_ID(mw.getM_Warehouse_ID());
+				mi.setDocStatus(MInOut.DOCSTATUS_Drafted);
+				mi.setDocAction(MInOut.DOCACTION_Complete);
+				mi.setMovementDate(WSUtil.parsedate(inout.MOVEMENTDATE));
+				mi.setMovementType(inout.ISSOTRX.equals("Y")?MInOut.MOVEMENTTYPE_CustomerShipment:MInOut.MOVEMENTTYPE_VendorReceipts);
+				mi.setIsReturnTrx(false);
+				mi.setDeliveryRule(MInOut.DELIVERYRULE_Force);
+				mi.setDescription(inout.DESCRIPTION);
+				if(!mi.save())
+				{
+					ret.error = SetInOutResult.E051;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E051);
+					ret.m_InOut_ID = 0;
+					ret.documentNo = "";
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E051), "", ret.errordesc));
+					return ret;
+				}
+				for (int i = 0; i < mols.length; i++) {
+					for( InOutLines ioutline : inout.inoutlines_set){
+						if(ioutline.ORDERLINE.equals(""+mols[i].getLine()))
+						{
+							MInOutLine mil = new MInOutLine(mi);
+							mil.setOrderLine(mols[i], 0, mols[i].getQtyOrdered());
+							if(ioutline.EMPL!=null && ioutline.EMPL.length()>0 && mls.length>0){
+								for (int j = 0; j < mls.length; j++) {
+									if(ioutline.EMPL.equals(""+mls[j].getValue()))
+									{
+										mil.setM_Locator_ID(mls[j].getM_Locator_ID());
+										mil.setQty(new BigDecimal(ioutline.QTY));
+									}
+								}
+							}else{
+								mil.setM_Locator_ID(new BigDecimal(ioutline.QTY));
+								mil.setQty(new BigDecimal(ioutline.QTY));
+							}
+						}
+					}
+				}
+				if(inout.DOCACTION.equals("CO"))
+				{
+					mi.setDocAction("CO");
+					mi.save();
+					if(!DocumentEngine.processIt(mi, MInOut.DOCSTATUS_Completed))
+					{
+						ret.error = SetInOutResult.E506;
+						ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E506);
+						ret.m_InOut_ID = mi.getM_InOut_ID();
+						ret.documentNo = mi.getDocumentNo();			
+						log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E506), "", ret.errordesc));
+						return ret;
+					}
+					ret.error = SetInOutResult.E503;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E503);
+					ret.m_InOut_ID = mi.getM_InOut_ID();
+					ret.documentNo = mi.getDocumentNo();		
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E503), "", ret.errordesc));
+					return ret;
+				}
+				
+				if(inout.DOCACTION.equals("DR")){
+					//CONTINUER LE DOCUMENT
+					//Ajout de lignes
+					ret.error = SetInOutResult.E507;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E507);
+					ret.m_InOut_ID = mi.getM_InOut_ID();
+					ret.documentNo = mi.getDocumentNo();			
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E507), "", ret.errordesc));
+					return ret;
+				}
+			}
+		}
+		else
+		{
+			//Modif
+			//Exists ?
+			MInOutWS mi = (MInOutWS)WSUtil.getMInOutByDocNo(getCtx(), inout.NO_INOUT, get_Trx());
+			if(mi == null)
+			{
+				ret.error = SetInOutResult.E010;
+				ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E010);
+				ret.m_InOut_ID = 0;
+				ret.documentNo = inout.NO_INOUT;
+				log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E010), "", ret.errordesc));
+				return ret;
+			}
+			if(mi.getDocStatus().equals("DR") ){
+				if(inout.inoutlines_set.size()>0)
+				{
+					//Ajouter les lignes
+					for( InOutLines ioutline : inout.inoutlines_set){
+						MInOutLine mil = new MInOutLine(mi);
+						mil.setDescription(ioutline.DESCRIPTION);
+						mil.setProduct(WSUtil.isProductExist(getCtx(), client_ID, ioutline.PRODUCT));
+						if(ioutline.EMPL!=null && ioutline.EMPL.length()>0 && mls.length>0){
+							for (int j = 0; j < mls.length; j++) {
+								if(ioutline.EMPL.equals(""+mls[j].getValue()))
+								{
+									mil.setM_Locator_ID(mls[j].getM_Locator_ID());
+									mil.setQty(new BigDecimal(ioutline.QTY));
+								}else
+								{
+									mil.setM_Locator_ID(new BigDecimal(ioutline.QTY));
+									mil.setQty(new BigDecimal(ioutline.QTY));
+								}
+							}
+						}else{
+							mil.setM_Locator_ID(new BigDecimal(ioutline.QTY));
+							mil.setQty(new BigDecimal(ioutline.QTY));
+						}
+						mil.save();
+				}
+				}
+			}
+			if(mi.getDocStatus().equals("CO") && inout.DOCACTION.equals("VO"))
+			{
+				//Annulation
+				mi.setDocAction("VO");
+				mi.save();
+				if(!DocumentEngine.processIt(mi, MInOut.DOCACTION_Void))
+				{
+					ret.error = SetInOutResult.E506;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E506);
+					ret.m_InOut_ID = mi.getM_InOut_ID();
+					ret.documentNo = mi.getDocumentNo();			
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E506), "", ret.errordesc));
+					return ret;
+				}
+				mi.save();
+				ret.error = SetInOutResult.E502;
+				ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E502);
+				ret.m_InOut_ID = mi.getM_InOut_ID();
+				ret.documentNo = inout.NO_INOUT;			
+				log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E502), "", ret.errordesc));
+				return ret;
+			}
+			if((mi.getDocStatus().equals("IP") || mi.getDocStatus().equals("IN") || mi.getDocStatus().equals("DR") ) && (inout.DOCACTION.equals("VO") || inout.DOCACTION.equals("CO")))
+			{
+				mi.setDocAction(inout.DOCACTION);
+				mi.save();
+				if(!DocumentEngine.processIt(mi, inout.DOCACTION))
+				{
+					ret.error = SetInOutResult.E501;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E501);
+					ret.m_InOut_ID = mi.getM_InOut_ID();
+					ret.documentNo = mi.getDocumentNo();			
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E501), "", ret.errordesc));
+					return ret;
+				}
+				mi.save();
+				if(inout.DOCACTION.equals("VO")){
+				ret.error = SetInOutResult.E502;
+				ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E502);
+				ret.m_InOut_ID = mi.getM_InOut_ID();
+				ret.documentNo = mi.getDocumentNo();		
+				log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E502), "", ret.errordesc));
+				}
+				if(inout.DOCACTION.equals("CO")){
+					ret.error = SetInOutResult.E503;
+					ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E503);
+					ret.m_InOut_ID = mi.getM_InOut_ID();
+					ret.documentNo = mi.getDocumentNo();		
+					log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E503), "", ret.errordesc));
+					}
+				return ret;
+			}
+			
+		}
+		
+		return ret;
+	}
+
+	private SetInOutResult validateSession(InOut inout) {
+		SetInOutResult ret = new SetInOutResult();
+		ret.error = SetInOutResult.E000;
+
+		if(inout == null || inout.key == null || inout.key.length() == 0){
+			ret.error = SetInOutResult.E001;
+			ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E001);
+			log.info(String.format(SetInOutResult.getErrorMsg(SetInOutResult.E001), "", ret.errordesc));
+			return ret;
+		}
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		Timestamp created = null;
+		try {
+			ps = DB.prepareStatement("SELECT Created, AD_Client_ID FROM AD_Session WHERE AD_SESSION_ID=?", (Trx)null);
+			ps.setString(1, inout.key);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				created = rs.getTimestamp("Created");
+				client_ID = rs.getInt("AD_Client_ID");
+			}
+		} catch (Exception e) {
+			ret.error = SetInOutResult.E001;
+			ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E001);
+			log.info(String.format("Authenticate for Key %s, %s", inout.key, ret.errordesc));
+			return ret;
+		} finally {
+			Util.closeCursor(ps, rs);
+		}
+
+		//Calculate expired date
+		Timestamp now = new Timestamp(System.currentTimeMillis());
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(now);
+		cal.add(Calendar.HOUR_OF_DAY, -12);
+		cal.add(Calendar.MINUTE, -30);
+		Timestamp expireddate = new Timestamp(cal.getTimeInMillis());
+		//
+
+		//key not found or expired
+		if (created == null || created.before(expireddate)){
+			ret.error = SetInOutResult.E001;
+			ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E001);
+			log.info(String.format("Authenticate for Key %s, %s", inout.key, ret.errordesc));
+		}else{
+			ret.error = SetInOutResult.E000;
+			ret.errordesc = SetInOutResult.getErrorMsg(SetInOutResult.E000);
+			log.info(String.format("Authenticate for Key %s, %s", inout.key, ret.errordesc));
+		}
+
+		return ret;
+
+	}
+
+	
+}

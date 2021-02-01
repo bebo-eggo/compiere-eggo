@@ -1,0 +1,2 @@
+delete  from ad_process_para where columnname='APAR' and ad_process_id=(select ad_process_id from ad_process where value='C_Allocation_Auto_EC');
+delete from ad_process_para where columnname='AllocateOldest' and ad_process_id=(select ad_process_id from ad_process where value='C_Allocation_Auto_EC');

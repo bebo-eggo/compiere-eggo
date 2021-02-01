@@ -1,0 +1,1 @@
+ALTER TABLE Z_TransactionMsg ADD ZCopyMsg CHAR(1);

@@ -1,0 +1,57 @@
+package com.audaxis.compiere.process;
+
+public class ImportCodaMessages {
+
+	public final static String BBA1 = "AUDAXIS_CODA_BBA1";
+	public final static String BBA2 = "AUDAXIS_CODA_BBA2";
+	public final static String DOM80 = "AUDAXIS_CODA_DOM80";
+	public final static String POS = "AUDAXIS_CODA_POS";
+	public final static String POS2 = "AUDAXIS_CODA_POS2";
+	public final static String IS011649 = "AUDAXIS_CODA_IS011649";
+	public final static String SEPADD = "AUDAXIS_CODA_SEPADD";
+	public final static String CURRENCY_ERROR = "AUDAXIS_CODA_CURRENCY_ERROR";
+	public final static String CURRENT_BALANCE_ERROR = "AUDAXIS_CODA_CURRBALANCE_ERROR";
+	public final static String BANK_ACCOUNT_ERROR = "AUDAXIS_CODA_BANKACCOUNT_ERROR";
+	public final static String BPARTNER_ERROR = "AUDAXIS_CODA_BPARTNER_ERROR";
+	public final static String INVOICE_ERROR = "AUDAXIS_CODA_INVOICE_ERROR";
+	public final static String LINKED_INVOICE_ERROR = "AUDAXIS_CODA_LINKEDINVOICE_ERROR";
+	public final static String PAYMENT_ERROR = "AUDAXIS_CODA_PAYMENT_ERROR";
+	public final static String SEQUENCE_ERROR = "AUDAXIS_CODA_SEQUENCE_ERROR";
+	public static final String REFERENCE_ERROR = "AUDAXIS_CODA_REFERENCE_ERROR";
+	public final static String TRXAMT_ERROR = "AUDAXIS_CODA_TRXAMT_ERROR";
+	public final static String NO_RECORD_ERROR = "AUDAXIS_CODA_NORECORD_ERROR";
+	public final static String NONCONFORMING_ERROR = "AUDAXIS_CODA_CONFORM_ERROR";
+	public final static String DOCTYPE_ERROR = "AUDAXIS_CODA_DOCTYPE_ERROR";
+	public final static String AMBIGUOUS_ERROR = "AUDAXIS_CODA_AMBIGUOUS_ERROR";
+	public final static String ASSIGNATION_ERROR = "AUDAXIS_CODA_ASSIGNATION_ERROR";
+	public final static String NO_PARTNER_DOC_ERROR = "AUDAXIS_CODA_BPDOCUMENT_ERROR";
+	public final static String PARTNER_BILL_ERROR = "AUDAXIS_CODA_BPINVOICE_ERROR";
+	public final static String PARTNER_PAYMENT_ERROR = "AUDAXIS_CODA_BPPAYMENT_ERROR";
+	public final static String PARTNER_BILL_ERROR2 = "AUDAXIS_CODA_BPINVOICE_ERROR2";
+	public final static String PARTNER_PAYMENT_ERROR2 = "AUDAXIS_CODA_BPPAYMENT_ERROR2";
+	public final static String INVOICE_PAYMENT_ERROR = "AUDAXIS_CODA_INVPAYMENT_ERROR";
+	public final static String PARTNER_VANDC_ERROR = "AUDAXIS_CODA_PARTNERVANDC_ERROR";
+	public final static String PARTNER_CURRENCY_ERROR = "AUDAXIS_CODA_PARTNERCURRENCY_ERROR";
+	public static final String DOCTYPE_ERROR2 = "AUDAXIS_CODA_DOCTYPE_ERROR2";
+
+	public final static String ASSIGNATION_TYPE_ERROR = "AUDAXIS_CODA_ASSIGNATIONTYPE_ERROR";
+	public final static String DOUBL_VERIFICATION_ERROR = "AUDAXIS_CODA_DOUBLVERIFICATION_ERROR";
+	public final static String GLOBAL_ASSIGNATION_ERROR = "AUDAXIS_CODA_GLOBALASSIGNATION_ERROR";
+	public final static String GLOBAL_VERIFICATION_ERROR = "AUDAXIS_CODA_GLOBALVERIFICATION_ERROR";
+	public final static String NOT_ASSIGNED_ERROR = "AUDAXIS_CODA_NOTASSIGNED_ERROR";
+	public final static String FINAL_VERIFICATION_ERROR = "AUDAXIS_CODA_FINALVERIFICATION_ERROR";
+	public final static String TOTAL_COHERENT = "AUDAXIS_CODA_TOTAL_COHERENT";
+
+	public static final String CONSISTENT_INVOICE_ERROR = "AUDAXIS_CODA_CONSISTENT_INVOICE_ERROR";
+	public static final String CONSISTENT_PAYMENT_ERROR = "AUDAXIS_CODA_CONSISTENT_PAYMENT_ERROR";
+	public static final String DUPLICATE_DOCUMENT_ERROR = "AUDAXIS_CODA_DUPLICATE_DOCUMENT_ERROR";
+	public static final String DUPLICATE_GENERATEBANKSTATMENTS_ERROR = "AUDAXIS_CODA_GENERATEBANKSTATMENTS_ERROR";
+	public static final String INVOICE_PAYSELECTION_ERROR = "AUDAXIS_CODA_INVOICE_PAYSELECTION_ERROR";//42840
+
+	public final static String PROCESSOK = "ProcessOK";
+	public final static String PROCESSFAILED = "ProcessFailed";
+	
+	//90353
+	public static final String BPARTNER_INACTIVE = "BPARTNER_INACTIVE";
+
+}

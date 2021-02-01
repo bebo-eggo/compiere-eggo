@@ -1,0 +1,1 @@
+ALTER TABLE AD_Process ADD XlsExportFormat NVARCHAR2(2000);

@@ -1,0 +1,225 @@
+package com.audaxis.erp.service;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.compiere.model.MBPartner;
+import org.compiere.model.MDocType;
+import org.compiere.model.MInOut;
+import org.compiere.model.MLocator;
+import org.compiere.model.MOrder;
+import org.compiere.model.MOrderLine;
+import org.compiere.model.MOrg;
+import org.compiere.model.MProduct;
+import org.compiere.model.MUser;
+import org.compiere.model.MWarehouse;
+import org.compiere.process.DocumentEngine;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.Order;
+import com.audaxis.erp.json.OrderLines;
+import com.audaxis.erp.json.SetOrderResult;
+
+import Util.ProductTypeOA;
+import Util.WSUtil;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class SetOrderService  extends CompiereSessionFullService implements ISetOrderService {
+
+	@Autowired
+	protected ISessionService sessionService;
+	
+	private CopyOnWriteArrayList<ProductTypeOA> productINList;
+	private int client_ID = 0;
+	
+	private MOrg org = null;
+	private MWarehouse mw = null;
+	private MDocType md = null;
+	private MBPartner mb;
+	private MOrder mo;
+	private MOrderLine[] mols =null;
+	private MLocator [] mls = null;
+	private MUser sales = null;
+	
+	
+	@Override
+	public SetOrderResult setOrder(Order order) {
+		SetOrderResult ret = new SetOrderResult();
+		ret.error = SetOrderResult.E000;
+		productINList = new CopyOnWriteArrayList<ProductTypeOA>();
+		client_ID = getCtx().getAD_Client_ID();
+		try{
+			if(client_ID == 0)
+			{
+				ret.error = SetOrderResult.E002;
+				ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E002);
+				ret.orders = "";
+				log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E002), "", ret.errordesc));
+				return ret;
+			}
+			
+			if(!order.DOCACTION.equals("CO") && !order.DOCACTION.equals("DR") && !order.DOCACTION.equals("VO"))
+			{
+				ret.error = SetOrderResult.E050;
+				ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E050);
+				ret.orders = "";
+				log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E050), "", ret.errordesc));
+				return ret;
+			}
+			if(order.MAG != null && order.MAG.length()>0){
+				org = WSUtil.getOrgByValue(getCtx(),client_ID,order.MAG);
+				if(org == null)
+				{
+					ret.error = SetOrderResult.E040;
+					ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E040);
+					ret.orders = "";
+					log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E040), "", ret.errordesc));
+					return ret;
+				}
+			}
+			if(order.ENTREPOT != null && order.ENTREPOT.length()>0){
+				mw = WSUtil.getWarehouseByValue(getCtx(), org.getAD_Org_ID(), order.ENTREPOT);
+				if(mw == null)
+				{
+					ret.error = SetOrderResult.E041;
+					ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E041);
+					ret.orders = "";
+					log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E041), "", ret.errordesc));
+					return ret;
+				}else
+					mls = WSUtil.getWithWhereClause(getCtx(), mw.getM_Warehouse_ID(),null);
+			}
+			
+			if(order.TYPEDOC != null && order.TYPEDOC.length()>0){
+				md = WSUtil.getDocTypeByName(getCtx(), client_ID, order.TYPEDOC);
+				if(md == null)
+				{
+					ret.error = SetOrderResult.E020;
+					ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E020);
+					ret.orders = "";
+					log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E020), "", ret.errordesc));
+					return ret;
+				}
+				
+			}
+			
+			if(order.BPARTNER != null && order.BPARTNER.length()>0){
+				mb = MBPartner.get(getCtx(), order.BPARTNER);
+				if(mb == null)
+				{
+					ret.error = SetOrderResult.E030;
+					ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E030);
+					ret.orders = "";
+					log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E030), "", ret.errordesc));
+					return ret;
+				}
+			}
+			
+			if(order.SALESREP != null && order.SALESREP.length()>0){
+				sales = WSUtil.getUserByName(getCtx(), client_ID, order.SALESREP);
+				if(sales == null)
+				{
+					ret.error = SetOrderResult.E031;
+					ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E031);
+					ret.orders = "";
+					log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E031), "", ret.errordesc));
+					return ret;
+				}
+			}
+			for( OrderLines orderline : order.orderlines_set){
+				if(orderline.PRODUCT!=null && orderline.PRODUCT.length()>0)
+				{
+					MProduct mp = WSUtil.isProductExist(getCtx(), client_ID, orderline.PRODUCT);
+					if(mp == null){
+						ret.error = SetOrderResult.E102;
+						ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E102)+" : "+orderline.PRODUCT;
+						ret.orders = "";
+						log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E102), "", ret.errordesc));
+						return ret;
+					}else{
+						productINList.add(ProductTypeOA.getProductTypeOA(getCtx(), mp,orderline, get_Trx()));
+					}
+				}
+			}
+			HashMap<Integer, MOrder> mapOrder = new HashMap<>();
+			if(productINList.size()>0)
+			{
+				MOrder mo = null;
+				for (int i = 0; i < productINList.size(); i++) {
+					ProductTypeOA pt = productINList.get(i);
+					if(!mapOrder.containsKey(pt.getZ_TypeOA_ID()))
+					{
+						//NewOrder
+						mo = WSUtil.createPOForVendor(getCtx(), client_ID, org.getAD_Org_ID(), mw.getM_Warehouse_ID(), md.getC_DocType_ID(), mb.getC_BPartner_ID(),
+								sales.getAD_User_ID(), pt.getZ_TypeOA_ID(), order.POREF, order.DESCRIPTION, get_Trx());
+						mo.setDocAction(order.DOCACTION);
+						
+						mapOrder.put(pt.getZ_TypeOA_ID(), mo);
+					}
+					//NewLine
+					
+					MOrderLine poLine = new MOrderLine (mo);
+					
+					poLine.setM_Warehouse_ID(mw.getM_Warehouse_ID());
+					poLine.set_Value("IsCocontractant", mb.get_Value("IsCocontractant"));
+				
+					poLine.setM_Product_ID(pt.getProduct().getM_Product_ID());
+					poLine.setM_AttributeSetInstance_ID(0);
+					poLine.setC_UOM_ID(pt.getProduct().getC_UOM_ID());
+					poLine.setQtyEntered(new BigDecimal(pt.getOl().QTY));
+					poLine.setQtyOrdered(new BigDecimal(pt.getOl().QTY));
+					poLine.setDescription(pt.getOl().DESCRIPTION);
+					poLine.setDatePromised(mo.getDatePromised());
+				
+					poLine.setPrice();
+			
+					poLine.setTax();
+					poLine.save();
+					poLine.updateHeaderTax();
+				
+				}
+				
+				if(order.DOCACTION.equals("CO") && mo != null)
+				{
+					mo.save();
+					for(Entry<Integer, MOrder> entry : mapOrder.entrySet()) {
+						entry.getValue().setDocAction("CO");
+						entry.getValue().save();
+						if(!DocumentEngine.processIt(entry.getValue(), MInOut.DOCSTATUS_Completed))
+						{
+							log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E506), "", ret.errordesc));
+						}
+						entry.getValue().save();
+						ret.error = SetOrderResult.E503;
+						ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E503);
+						ret.orders = entry.getValue().getDocumentNo();	
+						
+					}
+				}
+				return ret;
+				
+			}
+			//
+		}catch(Exception ex)
+		{
+			ret.error = SetOrderResult.E999;
+			ret.errordesc = SetOrderResult.getErrorMsg(SetOrderResult.E999)+" : "+ex.toString();
+			ret.orders = "";		
+			log.info(String.format(SetOrderResult.getErrorMsg(SetOrderResult.E999), "", ret.errordesc));
+			ex.printStackTrace();
+			return ret;
+		}
+		return ret;
+	}
+
+	
+}

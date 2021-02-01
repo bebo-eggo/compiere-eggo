@@ -1,0 +1,1 @@
+update ad_field set issameline ='Y' where name like 'NEC24' and ad_tab_id = ( select ad_tab_id from ad_tab where value like 'Types de document Info' ) ;

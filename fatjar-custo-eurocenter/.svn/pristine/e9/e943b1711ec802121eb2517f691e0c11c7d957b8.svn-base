@@ -1,0 +1,168 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>audaxis</groupId>
+    <artifactId>fatjar-custo-eurocenter</artifactId>
+    <packaging>jar</packaging>
+    <version>1.7.WS-SNAPSHOT</version>
+    <name>fatjar-custo-eurocenter -FATJAR to be used in WebService</name>
+    <description />
+    <url>http://www.audaxis.com</url>
+    <inceptionYear>2015</inceptionYear>
+    
+    <repositories>
+    	<repository>
+        	<snapshots>
+        		<enabled>true</enabled>
+        	</snapshots>
+           	<id>audaxis-snapshot</id>
+           	<name>Audaxis Internal Repository</name>
+           	<url>http://support.audaxis.com/m2-snapshots/</url>
+        </repository>
+		<repository>
+           	<id>audaxis</id>
+           	<name>Audaxis Internal Repository</name>
+           	<url>http://support.audaxis.com/maven2/</url>
+        </repository>
+		<repository>
+			<id>google-api-services</id>
+			<name>Google API</name>
+			<url>http://mavenrepo.google-api-java-client.googlecode.com/hg</url>
+		</repository>
+    </repositories>
+    <dependencies>
+    	<dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>compiere-custo-eurocenter</artifactId>
+            <version>361.51.0-SNAPSHOT</version>
+        </dependency>
+    	<dependency>
+            <groupId>audaxis</groupId>
+            <artifactId>compiere-jasper-eurocenter</artifactId>
+            <version>361.51.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+    
+    <scm>
+        <connection>scm:svn:http://svn.audaxis.com/svn/repos/fatjar-custo-eurocenter/branches/ws/fatjar-custo-eurocenter</connection>
+        <developerConnection>scm:svn:http://svn.audaxis.com/svn/repos/fatjar-custo-eurocenter/branches/ws/fatjar-custo-eurocenter</developerConnection>
+        <url>http://svn.audaxis.com/svn/repos/fatjar-custo-eurocenter/branches/ws/fatjar-custo-eurocenter</url>
+    </scm>
+	<distributionManagement>
+        <site>
+            <id>audaxis</id>
+            <url>scp://mail.audaxis.lu/home/forge/fatjar-custo-eurocenter</url>
+        </site>
+        <!--  
+        
+        THIS IS NOT STANDARD !
+        WE COMMIT TO THE RELEASE REPO FOR CUSTOS
+        SO THAT AT COMPIERE PLUGIN INSTALLER WE ONLY REFERENCE RELEASE REPO
+         -->
+		<repository>
+          <id>audaxis.repo</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/maven2</url>
+        </repository>
+        <snapshotRepository>
+          <id>audaxis.repo.snapshots</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/m2-snapshots</url>
+        </snapshotRepository>
+        <!--
+        <snapshotRepository>
+          <id>audaxis.repo.snapshots</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/m2-snapshots</url>
+        </snapshotRepository>
+         -->
+    </distributionManagement>
+    <build>
+		<extensions>
+    		<extension>
+       			<groupId>org.apache.maven.wagon</groupId>
+       			<artifactId>wagon-ssh</artifactId>
+       			<version>2.2</version>
+     		</extension>
+   		</extensions>
+
+        <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+                <debug>true</debug>
+                <encoding>ISO8859_1</encoding>
+              </configuration>
+            </plugin>
+            
+            <plugin>
+        		<groupId>org.apache.maven.plugins</groupId>
+        		<artifactId>maven-shade-plugin</artifactId>
+        		<version>2.0</version>
+        		<executions>
+          			<execution>
+            			<phase>package</phase>
+            			<goals>
+              				<goal>shade</goal>
+            			</goals>
+            			<configuration>
+	              			<artifactSet>
+	                			<includes>
+	                  				<include>audaxis:compiere-all-aj</include>
+	                  				<include>audaxis:compiere-all-license</include>
+	                  				<include>audaxis:compiere-core</include>
+	                  				<include>audaxis:compiere-core-util</include>
+	                  				<include>audaxis:compiere-custo</include>
+	                  				<include>audaxis:compiere-core-jasperreports</include>
+	                  				<include>audaxis:compiere-custo-eurocenter</include>
+	                  				<include>log4j:log4j</include>
+	                  				<include>org.aspectj:aspectjrt</include>
+	                  				<include>google:google-collect</include>
+	                  				<include>compiere:jpdf</include>
+                  				    <include>oracle:oracle</include>
+                  				    <include>commons-cli:commons-cli</include>
+                  				    <include>commons-beanutils:commons-beanutils</include>
+                  				    <include>commons-httpclient:commons-httpclient</include>
+                  				    <include>commons-digester:commons-digester</include>
+                  				    <include>net.sf.jasperreports:jasperreports</include>
+                  				    <include>javax.mail:mail</include>
+                  				    <include>jboss:jbossall-client</include>                  				              	                				 
+	                			</includes>
+                            </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>**/*.java</exclude>
+                                        <exclude>**/*.sample</exclude>
+                                        <exclude>**/*.sql</exclude>
+                                        <exclude>**/*.jrxml</exclude>
+                                        <exclude>**/*.jasper</exclude>
+                                        <exclude>**/*.html</exclude>
+                                        <exclude>META-INF/**</exclude>
+                                        <exclude>Compiere2/**</exclude>
+                                        <exclude>utils/**</exclude>
+                                        <exclude>data/**</exclude>
+                                        <exclude>example/**</exclude>
+                                        <exclude>adreference/**</exclude>
+                                        <exclude>pl/**</exclude>
+                                        <exclude>compiere/**</exclude>
+                                        <exclude>images/**</exclude>
+                                        <exclude>nanoxml/**</exclude>                                   
+                                        <exclude>cmaps/**</exclude>
+                                        <exclude>fonts/**</exclude>
+                                    </excludes>
+			                    </filter>
+                            </filters>
+	            		</configuration>
+          			</execution>
+        		</executions>
+      		</plugin>
+      		
+        </plugins>
+    </build>
+
+</project>

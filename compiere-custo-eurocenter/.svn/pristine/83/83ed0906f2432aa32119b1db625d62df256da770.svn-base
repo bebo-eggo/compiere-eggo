@@ -1,0 +1,11 @@
+ALTER TABLE C_OrderLine ADD IsCocontractant CHAR(1) DEFAULT 'N' CHECK (IsCocontractant IN ('Y','N')) NOT NULL;
+ALTER TABLE C_InvoiceLine ADD IsCocontractant CHAR(1) DEFAULT 'N' CHECK (IsCocontractant IN ('Y','N')) NOT NULL;
+ALTER TABLE C_Tax ADD IsCocontractant CHAR(1) DEFAULT 'N' CHECK (IsCocontractant IN ('Y','N')) NOT NULL;
+update AD_Column set AD_Val_Rule_ID = (select AD_Val_Rule_ID From AD_Val_Rule WHERE NAME = 'C_Tax(SO/PO Type) - Cocontractant | IsTaxTransf') where ColumnName = 'C_Tax_ID' AND AD_Table_ID = (select AD_Table_ID From AD_Table WHERE TableName='C_OrderLine');
+update AD_Column set AD_Val_Rule_ID = (select AD_Val_Rule_ID From AD_Val_Rule WHERE NAME = 'C_Tax(SO/PO Type) - Cocontractant | IsTaxTransf') where ColumnName = 'C_Tax_ID' AND AD_Table_ID = (select AD_Table_ID From AD_Table WHERE TableName='C_InvoiceLine');
+update ad_column set iscallout = 'Y'  where columnname='C_Tax_ID' and ad_table_id=(select ad_table_id from ad_table where tablename='C_OrderLine');
+ALTER TABLE AD_Org ADD IsTaxTransf CHAR(1) DEFAULT 'N' CHECK (IsTaxTransf IN ('Y','N'));
+ALTER TABLE C_Tax ADD IsTaxTransf CHAR(1) DEFAULT 'N' CHECK (IsTaxTransf IN ('Y','N')) NOT NULL;
+update C_OrderLine set IsCocontractant = 'N';
+update C_InvoiceLine set IsCocontractant = 'N';
+update C_Tax set IsCocontractant = 'N';

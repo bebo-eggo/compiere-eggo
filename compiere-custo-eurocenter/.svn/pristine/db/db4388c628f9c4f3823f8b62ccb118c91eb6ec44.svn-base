@@ -1,0 +1,1 @@
+ALTER TABLE ZSubPaymentRule ADD ZPaymentRule CHAR(1)

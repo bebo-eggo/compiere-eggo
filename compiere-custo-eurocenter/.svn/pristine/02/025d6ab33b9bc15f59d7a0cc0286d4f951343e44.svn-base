@@ -1,0 +1,839 @@
+package com.audaxis.compiere.eurocenter.ws;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.GregorianCalendar;
+import java.util.List;
+
+import javax.ws.rs.client.*;
+
+import org.apache.commons.io.FileUtils;
+import org.compiere.db.QueryUtil;
+import org.compiere.model.MBPartner;
+import org.compiere.model.MBPartnerLocation;
+import org.compiere.model.MCountry;
+import org.compiere.model.MInvoice;
+import org.compiere.model.MLocation;
+import org.compiere.model.MMovement;
+import org.compiere.model.MMovementConfirm;
+import org.compiere.model.MOrder;
+import org.compiere.model.MOrderLine;
+import org.compiere.model.MOrg;
+import org.compiere.model.MOrgInfo;
+import org.compiere.model.MPoAcknoledgment;
+import org.compiere.model.MProcess;
+import org.compiere.model.MProduct;
+import org.compiere.model.MUser;
+import org.compiere.process.ProcessInfo;
+import org.compiere.process.ProcessInfoParameter;
+import org.compiere.util.CLogger;
+import org.compiere.util.Ctx;
+import org.compiere.util.DB;
+import org.compiere.util.Env;
+import org.compiere.util.Language;
+import org.compiere.util.Msg;
+import org.compiere.util.Trx;
+
+import com.audaxis.compiere.eurocenter.util.OSInfo;
+import com.audaxis.compiere.model.MDocTypeInfo;
+import com.audaxis.compiere.model.MOrderDownload;
+import com.audaxis.compiere.model.MPInstanceProxy;
+import com.audaxis.compiere.process.ProcessStarter;
+import com.audaxis.compiere.util.CompiereException;
+
+import ru.compiere.report.RusReportStarter;
+
+
+public class WSUtil {
+
+	static CLogger log = CLogger.getCLogger(WSUtil.class);
+	static final String USER_NAME = "ERPDocumentService";
+    static final String PASSWORD = "ERPD0c";
+	
+	public static void updateOrderRecouv(Ctx ctx, MOrder mo, boolean isnew, Trx trx)
+	{
+		X_XX_OrderEventLog ol = new X_XX_OrderEventLog(ctx, 0, trx);
+		ol.setEventType("30");
+		ol.setRecord_ID(mo.getC_Order_ID());
+		ol.setAD_Table_ID(MOrder.Table_ID);
+		ol.setAD_Org_ID(mo.getAD_Org_ID());
+		ol.setAD_User_ID(ctx.getAD_User_ID());
+		ol.setDateAction(new Timestamp(System.currentTimeMillis()));
+		ol.setRecouv_List(mo.get_ValueAsString("XX_Recouv_List"));
+		ol.setRecouv_Date(mo.get_ValueAsTimestamp("XX_Recouv_Date"));
+		ol.setDescription("Update Recouvrement");
+		ol.save();
+	}
+	
+	public static void updateOrder(Ctx ctx, MOrder mo, boolean isnew, Trx trx)
+	{
+		//Notif Insert/update Order
+		String REST_URI = null;
+		if(mo.getAD_Client_ID() == 1000024)
+			REST_URI = Msg.getMsg("en_US",  "EGGOLUX_WS_SERVEUR");
+		else
+			REST_URI = Msg.getMsg("en_US",  "EGGO_WS_SERVEUR");
+		int WSID = DB.getSQLValue(trx, "Select XX_WSEggo_ID from XX_WSEggo where AD_Client_ID = ? and XX_WSName = ?  ",mo.getAD_Client_ID(), "updateOrder");
+		X_WSEggo ws = new X_WSEggo(ctx, WSID, trx);
+		
+		if(AddLine(ctx,ws, mo.getC_Order_ID(), trx ))
+			return;
+		if(isnew && istInsertEventByID(ctx,WSID, mo.getC_Order_ID(),trx ))
+			return;
+		
+		MWSEventLog wse = new MWSEventLog(ctx, 0, trx);
+		
+		wse.setCounter(0);
+		wse.setRunsMax(ws.getRunsMax());
+		wse.setRecord_ID(mo.getC_Order_ID());	
+		String inst = isnew?"INSERT":"UPDATE";
+		String AccesMajWS = Msg.getMsg(ctx, "WS_MAJ_ORDER");
+		
+		X_XX_OrderEventLog ol = new X_XX_OrderEventLog(ctx, 0, trx);
+		ol.setEventType("10");
+		ol.setRecord_ID(mo.getC_Order_ID());
+		ol.setAD_Table_ID(MOrder.Table_ID);
+		ol.setAD_Org_ID(mo.getAD_Org_ID());
+		ol.setAD_User_ID(ctx.getAD_User_ID());
+		ol.setDateAction(new Timestamp(System.currentTimeMillis()));
+		
+		if(AccesMajWS.equals("1")){
+			wse.setXX_WSEggo_ID(WSID);
+			wse.setURLWS(REST_URI+ws.getURLWS());
+			String iss = mo.isSOTrx()?"Y":"N" ;
+			
+			String WSBody = "{\"c_order_id\":\""+mo.getC_Order_ID()+"\","
+					+ "\"documentno\":\""+mo.getDocumentNo()+"\","
+					+ "\"poreference\":\""+mo.getPOReference()+"\","
+					+ "\"issotrx\":\""+iss+"\","
+					+ "\"action\":\""+inst+"\"}";
+			wse.setWSBody(WSBody);
+			ol.setDescription(inst+" order : "+mo.getDocumentNo());
+			
+		}
+		else{
+			wse.setProcessed(true);
+			wse.setCounter(ws.getRunsMax());
+			wse.setURLWS("WS WebHook MAj order No active");
+			ol.setDescription("WS WebHook MAj order No active");
+			
+		}
+		wse.set_ValueNoCheck("EventType", inst);
+		wse.save();
+		ol.setXX_WSEventLog_ID(new BigDecimal(wse.getID()));
+		ol.save();
+	}
+	
+	public static void completeTrftConfirm(Ctx ctx, MMovementConfirm moc, Trx trx)
+	{
+		//Notif Insert/update Order
+		String REST_URI = null;
+		if(moc.getAD_Client_ID() == 1000024)
+			REST_URI = Msg.getMsg("en_US",  "EGGOLUX_WS_SERVEUR");
+		else
+			REST_URI = Msg.getMsg("en_US",  "EGGO_WS_SERVEUR");
+		int WSID = DB.getSQLValue(trx, "Select XX_WSEggo_ID from XX_WSEggo where AD_Client_ID = ? and XX_WSName = ?  ",moc.getAD_Client_ID(), "completeTrftConfirm");
+		X_WSEggo ws = new X_WSEggo(ctx, WSID, trx);
+		
+		if(istInsertEventByID(ctx,WSID, moc.getM_MovementConfirm_ID(),trx ))
+			return;
+		
+		MWSEventLog wse = new MWSEventLog(ctx, 0, trx);
+		
+		wse.setCounter(0);
+		wse.setRunsMax(ws.getRunsMax());
+		wse.setRecord_ID(moc.getM_MovementConfirm_ID());	
+		String inst = "INSERT";
+		String AccesMajWS = Msg.getMsg(ctx, "WS_MAJ_TrftConfirm");
+		
+		if(AccesMajWS.equals("1")){
+			wse.setXX_WSEggo_ID(WSID);
+			wse.setURLWS(REST_URI+ws.getURLWS());
+			MMovement mm = new MMovement(ctx, moc.getM_Movement_ID(), trx); 
+			String WSBody = "{\"m_movementconfirm_id\":\""+moc.getM_MovementConfirm_ID()+"\","
+					+ "\"m_movement_id\":\""+moc.getM_Movement_ID()+"\","
+					+ "\"confirmation\":\""+moc.getDocumentNo()+"\","
+					+ "\"transfert\":\""+mm.getDocumentNo()+"\"}";
+			wse.setWSBody(WSBody);
+			
+		}
+		else{
+			wse.setProcessed(true);
+			wse.setCounter(ws.getRunsMax());
+			wse.setURLWS("WS WebHook Complete Conf Trft No active");
+			
+			
+		}
+		wse.set_ValueNoCheck("EventType", inst);
+		wse.save();
+		
+	}
+	
+	public static void majStepStatus(Ctx ctx, MOrder mo, String OldStep, String p_NewOrderStatus, Trx trx)
+	{
+		String REST_URI = null;
+		if(mo.getAD_Client_ID() == 1000024)
+			REST_URI = Msg.getMsg("en_US",  "EGGOLUX_WS_SERVEUR");
+		else
+			REST_URI = Msg.getMsg("en_US",  "EGGO_WS_SERVEUR");
+		int WSID = DB.getSQLValue(trx, "Select XX_WSEggo_ID from XX_WSEggo where AD_Client_ID = ? and XX_WSName = ?  ",mo.getAD_Client_ID(), "changeFluxProjet");
+		X_WSEggo ws = new X_WSEggo(ctx, WSID, trx);
+		MWSEventLog wse = new MWSEventLog(ctx, 0, trx);
+		
+		wse.setCounter(0);
+		wse.setRunsMax(ws.getRunsMax());
+				
+		String AccesMajWS = Msg.getMsg(ctx, "WS_FLUX_MAJ");
+		
+		String WS_Order_Status = DB.getSQLValueString(trx, " select Z_StepStatusWS from Z_PARAMFLUX where Z_ORDERSTEPSTATUS=? and ISACTIVE='Y' and rownum=1", p_NewOrderStatus);
+		String WS_Old_Status = DB.getSQLValueString(trx, " select Z_StepStatusWS from Z_PARAMFLUX where Z_ORDERSTEPSTATUS=? and ISACTIVE='Y' and rownum=1", OldStep);
+		String vide = "";
+		
+		X_XX_OrderEventLog ol = new X_XX_OrderEventLog(ctx, 0, trx);
+		ol.setEventType("15");
+		ol.setRecord_ID(mo.getC_Order_ID());
+		ol.setAD_Table_ID(MOrder.Table_ID);
+		ol.setAD_Org_ID(mo.getAD_Org_ID());
+		ol.setAD_User_ID(ctx.getAD_User_ID());
+		ol.setDateAction(new Timestamp(System.currentTimeMillis()));
+		
+		if(AccesMajWS.equals("1")){
+			wse.setXX_WSEggo_ID(WSID);
+			wse.setURLWS(REST_URI+ws.getURLWS());
+			
+			String WSBody = "{\"c_order_id\":\""+mo.getC_Order_ID()+"\","
+					+ "\"documentno\":\""+mo.getDocumentNo()+"\","
+					+ "\"poreference\":\""+mo.getPOReference()+"\","
+					+ "\"oldflux\":\""+(WS_Old_Status==null?vide:WS_Old_Status)+"\","
+					+ "\"newflux\":\""+(WS_Order_Status==null?vide:WS_Order_Status)+"\"}";
+			wse.setWSBody(WSBody);
+			wse.setRecord_ID(mo.get_ID());
+			ol.setDescription("oldflux :"+(WS_Old_Status==null?vide:WS_Old_Status)+", newflux  : "+(WS_Order_Status==null?vide:WS_Order_Status));
+		}
+		else{
+			wse.setProcessed(true);
+			wse.setCounter(ws.getRunsMax());
+			wse.setURLWS("Anomalie dans le parametrage");
+			ol.setDescription("Anomalie dans le parametrage");
+		}
+		wse.save();
+		ol.setXX_WSEventLog_ID(new BigDecimal(wse.getID()));
+		ol.save();
+	}
+
+	public static void updateProduct(Ctx ctx, MProduct mo, boolean isnew, Trx trx)
+	{
+		//Notif Insert/update Order
+		//Test MAJ 5 sec
+		
+		String REST_URI = null;
+		if(mo.getAD_Client_ID() == 1000024)
+			REST_URI = Msg.getMsg("en_US",  "EGGOLUX_WS_SERVEUR");
+		else
+			REST_URI = Msg.getMsg("en_US",  "EGGO_WS_SERVEUR");
+		int WSID = DB.getSQLValue(trx, "Select XX_WSEggo_ID from XX_WSEggo where AD_Client_ID = ? and XX_WSName = ?  ",mo.getAD_Client_ID(), "updateProduct");
+		X_WSEggo ws = new X_WSEggo(ctx, WSID, trx);
+		
+		if(AddLine(ctx,ws, mo.getM_Product_ID(), trx ))
+			return;
+		if(isnew && istInsertEventByID(ctx,WSID, mo.getM_Product_ID(),trx ))
+			return;
+		MWSEventLog wse = new MWSEventLog(ctx, 0, trx);
+		
+		wse.setCounter(0);
+		wse.setRunsMax(ws.getRunsMax());
+		wse.setRecord_ID(mo.getM_Product_ID());	
+		String AccesMajWS = Msg.getMsg(ctx, "WS_MAJ_PRODUCT");
+		String inst = isnew?"INSERT":"UPDATE";
+		
+		X_XX_OrderEventLog ol = new X_XX_OrderEventLog(ctx, 0, trx);
+		ol.setEventType("25");
+		ol.setRecord_ID(mo.getM_Product_ID());
+		ol.setAD_Table_ID(MProduct.Table_ID);
+		ol.setAD_Org_ID(0);
+		ol.setAD_User_ID(ctx.getAD_User_ID());
+		ol.setDateAction(new Timestamp(System.currentTimeMillis()));
+		
+		if(AccesMajWS.equals("1")){
+			wse.setXX_WSEggo_ID(WSID);
+			wse.setURLWS(REST_URI+ws.getURLWS());
+			//String iss = mo.isSOTrx()?"Y":"N" ;
+			String WSBody = "{\"m_product_id\":\""+mo.getM_Product_ID()+"\","
+					+ "\"value\":\""+mo.getValue()+"\","
+					+ "\"name\":\""+mo.getName()+"\","
+					+ "\"action\":\""+inst+"\"}";
+			wse.setWSBody(WSBody);
+			ol.setDescription(inst+" product");
+		}
+		else{
+			wse.setProcessed(true);
+			wse.setCounter(ws.getRunsMax());
+			wse.setURLWS("WS WebHook MAJ Product Not Activate");
+		}
+		wse.set_ValueNoCheck("EventType", inst);
+		wse.save();
+		ol.setXX_WSEventLog_ID(new BigDecimal(wse.getID()));
+		ol.save();
+	}
+	
+	public static boolean AddLine(Ctx ctx, X_WSEggo ws, int record_ID, Trx trx)
+	{
+		Timestamp ts = new Timestamp(System.currentTimeMillis());
+		int maxID = DB.getSQLValue(trx,"Select max(XX_WSEventLog_ID) from XX_WSEventLog where XX_WSEggo_ID = ? and Record_ID = ? and processed = 'N' AND RUNSMAX <> COUNTER",ws.getXX_WSEggo_ID(), record_ID); 
+		if(maxID<=0)
+			return false;
+		if(ws.get_ValueAsBoolean("IsUnique") && maxID>0)
+			return true;
+		MWSEventLog wseM = new MWSEventLog(ctx, maxID, trx);
+		long secondsBetween = (ts.getTime() - wseM.getUpdated().getTime()) / 1000;
+		if(secondsBetween <5)
+			return true;
+		else
+			return false;
+	}
+	
+	public static void updatePoAcknoledgment(Ctx ctx, MPoAcknoledgment mo, boolean isnew, Trx trx)
+	{
+		//Notif Insert/update Order
+		String REST_URI = null;
+		if(mo.getAD_Client_ID() == 1000024)
+			REST_URI = Msg.getMsg("en_US",  "EGGOLUX_WS_SERVEUR");
+		else
+			REST_URI = Msg.getMsg("en_US",  "EGGO_WS_SERVEUR");
+		int WSID = DB.getSQLValue(trx, "Select XX_WSEggo_ID from XX_WSEggo where AD_Client_ID = ? and XX_WSName = ?  ",mo.getAD_Client_ID(), "updatePoAcknoledgment");
+		X_WSEggo ws = new X_WSEggo(ctx, WSID, trx);
+		
+		if(AddLine(ctx,ws, mo.getC_Order_ID(), trx ))
+			return;
+
+		String iss = mo.isZ_ArMain()?"Y":"N" ;
+		String isnewS = isnew?"Y":"N" ;
+		MWSEventLog wse = new MWSEventLog(ctx, 0, trx);
+		String inst = isnew?"INSERT":"UPDATE";
+		wse.setCounter(0);
+		wse.setRunsMax(ws.getRunsMax());
+		wse.setRecord_ID(mo.getZ_PoAcknoledgment_ID());	
+		String AccesMajWS = Msg.getMsg(ctx, "WS_MAJ_AR");
+		
+		X_XX_OrderEventLog ol = new X_XX_OrderEventLog(ctx, 0, trx);
+		ol.setEventType("20");
+		ol.setRecord_ID(mo.getC_Order_ID());
+		ol.setAD_Table_ID(MOrder.Table_ID);
+		ol.setAD_Org_ID(mo.getAD_Org_ID());
+		ol.setAD_User_ID(ctx.getAD_User_ID());
+		ol.setDateAction(new Timestamp(System.currentTimeMillis()));
+		
+		if(AccesMajWS.equals("1")){
+			MOrder mod = new MOrder(ctx, mo.getC_Order_ID(), trx);
+			wse.setXX_WSEggo_ID(WSID);
+			wse.setURLWS(REST_URI+ws.getURLWS());
+			String WSBody = "{\"c_order_id\":\""+mo.getC_Order_ID()+"\","
+					+ "\"documentno\":\""+mod.getDocumentNo()+"\","
+					+ "\"poreference\":\""+mod.getPOReference()+"\","
+					+ "\"arnumber\":\""+mo.getZ_ArNumber()+"\","
+					+ "\"arnew\":\""+isnewS+"\","
+					+ "\"armain\":\""+iss+"\","
+					+ "\"aramt\":\""+mo.getZ_ArAmt()+"\","
+					+ "\"ardate\":\""+mo.getZ_ArDate()+"\","
+					+ "\"arsem\":\""+mo.getXX_SemAR()+"\"}";
+			wse.setWSBody(WSBody);
+			ol.setDescription("AR : "+mo.getZ_ArNumber()+", AR Event : "+inst);
+		}
+		else{
+			wse.setProcessed(true);
+			wse.setCounter(ws.getRunsMax());
+			wse.setURLWS("WS Insert/Update AR non actif");
+			ol.setDescription("WS Insert/Update AR not active");
+		}
+		wse.set_ValueNoCheck("EventType", inst);
+		wse.save();
+		
+		
+		ol.setXX_WSEventLog_ID(new BigDecimal(wse.getID()));
+		ol.save();
+	}
+	
+	private static boolean istInsertEventByID(Ctx ctx, int WSEggo_ID, int record_ID, Trx trx)
+	{
+		int maxID = DB.getSQLValue(trx,"Select max(XX_WSEventLog_ID) from XX_WSEventLog where XX_WSEggo_ID = ? and Record_ID = ? and EventType = 'INSERT' ",WSEggo_ID, record_ID); 
+		if(maxID<=0)
+			return false;
+		else 
+			return true;
+	}
+
+	public static String SendEmailEvent(Ctx ctx, MOrder mo, String EventType, int PInstance_ID, Trx trx)
+	{
+		String WS_SMILE = Msg.getMsg(ctx, "XX_WS_SMILE");
+		String REST_URI = null;
+		String sessionID = mo.getAD_Client_ID()==1000024?"999998":"999999";
+		if(mo.getAD_Client_ID() == 1000024)
+			REST_URI = Msg.getMsg("en_US",  "EGGOLUX_WS_SERVEUR");
+		else
+			REST_URI = Msg.getMsg("en_US",  "EGGO_WS_SERVEUR");
+		int WSID = DB.getSQLValue(trx, "Select XX_WSEggo_ID from XX_WSEggo where AD_Client_ID = ? and XX_WSName = ?  ",mo.getAD_Client_ID(), "SendEmail");
+		X_WSEggo ws = new X_WSEggo(ctx, WSID, trx);
+		String AccesMajWS = Msg.getMsg(ctx, "WS_Event_SendMail");
+		MWSEventLog wse = new MWSEventLog(ctx, 0, trx);
+		wse.setCounter(0);
+		wse.setRunsMax(ws.getRunsMax());
+		wse.setRecord_ID(mo.getC_Order_ID());
+		wse.set_ValueNoCheck("EventType", "INSERT");
+		wse.setURLWS(REST_URI+ws.getURLWS());
+		
+		if(!AccesMajWS.equals("1")){
+			wse.setProcessed(true);
+			wse.setCounter(ws.getRunsMax());
+			wse.setURLWS("WS SendEmail non actif");
+			wse.save();
+			
+			return "OK";
+		}
+		wse.setXX_WSEggo_ID(WSID);
+		MBPartner bp = new MBPartner(ctx, mo.getC_BPartner_ID(), trx);
+		MUser mu = new MUser(ctx, mo.getAD_User_ID(), trx);
+		MDocTypeInfo mdi = MDocTypeInfo.get(ctx, mo.getC_DocType_ID(), trx);
+		MBPartnerLocation mbl = new MBPartnerLocation(ctx, mo.getC_BPartner_Location_ID(), trx);
+		MLocation ml = new MLocation(ctx, mbl.getC_Location_ID(), trx);
+		MCountry mc = MCountry.get(ctx, ml.getC_Country_ID());
+		MOrg org = MOrg.get(ctx, mo.getAD_Org_ID());
+		MOrgInfo orgi = MOrgInfo.get(ctx, org.getAD_Org_ID(), trx);
+		
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+		String WSBody = "{\"emailtype\":\""+EventType+"\","
+				+ "\"c_order_id\":\""+mo.getC_Order_ID()+"\","
+				+ "\"documentno\":\""+mo.getDocumentNo()+"\","
+				+ "\"poreference\":\""+mo.getPOReference()+"\","
+				+ "\"emailclient\":\""+mu.getEMail()+"\","
+				+ "\"mag_key\":\""+org.getValue()+"\","
+				+ "\"mail_gest\":\"gest"+orgi.get_ValueAsString("EMail")+"\",";
+		
+		//Prise en main
+		if(EventType.equals("01"))
+		{
+			WSBody =WSBody+ "\"data\": [{\"project_type\":\""+(mdi.isPlacard()?"Placard":"Cuisine")+"\","
+					+ "\"client_id\":\""+mo.getC_BPartner_ID()+"\","
+					+ "\"client_key\":\""+bp.getValue()+"\","
+					+ "\"client_lang\":\""+bp.getAD_Language()+"\","
+					+ "\"client_name\":\""+bp.getName()+"\","
+					+ "\"client_name2\":\""+bp.getName2()+"\","
+					+ "\"client_tel\":\""+mu.getPhone()+"\","
+					+ "\"client_gsm\":\""+mu.getPhone2()+"\","
+					+ "\"adr_liv\":[{\"adr1\":\""+ml.getAddress1()+"\","
+							+ "\"adr2\":\""+ml.getAddress2()+"\","
+							+ "\"adr3\":\""+ml.getAddress3()+"\","
+							+ "\"adr4\":\""+ml.getAddress4()+"\","
+							+ "\"postal\":\""+ml.getPostal()+"\","
+							+ "\"city\":\""+ml.getCity()+"\","
+							+ "\"country\":\""+mc.getCountryCode()+"\"}],"
+					+ "\"mag_name\":\""+org.getName().subSequence(org.getName().indexOf(" ")+1, org.getName().length())+"\","
+					+ "\"mag_tel\":\""+orgi.get_ValueAsString("TelMag")+"\","
+					+ "\"order_date_pose\":\""+dateFormat.format(mo.get_ValueAsTimestamp("DatePose"))+"\""
+					+ "}]}";
+			WSBody = WSBody.replaceAll("null", "");
+			wse.setWSBody(WSBody);
+		}else
+			//mail livraison
+			if(EventType.equals("05"))
+			{
+				String dataOrder = DB.getSQLValueString(trx,"select GETZ_COM_ACP(o.C_Order_ID)||';'||NVL(getSoldeOrder(o.C_Order_ID),0)||';'||ROUND((NVL(TotalPaySchedNotFin(o.c_order_id),0)+NVL(o.Z_SoldeGI,0)+NVL(o.Z_PayGI,0)),2)||';'||"
+						+ "NVL(TotalPaySchedFin(o.c_order_id),0)||';'||NVL(TotalPaySchedProm(o.c_order_id),0) as datas from C_Order o where o.C_Order_ID = ? ", mo.getC_Order_ID());
+				String datas[] = dataOrder.split(";");
+				String Z_COM = datas[0];
+				String SoldeOrder = datas[1];
+				BigDecimal SoldeOrderB = new BigDecimal(SoldeOrder.replace(",", ".").replace(" ", ""));
+				String Tot_paye =  datas[2];
+				BigDecimal Tot_payeB = new BigDecimal(Tot_paye.replace(",", ".").replace(" ", ""));
+				String Tot_fin = datas[3];
+				BigDecimal Tot_finB = new BigDecimal(Tot_fin.replace(",", ".").replace(" ", ""));
+				String Tot_prom=  datas[4];
+				BigDecimal Tot_promB = new BigDecimal(Tot_prom.replace(",", ".").replace(" ", ""));
+				
+				SoldeOrder = ""+(SoldeOrderB.subtract(Tot_finB)).setScale(2, BigDecimal.ROUND_HALF_UP);
+				BigDecimal SoldeOrderC = new BigDecimal(SoldeOrder.replace(",", ".").replace(" ", ""));
+				String invoices_info = null;
+				
+				//Fichier Facture
+				//Est ce que la facture est dans les fichiers Attachés ?
+				
+				if(Msg.getMsg("en_US","EGGO_SENDMAIL_INV").equals("0") )
+				{
+					//Donner les factures
+					String sql = "Select ci.DocumentNo , chr(38)||'Process_ID=116'||chr(38)||'Record_ID='||ci.C_Invoice_ID||chr(38)||'REPORT_LOCALE=' as Link, cod.c_orderdownload_id, ci.C_Invoice_ID from z_orderpaymschedule " + 
+							"inner join C_invoice ci on ci.C_invoice_ID = z_orderpaymschedule.C_Invoice_ID " + 
+							"left join C_OrderDownload cod on cod.C_order_ID = z_orderpaymschedule.C_order_ID and cod.z_filetype = 'Invoice' and cod.Name = ci.documentNo||'.pdf'  " + 
+							"where z_orderpaymschedule.C_order_ID = ? and exists (select 1 from z_typeecheance where z_typeecheance.z_typeecheance_ID = z_orderpaymschedule.z_typeecheance_ID and value = '05') order by ci.C_invoice_ID DESC" ;
+					Object[][] infos = QueryUtil.executeQuery(
+							sql, 
+							new Object[]{mo.getC_Order_ID()}, 
+							trx );
+					if(infos.length>0)
+					{
+						String lin = "";
+						//getPDF
+						if(infos[0][2]!=null)
+						{
+							//in Exists
+							lin = lin+"{\"type\":\"invoice\",\"docno\":\""+infos[0][0]+"\",\"extension\":\"pdf\",\"file_smile_id\":\""+infos[0][2]+"\"}"; 
+						}else
+						{
+							//Produire file
+							//String url = WS_SMILE+"getPDFByProcess?"+infos[0][1]+bp.getAD_Language()+"&X-SessionId="+sessionID;
+							//Client client = ClientBuilder.newClient();
+							//final InputStream responseStream = client.target(url).request().get(InputStream.class);
+							//int processID, int AD_User_ID, int order_ID, int record_id, int PInstance_ID, String type, String[] params,String DocNo, String extention, Trx trx
+							int orderdownload_id = setFileAttach(ctx,116, ctx.getAD_User_ID(),mo, Integer.parseInt(""+infos[0][3]), PInstance_ID, "Invoice",""+infos[0][0], "pdf", trx   );
+							lin = lin+"{\"type\":\"invoice\",\"docno\":\""+infos[0][0]+"\",\"extension\":\"pdf\",\"file_smile_id\":\""+orderdownload_id+"\"}"; 
+						}
+						
+						invoices_info = lin;
+					}
+				}
+				//Fichier courrier LIV
+				String sql = "Select cod.c_orderdownload_ID from c_orderdownload cod " + 
+						"where cod.z_filetype = 'courrier livraison' and C_order_ID = ? " ;
+				Object[][] infos = QueryUtil.executeQuery(
+						sql, 
+						new Object[]{mo.getC_Order_ID()}, 
+						trx );
+				int download_id = 0;
+				String linLiv = "";
+				if(infos.length>0)
+				{
+					
+					download_id = Integer.parseInt(""+infos[0][0]);
+					linLiv = linLiv+"{\"type\":\"courrier_livraison\",\"docno\":\"+c_liv_"+mo.getPOReference()+"\",\"extension\":\"pdf\",\"file_smile_id\":\""+download_id+"\"}"; 
+				}else
+					{
+						int orderdownload_id = setFileAttach(ctx,1002357, ctx.getAD_User_ID(),mo, mo.getC_Order_ID(), PInstance_ID, "Courrier_livraison","c_liv_"+mo.getPOReference(), "pdf", trx   );
+						linLiv = linLiv+"{\"type\":\"courrier_livraison\",\"docno\":\"c_liv_"+mo.getPOReference()+"\",\"extension\":\"pdf\",\"file_smile_id\":\""+orderdownload_id+"\"}"; 
+					}
+				
+				
+				WSBody =WSBody+ "\"data\": [{\"project_type\":\""+(mdi.isPlacard()?"Placard":"Cuisine")+"\","
+						+ "\"client_id\":\""+mo.getC_BPartner_ID()+"\","
+						+ "\"client_key\":\""+bp.getValue()+"\","
+						+ "\"client_lang\":\""+bp.getAD_Language()+"\","
+						+ "\"client_name\":\""+bp.getName()+"\","
+						+ "\"client_name2\":\""+bp.getName2()+"\","
+						+ "\"client_tel\":\""+mu.getPhone()+"\","
+						+ "\"client_gsm\":\""+mu.getPhone2()+"\","
+						+ "\"adr_liv\":[{\"adr1\":\""+ml.getAddress1()+"\","
+								+ "\"adr2\":\""+ml.getAddress2()+"\","
+								+ "\"adr3\":\""+ml.getAddress3()+"\","
+								+ "\"adr4\":\""+ml.getAddress4()+"\","
+								+ "\"postal\":\""+ml.getPostal()+"\","
+								+ "\"city\":\""+ml.getCity()+"\","
+								+ "\"country\":\""+mc.getCountryCode()+"\"}],"
+						+ "\"mag_name\":\""+org.getName().subSequence(org.getName().indexOf(" ")+1, org.getName().length())+"\","
+						+ "\"mag_tel\":\""+orgi.get_ValueAsString("TelMag")+"\","
+						+ "\"order_date_pose\":\""+(mo.get_ValueAsTimestamp("DatePose")!=null?dateFormat.format(mo.get_ValueAsTimestamp("DatePose")):"")+"\","
+						+ "\"order_date_liv\":\""+(mo.get_ValueAsTimestamp("Z_DATELIVRCLI")!=null?dateFormat.format(mo.get_ValueAsTimestamp("Z_DATELIVRCLI")):"")+"\","
+						+ "\"order_date_liv_AM_PM\":\""+mo.get_ValueAsString("Z_AMPM")+"\","
+						+ "\"order_com\":\""+(Z_COM==null?mo.getPOReference():Z_COM)+"\","
+						+ "\"order_total\":\""+(mo.getGrandTotal())+"\","
+						+ "\"order_paye\":\""+(Tot_payeB)+"\","
+						+ "\"order_financement\":\""+(Tot_finB)+"\","
+						+ "\"order_promoteur\":\""+(Tot_promB)+"\","
+						+ "\"order_solde\":\""+(SoldeOrderC)+"\","
+						+ "\"url_pdfs\":["+linLiv;
+						if(invoices_info!=null) {
+							WSBody=WSBody+","+invoices_info+"]}";
+						}else
+							WSBody=WSBody+"]}";
+				WSBody=WSBody+ "]}";
+				
+				WSBody = WSBody.replaceAll("null", "");
+				
+				wse.setWSBody(WSBody);
+			}else 
+				if(EventType.equals("10") && mdi.isSAV())
+				{
+					String SoldeOrder = DB.getSQLValueString(trx,"select getsoldeorder(?) from dual ", mo.getC_Order_ID());
+					BigDecimal SoldeOrderB = new BigDecimal(SoldeOrder.replace(",", ".").replace(" ", ""));
+					String sql = "select ci.z_com from C_invoice ci " + 
+							"inner join C_order co on co.c_order_id = ci.c_order_id " + 
+							"inner join c_doctypeinfo cdi on cdi.c_doctype_id = co.c_doctype_id and (cdi.c_doctype_raccompte_id <> ci.c_doctype_id OR cdi.isaccompte = 'N') " + 
+							"where ci.issotrx = 'Y' and co.C_Order_ID = ? " + 
+							"order by ci.c_invoice_id DESC";
+					String z_com = DB.getSQLValueString(trx, sql, mo.getC_Order_ID());
+					if(z_com==null)
+						z_com = "";
+					WSBody = "{\"emailtype\":\""+EventType+"\","
+							+ "\"c_order_id\":\""+mo.getC_Order_ID()+"\","
+							+ "\"documentno\":\""+mo.getDocumentNo()+"\","
+							+ "\"poreference\":\""+mo.getPOReference()+"\","
+							+ "\"emailclient\":\""+mu.getEMail()+"\","
+							+ "\"mag_key\":\""+org.getValue()+"\","
+							+ "\"mail_gest\":\"gest"+orgi.get_ValueAsString("EMail")+"\",";
+					WSBody=	WSBody+ "\"data\": [{\"project_type\":\""+(mdi.isPlacard()?"Placard":"Cuisine")+"\","
+							+ "\"client_lang\":\""+bp.getAD_Language()+"\","
+							+ "\"order_solde\":\""+SoldeOrderB+"\","
+							+ "\"structured_com\":\""+z_com+"\"}";
+					WSBody=WSBody+"]}";
+					WSBody = WSBody.replaceAll("null", "");
+					wse.setWSBody(WSBody);
+					EventType = "09";
+				}else
+					if(EventType.equals("10") && !mdi.isSAV())
+					{
+						return "Mail pour vente SAV";
+					}	
+					else
+						return null;
+		wse.save();
+		X_XX_OrderEventLog ol = new X_XX_OrderEventLog(ctx, 0, trx);
+		ol.setEventType(EventType);
+		ol.setRecord_ID(mo.getC_Order_ID());
+		ol.setAD_Table_ID(MOrder.Table_ID);
+		ol.setAD_Org_ID(mo.getAD_Org_ID());
+		ol.setAD_User_ID(ctx.getAD_User_ID());
+		ol.setDateAction(new Timestamp(System.currentTimeMillis()));
+		ol.setDescription("");
+		ol.setXX_WSEventLog_ID(new BigDecimal(wse.getID()));
+		ol.save();
+		
+		return "OK";
+	}
+	
+	private void connect(Ctx ctx) {
+		String URL = Msg.getMsg(ctx, "EGGO_UPLOADFILE");
+		String commandConnect = "net use " + URL+" /USER:"+USER_NAME+"@Eurocenter.be "+PASSWORD+" /PERSISTENT:NO";
+		try {
+			Runtime.getRuntime().exec(commandConnect);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
+	
+	private static int setFileAttach(Ctx ctx, int processID, int AD_User_ID, MOrder mo, int record_id, int PInstance_ID, String type,String DocNo, String extention, Trx trx)
+	{
+		int retx = 0;
+		File ret = null;
+		String URL = Msg.getMsg(ctx, "EGGO_UPLOADFILE");
+		String xxx = System.getProperty("java.io.tmpdir").substring(0, System.getProperty("java.io.tmpdir").length()-1);
+		String p_File = xxx+File.separator+"U"+AD_User_ID+"_"+PInstance_ID+"_JasperReport.pdf";
+		String vals[] = mo.getDocumentNo().split("-");
+		String URL_Linux = Msg.getMsg(ctx, "SHARE_FOLDER");
+		if(OSInfo.OS.WINDOWS.equals(OSInfo.getOs()))
+		{
+			
+			URL = URL+File.separator+vals[0]+File.separator+mo.getPOReference()+File.separator+"CommandeClient"+File.separator+mo.getDocumentNo()+File.separator+type+File.separator+DocNo+"."+extention;
+
+		}
+		else
+		{
+			URL = URL+File.separator+vals[0]+File.separator+mo.getPOReference()+File.separator+"CommandeClient"+File.separator+mo.getDocumentNo()+File.separator+type+File.separator+DocNo+"."+extention;
+			URL_Linux = URL_Linux+File.separator+vals[0]+File.separator+mo.getPOReference()+File.separator+"CommandeClient"+File.separator+mo.getDocumentNo()+File.separator+type+File.separator+DocNo+"."+extention;
+		}
+		
+		String p_File2 = DocNo+"."+extention;
+		int AD_Process_ID = processID;
+		ctx.setContext(1,"C_BPartner_ID", mo.getC_BPartner_ID());
+		ProcessInfo pi2 = new ProcessInfo("File Attach", AD_Process_ID);
+        pi2.setRecord_ID(record_id  );
+        pi2.setAD_PInstance_ID(MPInstanceProxy.getAD_PInstance_ID(ctx,
+                    pi2.getAD_Process_ID(),record_id));
+        pi2.setTable_ID(MOrder.Table_ID);
+        List<ProcessInfoParameter> pipList = new ArrayList<ProcessInfoParameter>();
+        ProcessInfoParameter pip1 = new ProcessInfoParameter("C_BPartner_ID",mo.getC_BPartner_ID(),
+                null, null, null);
+        pipList.add(pip1);
+        ProcessInfoParameter[] parameters = (ProcessInfoParameter[]) pipList
+                .toArray(new ProcessInfoParameter[pipList.size()]);
+        pi2.setParameter(parameters);
+            //#18759
+            boolean success = true;
+            //#18759
+            RusReportStarter jrl = new RusReportStarter();
+            //#18759
+            MProcess process2 = new MProcess(ctx, AD_Process_ID, trx);
+            if (!process2.isReport()){
+            	ProcessStarter pstart = new ProcessStarter(ctx, AD_Process_ID, trx);
+            	pstart.setRecord_ID(record_id);
+            	pstart.addParameter("FileName", p_File, null);
+            	try {
+					pstart.start();
+					String outFile = pstart.getOutput();
+					int spacePos = outFile.indexOf(" ");
+					if (spacePos > 0) {
+					   outFile= outFile.substring(0, spacePos);
+					}
+					
+					ret = new File(outFile);
+				} catch (Exception e) {
+					throw new CompiereException("Le processus d'export est en echec");
+				}
+            }
+            else
+            {
+            //#18759
+            	ret = new File(p_File);
+            	
+            	ret = jrl.startReport(ctx, pi2, false); // ZCOM999
+            }
+            if (ret == null)
+            {
+                throw new CompiereException("Le processus d'export est en echec");
+            }
+            
+            
+          
+            File f = new File(ret.getAbsolutePath()); 
+            String dest = "";
+            
+            try {
+            	File n = null;
+            	if(OSInfo.OS.WINDOWS.equals(OSInfo.getOs()))
+        			n = new File(URL);
+        		else
+        			n = new File(URL_Linux);
+    			FileUtils.copyFile(f, n);
+    			n.canRead();
+    			File fx = new File(n.getAbsolutePath()); 
+    			fx.exists();
+    			 
+    			String orig =f.getAbsolutePath();
+    			dest = n.getAbsolutePath();
+    			InputStream in = new FileInputStream(orig);
+    			OutputStream out = new FileOutputStream(dest);
+    			byte[] buf = new byte[1024];
+    			int len;
+    			while ((len = in.read(buf)) > 0) {
+    			   out.write(buf, 0, len);
+    			}
+    			in.close();
+    			out.close(); 
+    			
+    		
+    		} catch (IOException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
+		
+		
+		Timestamp t = new Timestamp(GregorianCalendar.getInstance().getTimeInMillis());
+		MOrderDownload odx =  new MOrderDownload(ctx, 0, trx);
+		//od.set("DateCreated", new GregorianCalendar());
+		odx.set_Value("DateCreated", t);
+		odx.setC_Order_ID(mo.getC_Order_ID());
+		odx.setZ_FileType(type);
+		odx.setName(DocNo+"."+extention);
+		odx.setDownloadURL(URL.replace("\\", "/"));
+		odx.setAD_Org_ID(mo.getAD_Org_ID());
+		odx.set_ValueNoCheck("IsArControled", false);
+		odx.setIsToNotify(true);
+		odx.save();
+		retx = odx.getC_OrderDownload_ID();
+		return retx;
+	}
+	
+	public static void updateBPartner(Ctx ctx, MBPartner mb, boolean isnew, Trx trx)
+	{
+		//Notif Insert/update Order
+		//Test MAJ 5 sec
+		
+		if(!mb.isVendor())
+			return;
+			
+		String REST_URI = null;
+		if(mb.getAD_Client_ID() == 1000024)
+			REST_URI = Msg.getMsg("en_US",  "EGGOLUX_WS_SERVEUR");
+		else
+			REST_URI = Msg.getMsg("en_US",  "EGGO_WS_SERVEUR");
+		int WSID = DB.getSQLValue(trx, "Select XX_WSEggo_ID from XX_WSEggo where AD_Client_ID = ? and XX_WSName = ?  ",mb.getAD_Client_ID(), "updateBPartner");
+		X_WSEggo ws = new X_WSEggo(ctx, WSID, trx);
+		
+		if(AddLine(ctx,ws, mb.getC_BPartner_ID(), trx ))
+			return;
+		if(isnew && istInsertEventByID(ctx,WSID, mb.getC_BPartner_ID(),trx ))
+			return;
+		MWSEventLog wse = new MWSEventLog(ctx, 0, trx);
+		
+		wse.setCounter(0);
+		wse.setRunsMax(ws.getRunsMax());
+		wse.setRecord_ID(mb.getC_BPartner_ID());	
+		String AccesMajWS = Msg.getMsg(ctx, "WS_MAJ_BPARTNER");
+		String inst = isnew?"INSERT":"UPDATE";
+		
+		
+		if(AccesMajWS.equals("1")){
+			wse.setXX_WSEggo_ID(WSID);
+			wse.setURLWS(REST_URI+ws.getURLWS());
+			String isc = mb.isCustomer()?"Y":"N" ;
+			String isv = mb.isVendor()?"Y":"N" ;
+			String WSBody = "{\"c_bpartner_id\":\""+mb.getC_BPartner_ID()+"\","
+					+ "\"value\":\""+mb.getValue()+"\","
+					+ "\"name\":\""+mb.getName()+"\","
+					+ "\"client\":\""+isc+"\","
+					+ "\"fournisseur\":\""+isv+"\","
+					+ "\"action\":\""+inst+"\"}";
+			wse.setWSBody(WSBody);
+		}
+		else{
+			wse.setProcessed(true);
+			wse.setCounter(ws.getRunsMax());
+			wse.setURLWS("WS WebHook MAJ BPartner Not Activate");
+		}
+		wse.set_ValueNoCheck("EventType", inst);
+		wse.save();
+	}
+	
+	public static void updateInvoice(Ctx ctx, MInvoice mi, boolean isnew, Trx trx)
+	{
+		//Notif Insert/update Order
+		//Test MAJ 5 sec
+		
+		if(mi.isSOTrx())
+			return;
+		
+		String REST_URI = null;
+		if(mi.getAD_Client_ID() == 1000024)
+			REST_URI = Msg.getMsg("en_US",  "EGGOLUX_WS_SERVEUR");
+		else
+			REST_URI = Msg.getMsg("en_US",  "EGGO_WS_SERVEUR");
+		int WSID = DB.getSQLValue(trx, "Select XX_WSEggo_ID from XX_WSEggo where AD_Client_ID = ? and XX_WSName = ?  ",mi.getAD_Client_ID(), "updateInvoice");
+		X_WSEggo ws = new X_WSEggo(ctx, WSID, trx);
+		
+		if(AddLine(ctx,ws, mi.getC_Invoice_ID(), trx ))
+			return;
+		if(isnew && istInsertEventByID(ctx,WSID, mi.getC_Invoice_ID(),trx ))
+			return;
+		MWSEventLog wse = new MWSEventLog(ctx, 0, trx);
+		
+		wse.setCounter(0);
+		wse.setRunsMax(ws.getRunsMax());
+		wse.setRecord_ID(mi.getC_Invoice_ID());	
+		String AccesMajWS = Msg.getMsg(ctx, "WS_MAJ_INVOICE");
+		String inst = isnew?"INSERT":"UPDATE";
+		String iss = mi.isSOTrx()?"Y":"N" ;
+		
+		if(AccesMajWS.equals("1")){
+			wse.setXX_WSEggo_ID(WSID);
+			wse.setURLWS(REST_URI+ws.getURLWS());
+			String WSBody = "{\"c_invoice_id\":\""+mi.getC_Invoice_ID()+"\","
+					+ "\"documentno\":\""+mi.getDocumentNo()+"\","
+					+ "\"poreference\":\""+mi.getPOReference()+"\","
+					+ "\"issotrx\":\""+iss+"\","
+					+ "\"action\":\""+inst+"\"}";
+			wse.setWSBody(WSBody);
+		}
+		else{
+			wse.setProcessed(true);
+			wse.setCounter(ws.getRunsMax());
+			wse.setURLWS("WS WebHook MAJ Invoice Not Activate");
+		}
+		wse.set_ValueNoCheck("EventType", inst);
+		wse.save();
+	}
+	 
+}

@@ -1,0 +1,57 @@
+package com.audaxis.erp.service;
+
+import org.springframework.cache.annotation.CacheConfig;
+import org.compiere.model.MInvoice;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.ObjArco;
+import com.audaxis.erp.json.SetUpdateArcoResult;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class ArcoService extends CompiereSessionFullService implements IArcoService {
+
+	@Override
+	public SetUpdateArcoResult updateArco(ObjArco objarco) {
+		
+		SetUpdateArcoResult ret = new SetUpdateArcoResult();
+		ret.invoice_id = objarco.invoice_id;
+		MInvoice mi = new MInvoice(getCtx(), Integer.parseInt(objarco.invoice_id), get_Trx());
+		if(mi == null || mi.getC_Invoice_ID() <=0)
+		{
+			ret.error = "Invoice not found";
+			return ret;
+		}
+		if(objarco.statut.equals("INIT"))
+		{
+			mi.set_ValueNoCheck("Z_UrlARCO", objarco.urlarco);
+			mi.set_ValueNoCheck("Z_ValidationInvoiceID",objarco.idarco);
+			mi.save();
+		}else if(objarco.statut.equals("FINAL"))
+		{
+			//IsInDispute = N
+			//Z_approvedInv 
+			mi.setIsInDispute(false);
+			mi.set_ValueNoCheck("Z_ApprovedInv", objarco.approved.equals("Y")?true:false);
+			mi.save();
+		}else if(objarco.statut.equals("BLOCKED"))
+		{
+			//IsInDispute =Y
+			//Z_approvedInv 
+			mi.setIsInDispute(true);
+			mi.set_ValueNoCheck("Z_ApprovedInv", objarco.approved.equals("Y")?true:false);
+			mi.save();
+		}else
+		{
+			ret.error = "STATUT not support";
+		}
+		ret.error = "";
+		
+		return ret;
+	}
+
+}

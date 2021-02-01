@@ -1,0 +1,3 @@
+ALTER TABLE Z_Interventions MODIFY XX_Hours NUMBER DEFAULT 8;
+UPDATE Z_Interventions SET XX_Hours=8 WHERE XX_Hours IS NULL;
+ALTER TABLE Z_Interventions MODIFY XX_Hours NOT NULL;

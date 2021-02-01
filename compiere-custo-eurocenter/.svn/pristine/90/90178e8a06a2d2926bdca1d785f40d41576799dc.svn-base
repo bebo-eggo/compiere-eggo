@@ -1,0 +1,2 @@
+ Update Ad_Column Set Defaultvalue='@SQL=SELECT C_BankAccount_ID FROM C_BankAccount  WHERE AD_Org_ID=@#AD_Org_ID@' Where Columnname='C_BankAccount_ID' And Ad_Table_Id=(Select Ad_Table_Id From Ad_Table Where Tablename Like 'C_BankStatement');
+ ALTER TABLE C_BankStatement MODIFY C_BankAccount_ID NUMBER(10) DEFAULT NULL;

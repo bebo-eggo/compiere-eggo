@@ -1,0 +1,75 @@
+package com.audaxis.erp.service;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.compiere.util.DB;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.CA_Mag;
+import com.audaxis.erp.json.CA_MagDetail;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class TurnoverForAllStoresService extends CompiereSessionFullService implements ITurnoverForAllStores {
+
+	@Override
+	public CA_Mag getTurnoverForAllStores(String annee, String mois) {
+		CA_Mag cam = new CA_Mag();
+		cam.annee = annee;
+		cam.mois = mois;
+		CopyOnWriteArrayList<CA_MagDetail> MagDetail = new CopyOnWriteArrayList<>();
+		String sql = "select * from (select country,MAGValue,MAGNom,ANNEE, MOIS , sum (PO_AMT) as PA_AMT, sum (totallines) as SO_AMT from (" + 
+				"select country,MAGValue,MAGNom, DOCUMENTNO, POREFERENCE, sum(POPRice*QTYOrdered) as PO_AMT, totallines,ANNEE, MOIS from (" + 
+				"Select ao.Value as MAGValue, ao.Name as MAGNom, co.c_order_id , co.POREFERENCE, CO.DOCUMENTNO, case when (col.storepoprice is null OR col.storepoprice=0) then GETPRODUCTPRICE(col.M_Product_ID,co.AD_Client_ID, co.dateOrdered) else col.storepoprice end as POPRice " + 
+				",col.QTYOrdered, co.totallines, col.storepoprice, co.marginamt, co.marginamtpl,TO_CHAR(co.dateordered,'YYYY') as ANNEE, TO_CHAR(co.dateordered,'MM') as MOIS,"
+				+ "getOrgCountryCode(ao.AD_org_ID) as country "
+				+ "from C_Order co " + 
+				"inner join C_orderLine col on col.C_order_ID = co.C_order_ID " + 
+				"inner join AD_Org ao on ao.AD_Org_ID = co.AD_Org_ID and ao.isactive = 'Y' " + 
+				"inner join c_doctypeinfo cdi on cdi.c_doctype_id = co.c_doctype_id inner join C_DocType cd on cd.c_doctype_id = cdi.c_doctype_id " + 
+				"where co.docstatus not in ('VO') and co.Z_Orderstepstatus not in ('38') and  co.issotrx = 'Y' and cdi.isdevis = 'N' and ((cdi.isdirect = 'Y' OR cdi.isstore = 'Y' OR cdi.isplacard = 'Y' OR cdi.isexpo ='Y') " + 
+				"and cdi.isdevis = 'N' and cd.issotrx = 'Y' and cdi.issav ='N')) tt " + 
+				"group by c_order_id, POREFERENCE, DOCUMENTNO,totallines, MAGValue,MAGNom,ANNEE, MOIS,country)xx " + 
+				"group by MAGValue,MAGNom,ANNEE, MOIS,country )vv where vv.ANNEE = ? and vv.MOIS = ? ORDER BY MAGValue ";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			int i=1;
+			pstmt = DB.prepareStatement(sql,get_Trx());
+			pstmt.setString(i++, annee);
+			pstmt.setString(i++, mois);
+			rs = pstmt.executeQuery();
+			while (rs.next())
+			{
+				CA_MagDetail dd = new CA_MagDetail();
+				dd.magname = rs.getString("MAGNom");
+				dd.magvalue = rs.getString("MAGValue");
+				dd.pa_amt = rs.getString("PA_AMT");
+				dd.pv_amt =  rs.getString("SO_AMT");
+				dd.pays = rs.getString("country");
+				MagDetail.add(dd);
+				
+			}
+		}catch (SQLException ex) {
+			ex.printStackTrace();
+			return cam;
+		}
+		finally {
+			DB.closeResultSet(rs);
+			DB.closeStatement(pstmt);
+		}
+		cam.CA_MAG_set = new HashSet<>(MagDetail);
+		return cam;
+	}
+
+}

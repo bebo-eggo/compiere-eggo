@@ -1,0 +1,164 @@
+package com.audaxis.erp.service;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+
+import org.compiere.framework.PO;
+import org.compiere.model.MInOut;
+import org.compiere.model.MInvoice;
+import org.compiere.model.MMovement;
+import org.compiere.model.MOrder;
+import org.compiere.model.MPInstancePara;
+import org.compiere.model.MProcess;
+import org.compiere.model.MProcessPara;
+import org.compiere.process.DocumentEngine;
+import org.compiere.process.ProcessInfo;
+import org.compiere.process.ProcessInfoParameter;
+import org.compiere.util.DB;
+import org.compiere.util.Msg;
+import org.compiere.util.QueryUtil;
+import org.compiere.util.Trx;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.api.CompiereAPIApplicationException;
+import com.audaxis.compiere.process.MPInstanceProxy;
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.ProcessRecordIDObj;
+import com.audaxis.erp.json.SetProcessRecordIDResult;
+import com.audaxis.erp.security.AuthorizationException;
+import com.edb.core.Query;
+
+import Util.WSUtil;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class ProcessRecordID  extends CompiereSessionFullService implements IProcessRecordID {
+
+	@Autowired
+	protected ISessionService sessionService;
+	
+	private int client_ID = 0;
+	
+	@Override
+	public SetProcessRecordIDResult processRecordID(ProcessRecordIDObj processRecordID) throws CompiereAPIApplicationException, AuthorizationException {
+		SetProcessRecordIDResult ret = new SetProcessRecordIDResult();
+		ret.error = SetProcessRecordIDResult.E000;
+		
+		client_ID = getCtx().getAD_Client_ID();
+		if(client_ID == 0)
+		{
+			ret.error = SetProcessRecordIDResult.E002;
+			ret.errordesc = SetProcessRecordIDResult.getErrorMsg(SetProcessRecordIDResult.E002);
+			log.info(String.format(SetProcessRecordIDResult.getErrorMsg(SetProcessRecordIDResult.E002), "", ret.errordesc));
+			return ret;
+		}
+		
+		MProcess process = MProcess.get(getCtx(), processRecordID.process_id);
+        if (process.getAD_Process_ID() <=0)
+        	throw new CompiereAPIApplicationException("Process does not exist "+processRecordID.process_id);
+        log.info("Process ["+processRecordID.process_id+"] "+process.getName()+" {"+process.getClassname()+"}");
+        if (processRecordID.params != null) {
+	        for (int i = 0; i < processRecordID.params.length; i++) {
+				String input = processRecordID.params[i];
+				log.info(" Param ["+i+"] = "+input);
+			}
+        }
+        ProcessInfo pi = new ProcessInfo("Batch Runner Process", processRecordID.process_id);
+        pi.setAD_PInstance_ID(MPInstanceProxy.createProcessInstance(getCtx(), pi.getAD_Process_ID(),processRecordID.record_id>0?processRecordID.record_id:pi.getRecord_ID()));
+        pi.setAD_User_ID (getCtx().getAD_User_ID());
+		pi.setAD_Client_ID(getCtx().getAD_Client_ID());
+		if(processRecordID.record_id>0)
+			pi.setRecord_ID(processRecordID.record_id);
+        if (pi.getAD_PInstance_ID() == 0)
+        {
+            throw new IllegalArgumentException(Msg.getMsg(getCtx(), "ProcessNoInstance"));
+        }
+
+        int[] paramIds = PO.getAllIDs("AD_Process_Para",
+                "IsActive = 'Y' and AD_Process_ID = " + processRecordID.process_id + " order by SeqNo ASC ", null);
+
+        List<ProcessInfoParameter> pipList = new ArrayList<ProcessInfoParameter>();
+
+        for (int i = 0; i < paramIds.length; i++)
+        {
+            int p = paramIds[i];
+            log.info("param id " + p);
+
+            MProcessPara param = new MProcessPara(getCtx(), p, null);
+            log.info("param " + param);
+
+            if (processRecordID.params != null && i < processRecordID.params.length)
+            {
+                Object parameterValue = WSUtil.parseParameterValue(processRecordID.params[i], param);
+
+                ProcessInfoParameter pip = new ProcessInfoParameter(param.getColumnName(), parameterValue, "", param.getName(), "");
+                pipList.add(pip);
+                log.info("process info param " + pip);
+
+                // Look if we have a RANGE parameter
+                if ((i + 1) < paramIds.length)
+                {
+                    if (param.isRange())
+                    {
+                        i++;
+                        p = paramIds[i];
+
+                        Object parameterValue_To = WSUtil.parseParameterValue(processRecordID.params[i], param);
+                        pip.setInfo_To(param.getColumnName() + " To");
+                        pip.setParameter_To(parameterValue_To);
+                    }
+                }
+
+                WSUtil.setParameterInstance(getCtx(),pi.getAD_PInstance_ID(), param.getSeqNo(), pip, get_Trx());
+            }
+        }
+
+        ProcessInfoParameter[] pips = (ProcessInfoParameter[]) pipList.toArray(new ProcessInfoParameter[pipList.size()]);
+        pi.setParameter(pips);
+
+        String trxName = "BATCH";
+        
+        // PL/SQL ProcedureName
+ 		if (process.getProcedureName() != null && process.getProcedureName().trim().length() > 0) {
+ 			boolean ok = WSUtil.startDBProcess(getCtx(), process.getProcedureName(), pi);
+ 			if (!ok)
+	        	throw new CompiereAPIApplicationException("Error in StartDBProcess");
+ 		}
+ 		else {
+ 			
+ 	        Trx trx = null;
+ 	        boolean ok = false;
+            String errorMsg = "Error in ProcessIt of ["+process.getAD_Process_ID()+"] "+process.getName()+" {"+process.getClassname()+"}";
+ 	        try {
+ 	        	trx = Trx.get(trxName);
+	 			ok = process.processIt(pi, trx);
+		        if (ok) {
+		        	trx.commit();
+		        }
+		        else {
+		        	trx.rollback();
+		        	errorMsg = pi.getSummary();
+		        }
+ 	        } catch (Throwable t) {
+ 	        	trx.rollback();
+ 	        	throw new CompiereAPIApplicationException(t);
+ 	        } finally {
+ 	        	trx.close();
+ 	        }
+ 	       if (!ok)
+	        	throw new CompiereAPIApplicationException(errorMsg);
+ 		}
+		
+		return null;
+	}
+
+	
+}

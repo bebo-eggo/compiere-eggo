@@ -1,0 +1,9 @@
+CREATE OR REPLACE VIEW RV_DOCSTATUSNAME (VALUE, NAME)
+AS
+SELECT 'en_US'|| rf.Value , rf.name
+FROM AD_Ref_List rf WHERE rf.AD_REFERENCE_ID = 131
+UNION
+SELECT tr.AD_LANGUAGE|| rf.Value , tr.name
+FROM AD_Ref_List_Trl tr
+INNER JOIN AD_Ref_List rf ON (rf.AD_Ref_List_ID=tr.AD_REF_LIST_ID AND rf.AD_REFERENCE_ID = 131);
+/

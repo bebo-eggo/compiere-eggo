@@ -1,0 +1,186 @@
+<!-- Compiere Version venant de compiere-core-api/src/main/resources -->
+
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="ehcache.xsd" 
+	updateCheck="false"
+	monitoring="autodetect" 
+	dynamicConfig="true">
+ 
+	<diskStore path="java.io.tmpdir" />
+  
+     <!--
+    Default Cache configuration. These settings will be applied to caches
+    created programmatically using CacheManager.add(String cacheName).
+    This element is optional, and using CacheManager.add(String cacheName) when
+    its not present will throw CacheException
+
+    The defaultCache has an implicit name "default" which is a reserved cache name.
+    -->
+    <defaultCache
+			statistics="true"
+           maxEntriesLocalHeap="0"
+           eternal="false"
+           overflowToDisk="true"
+           timeToIdleSeconds="1200"
+           timeToLiveSeconds="1200">
+    </defaultCache>
+    
+    <cache name="order" 
+		maxEntriesLocalHeap="5"
+		maxEntriesLocalDisk="500000" 
+		eternal="false" 
+		diskSpoolBufferSizeMB="20"
+		
+		timeToIdleSeconds="14400" 
+		timeToLiveSeconds="28800"
+		
+		memoryStoreEvictionPolicy="LFU" 
+		transactionalMode="off">
+		
+		<persistence strategy="localTempSwap" />
+		
+	</cache>
+	
+	<cache name="shipment" 
+		maxEntriesLocalHeap="5"
+		maxEntriesLocalDisk="500000" 
+		eternal="false" 
+		diskSpoolBufferSizeMB="20"
+		
+		timeToIdleSeconds="14400" 
+		timeToLiveSeconds="28800"
+		
+		memoryStoreEvictionPolicy="LFU" 
+		transactionalMode="off">
+		
+		<persistence strategy="localTempSwap" />
+		
+	</cache>
+	
+	<cache name="invoice" 
+		maxEntriesLocalHeap="5"
+		maxEntriesLocalDisk="500000" 
+		eternal="false" 
+		diskSpoolBufferSizeMB="20"
+		
+		timeToIdleSeconds="14400" 
+		timeToLiveSeconds="28800"
+		
+		memoryStoreEvictionPolicy="LFU" 
+		transactionalMode="off">
+		
+		<persistence strategy="localTempSwap" />
+		
+	</cache>
+	
+	<cache name="item" 
+		maxEntriesLocalHeap="5"
+		maxEntriesLocalDisk="500000" 
+		eternal="false" 
+		diskSpoolBufferSizeMB="20"
+		
+		timeToIdleSeconds="14400" 
+		timeToLiveSeconds="28800"
+		
+		memoryStoreEvictionPolicy="LFU" 
+		transactionalMode="off">
+		
+		<persistence strategy="localTempSwap" />
+		
+	</cache>
+	
+	<cache name="price" 
+		maxEntriesLocalHeap="5"
+		maxEntriesLocalDisk="500000" 
+		eternal="false" 
+		diskSpoolBufferSizeMB="20"
+		
+		timeToIdleSeconds="14400" 
+		timeToLiveSeconds="28800"
+		
+		memoryStoreEvictionPolicy="LFU" 
+		transactionalMode="off">
+		
+		<persistence strategy="localTempSwap" />
+		
+	</cache>
+
+	<cache name="customer" 
+		maxEntriesLocalHeap="5"
+		maxEntriesLocalDisk="500000" 
+		eternal="false" 
+		diskSpoolBufferSizeMB="20"
+		
+		timeToIdleSeconds="14400" 
+		timeToLiveSeconds="28800"
+		
+		memoryStoreEvictionPolicy="LFU" 
+		transactionalMode="off">
+		
+		<persistence strategy="localTempSwap" />
+	</cache>
+	
+	<cache name="common" 
+		maxEntriesLocalHeap="5"
+		maxEntriesLocalDisk="500000" 
+		eternal="false" 
+		diskSpoolBufferSizeMB="20"
+		
+		timeToIdleSeconds="14400" 
+		timeToLiveSeconds="28800"
+		
+		memoryStoreEvictionPolicy="LFU" 
+		transactionalMode="off">
+		
+		<persistence strategy="localTempSwap" />
+	</cache>
+	
+    <cache name="pdf" 
+		maxEntriesLocalHeap="5"
+		maxEntriesLocalDisk="500000" 
+		eternal="false" 
+		diskSpoolBufferSizeMB="20"
+		
+		timeToIdleSeconds="14400" 
+		timeToLiveSeconds="28800"
+		
+		memoryStoreEvictionPolicy="LFU" 
+		transactionalMode="off">
+		
+		<persistence strategy="localTempSwap" />
+		
+	</cache>
+
+    <!--
+    Compiere Disk Cache
+    10k elements in heap
+	20k elements on disk
+    -->
+    <cache name="CompiereDisk"
+			statistics="true"
+           maxEntriesLocalHeap="10000"
+           maxEntriesLocalDisk="20000"
+           eternal="true"
+           overflowToDisk="true"
+           diskSpoolBufferSizeMB="20"
+           memoryStoreEvictionPolicy="LFU"
+           transactionalMode="off"
+            />
+
+    <!--
+    Compiere Memory Cache
+    10k elements in heap
+	expire 1h (60*60=3600) if not used, or after 12h (60*60*12=43200)
+    -->
+    <cache name="CompiereMemory"
+			statistics="true"
+           maxEntriesLocalHeap="10000"
+           eternal="false"
+           overflowToDisk="false"
+           timeToIdleSeconds="3300"
+           timeToLiveSeconds="43200"
+           memoryStoreEvictionPolicy="LFU"
+           transactionalMode="off"
+            />
+            
+</ehcache>

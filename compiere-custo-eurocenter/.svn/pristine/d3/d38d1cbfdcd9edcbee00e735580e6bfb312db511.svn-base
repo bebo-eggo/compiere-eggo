@@ -1,0 +1,2 @@
+ALTER TABLE C_OrderLine ADD XX_PrixSN NUMBER;
+ALTER TABLE C_DocTypeInfo ADD DocStatus CHAR(2);

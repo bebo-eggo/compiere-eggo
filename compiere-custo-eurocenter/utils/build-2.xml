@@ -1,0 +1,408 @@
+<project name="update" default="init" basedir=".">
+	<target name="init">
+
+  		<property environment="env"/>
+		<property environment="file" file="build.properties" />
+
+		<property name="remote.patches.dir" value="http://support.audaxis.com/compiere-patches" />
+		<!-- OLD WAY
+		<property name="version" value="361" />
+		-->
+	  	<property name="compiere.dir" value="${basedir}/.." />
+		
+		<property name="lib.compiere.dir" value="${compiere.dir}/lib" />
+		<property name="utils.compiere.dir" value="${compiere.dir}/utils" />
+		
+  		<property name="data.compiere.dir" value="${compiere.dir}/data" />
+  		<property name="patch.data.compiere.dir" value="${data.compiere.dir}/patch" />
+		
+		<property name="download.compiere.dir" value="${compiere.dir}/download" />
+		<property name="lib.download.dir" value="${download.compiere.dir}/lib" />
+		<property name="extract.download.dir" value="${download.compiere.dir}/extract" />
+		<property name="data.extract.download.dir" value="${extract.download.dir}/data" />
+		<property name="excel.data.extract.download.dir" value="${data.extract.download.dir}/excel" />
+		
+		<property name="utils.extract.download.dir" value="${extract.download.dir}/utils" />
+		
+		<property name="scripts.compiere.dir" value="${compiere.dir}/scripts" />
+		<property name="scripts.extract.download.dir" value="${extract.download.dir}/scripts" />
+
+		<property name="data.download.dir" value="${download.compiere.dir}/data" />
+		<property name="patch.data.download.dir" value="${data.download.dir}/patch" />
+  	
+		<path id="project.classpath">
+        	<fileset dir="${compiere.dir}/lib">
+            	<include name="*.jar" />
+        	</fileset>
+    		</path>
+		
+		<setproxy/>
+		
+		<mkdir dir="${download.compiere.dir}"/>
+
+		<delete failonerror="false">
+			<fileset dir="${patch.data.compiere.dir}">
+				<include name="*"/>
+			</fileset>
+		</delete>
+
+	</target>
+	
+	<!-- 
+	Phase 1 We remove download/
+	Phase 2 is Maven magic : download or take from local repository and 
+	        copy to download/lib/
+	-->
+	<target name="download" depends="init">
+
+		<delete failonerror="false"> 
+			<fileset dir="${download.compiere.dir}">
+				<include name="**/*"/>
+			</fileset>
+		</delete>
+
+		<mkdir dir="${download.compiere.dir}"/>
+		<mkdir dir="${extract.download.dir}"/>
+
+		<!-- OLD WAY
+		<get src="${remote.patches.dir}/${version}/dist/apps.ear" 
+				    dest="${extract.download.dir}/apps.ear" 
+				    verbose="true"
+				    usetimestamp="true"
+					ignoreerrors="false"/>
+		-->
+		
+	</target>
+	
+	<!--
+	Phase 3 Extract resources to be copied to COMPIERE_HOME/...
+	-->
+	<target name="extract" depends="init">
+
+		<copy overwrite="true" todir="${extract.download.dir}/" failonerror="false">
+			<fileset dir="${lib.download.dir}">
+				<include name="apps*.ear"/>
+			</fileset>
+			<mapper type="merge" to="apps.ear"/>
+		</copy>
+
+		<unjar dest="${extract.download.dir}">
+			<fileset dir="${lib.download.dir}">
+				<include name="compiere-tools-*.jar"/>
+			</fileset>
+		</unjar>
+		<unjar dest="${extract.download.dir}">
+			<fileset dir="${lib.download.dir}">
+				<include name="compiere-core-*.jar"/>
+			</fileset>
+		</unjar>
+		<unjar dest="${extract.download.dir}">
+			<fileset dir="${lib.download.dir}">
+				<include name="compiere-custo-*.jar"/>
+			</fileset>
+		</unjar>
+		<unjar dest="${extract.download.dir}">
+			<fileset dir="${lib.download.dir}">
+				<include name="compiere-jasper-*.jar"/>
+		</fileset>
+		</unjar>
+	</target>
+	
+	<!--
+	Phase 4.1 Copy Patches to COMPIERE_HOME/data/patch
+	The process to load them will read this directory
+	-->
+	<target name="patch" depends="extract" >
+		<copy overwrite="true" todir="${patch.data.compiere.dir}" failonerror="false">
+			<!--
+			<fileset dir="${data.extract.download.dir}/patch-archives">
+				<include name="*.*"/>
+			</fileset>
+			<fileset dir="${data.extract.download.dir}/patch-archives/ddls">
+				<include name="*.*"/>
+			</fileset>
+			<fileset dir="${data.extract.download.dir}/patch">
+				<include name="*.*"/>
+			</fileset>
+			-->
+			<fileset dir="${data.extract.download.dir}/custos">
+				<include name="*.*"/>
+			</fileset>
+		</copy>
+	</target>
+	
+	<!-- 
+	Phase 4.2 Deploy Jasper File to WAR directory
+	-->
+	<target name="jasperreport" depends="extract">
+        <copy overwrite="true" todir="${compiere.dir}/jboss/server/compiere/deploy/audaxis.ear/jasper.war"
+        	failonerror="false">
+                <!-- compiere-tools : que les .jasper -->
+                <fileset dir="${extract.download.dir}">
+                        <include name="*.jasper"/>
+                        <include name="*.jrxml"/>
+                </fileset>
+                <!-- custo client : jasper, source, gif , ... -->
+                <fileset dir="${extract.download.dir}/data/jasper">
+                        <include name="**/*"/>
+                </fileset>
+        </copy>
+	</target>
+	
+	<!-- 
+	Phase 4.3 Deploy Excel File to WAR directory
+	-->
+	<target name="excel" depends="extract">
+		<copy overwrite="true" todir="${compiere.dir}/jboss/server/compiere/deploy/audaxis.ear/templates.war"
+			failonerror="false">
+			<fileset dir="${excel.data.extract.download.dir}">
+				<include name="**/*.xls"/>
+			</fileset>
+		</copy>
+		<!-- For Demo Only -->
+		<copy overwrite="true" todir="${compiere.dir}/data/excel"
+			failonerror="false">
+			<fileset dir="${excel.data.extract.download.dir}">
+				<include name="**/*.xls"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<!-- 
+	Phase 4.4 Deploy Scripts File to scripts directory
+	-->
+	<target name="scripts" depends="extract">
+		<copy overwrite="true" todir="${scripts.compiere.dir}" failonerror="false">
+			<fileset dir="${scripts.extract.download.dir}">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+	</target>
+	
+	<!-- 
+	Phase 4.5 EAR definition to EAR META_INF directory
+	For jasper and templates WAR
+	-->
+	<target name="ear" depends="extract">
+		<copy overwrite="true" todir="${compiere.dir}/jboss/server/compiere/deploy/audaxis.ear/META-INF"
+			failonerror="false">
+			<fileset dir="${utils.extract.download.dir}/audaxis.ear/META-INF">
+				<include name="application.xml"/>
+			</fileset>
+		</copy>
+		
+		<copy overwrite="true" todir="${compiere.dir}/jboss/server/compiere/deploy"
+			failonerror="false">
+			<fileset dir="${extract.download.dir}">
+				<include name="apps.ear"/>
+			</fileset>			
+		</copy>
+	</target>
+
+	<!-- 
+	Phase 4.6 Scripts for update... Ourselves 
+	Directory update/
+	-->
+	<target name="update" depends="extract">
+		<!-- Delete Old scripts -->
+		<delete failonerror="false">
+			<fileset dir="${compiere.dir}/update">
+				<include name="build.xml"/>
+				<include name="update.*"/>
+				<include name="RUN_update.*"/>
+				<include name="RUN_download.*"/>
+				<include name="RUN_download_*.*"/>
+				<include name="Load_Patch.*"/>
+				<include name="Load_Patch_*.*"/>
+				<include name="buildTemplate.properties"/>
+				<exclude name="Load_Patch_Custom.*"/>
+			</fileset>
+			<fileset dir="${compiere.dir}">
+				<include name="RUN_setup.*"/>
+			</fileset>				
+			<fileset dir="${compiere.dir}/jboss/server/compiere/lib">
+				<include name="compiere-audaxis-tools.jar"/>
+			</fileset>
+		</delete>
+		<copy overwrite="true" todir="${compiere.dir}/update">
+			<fileset dir="${utils.extract.download.dir}">
+				<include name="*-2.xml"/>
+				<include name="*_2.bat"/>
+				<include name="*_2.sh"/>
+				<include name="*Template.*"/>
+			</fileset>
+		</copy>		
+		<!-- Creation des Load_Patch_Custom qui ne seront eux pas ecrase contrairement aux fichiers *_2.* -->
+		 
+		<copy overwrite="false" todir="${compiere.dir}/update">
+			<fileset dir="${utils.extract.download.dir}">
+			<include name="*_Custom.*"/>
+			</fileset>
+		</copy>	
+		<copy overwrite="true" todir="${compiere.dir}">
+			<fileset dir="${utils.extract.download.dir}/Compiere2">
+				<include name="build*.xml"/>
+				<include name="RUN_setup_2.*"/>
+				<include name="RUN_Compiere2_2.*"/>
+				<include name="*.jnlp"/>
+			</fileset>
+		</copy>
+		<copy overwrite="false" todir="${lib.compiere.dir}">
+			<fileset dir="${utils.extract.download.dir}/Compiere2/lib">
+				<include name="ehcache.xml" />
+			</fileset>
+		</copy>
+	</target>
+	
+	<!--
+	Phase 4.7 This is the compiereRoot EJB
+	Responsible for Client/Server communication (Acct posting/status)
+	-->
+	<target name="compiereroot" depends="extract">
+		<copy overwrite="true" todir="${lib.compiere.dir}">
+			<fileset dir="${utils.extract.download.dir}/Compiere2/lib">
+				<include name="compiereRoot.xml"/>
+			</fileset>
+		</copy>
+		<jar file="${lib.compiere.dir}/compiereRoot.jar">
+			<fileset dir="${utils.extract.download.dir}/Compiere2/lib">
+				<include name="META-INF/ejb-jar.xml"/>
+			</fileset>
+		</jar>
+	</target>
+		
+	<!--
+	Phase 4.8 This is compiereApps WAR/JAR ???
+	Compiere HTML UI
+	-->
+	<target name="compiereapps" depends="extract">
+		<copy overwrite="true" todir="${lib.compiere.dir}">
+			<fileset dir="${utils.extract.download.dir}/Compiere2/lib">
+				<include name="compiereApps.xml"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<!--
+	Phase 4.8 This is compiereWebStore WAR/JAR ???
+	Compiere WebStore application
+	-->
+	<target name="compierewebstore" depends="extract">
+		<copy overwrite="true" todir="${lib.compiere.dir}">
+			<fileset dir="${utils.extract.download.dir}/Compiere2/lib">
+				<include name="compiereWebStore.xml"/>
+			</fileset>
+		</copy>
+	</target>
+	
+	<!--
+	Phase 4.9 Reload SQLJ
+	The Java files are under packages org.compiere.sqlj inside compiere-all-....jar
+	-->
+	<target name="sqlj" depends="extract">
+		<!-- ATTENTION
+		SQLJ requiret une compilation avec target=1.1
+		incompatible avec Maven
+		On va donc mettre le sql.jar comme module dans le repo et comme dépendance de all2
+		-->
+		<delete dir="sqlj" failonerror="true"/>
+		<mkdir dir="sqlj"/>
+		<unjar dest="sqlj">
+			<fileset dir="${lib.download.dir}">
+				<include name="sqlj-*.jar"/>
+			</fileset>
+		</unjar>
+		<jar destfile="${lib.compiere.dir}/sqlj.jar">
+			<fileset dir="sqlj">
+				<include name="org/compiere/sqlj/**"/>
+			</fileset>
+		</jar>
+		<delete dir="sqlj"/>
+		<!-- 
+		Quelle MERDE EN BOITE ce SQLJ ! 
+		On repasse en mode PL/SQL pour des raisons de performance
+		-->
+		<delete>
+			<fileset dir="${utils.compiere.dir}/oracle">
+			    <include name="RUN_sqlj.*"/>
+			    <include name="create.*"/>
+			</fileset>
+		</delete>
+	</target>
+
+	<!--
+	Phase 4.10 Jboss
+	The JBoss JAR must be called jboss.jar for RUN_Server2Stop to work
+	-->
+	<target name="jboss" depends="extract">
+		<!-- ATTENTION
+		SQLJ requiret une compilation avec target=1.1
+		incompatible avec Maven
+		On va donc mettre le sql.jar comme module dans le repo et comme dépendance de all2
+		-->
+		<delete dir="jbossdir" failonerror="true"/>
+		<mkdir dir="jbossdir"/>
+		<unjar dest="jbossdir">
+			<fileset dir="${lib.download.dir}">
+				<include name="jboss-*.jar"/>
+				<include name="jbossall-*.jar"/>
+			</fileset>
+		</unjar>
+		<jar destfile="${lib.compiere.dir}/jboss.jar">
+			<fileset dir="jbossdir">
+				<include name="*/**"/>
+			</fileset>
+		</jar>
+		<delete dir="jbossdir"/>
+	</target>
+
+	<!--
+	Phase 5 Copy Jars to COMPIERE_HOME/LIB
+	Phase 6 is to call setup of Compiere Ant build script
+	Phase 7 is to Load_Patch
+	-->
+	<target name="java" 
+		depends="patch,ear,jasperreport,excel,scripts,update,compiereroot,compiereapps,compierewebstore,sqlj,jboss">
+
+		<!-- Deploy Client jars -->
+		<delete>
+			<fileset dir="${lib.compiere.dir}">
+				<include name="*.jar"/> <!-- !!! -->
+				<exclude name="compiereRoot.jar"/> 	<!-- creer dans compiereroot -->
+				<exclude name="sqlj.jar"/> 			<!-- creer dans sqlj -->
+				<exclude name="jboss.jar"/> 			<!-- creer dans jboss -->
+			</fileset>
+		</delete>
+		<copy overwrite="true" todir="${lib.compiere.dir}">
+			<fileset dir="${lib.download.dir}">
+				<include name="*.jar"/> <!-- !!! -->
+				<exclude name="sqlj*.jar"/> 			<!-- creer dans sqlj -->
+				<exclude name="jboss*.jar"/> 
+			</fileset>
+		</copy>
+
+		<!-- Deploy Server jars -->
+		<!-- En changement de ce script il est important de respecter en phase le delete
+		     et le copy.  Ceci est indispensable pour faire a tout moment un retour
+		     sur un fichier copier chez un client par erreur -->
+		<delete>
+			<fileset dir="${compiere.dir}/jboss/server/compiere/lib">
+				<include name="commons-beanutils-*.jar"/> <!-- !!! -->
+				<include name="commons-cli-*.jar"/> <!-- !!! -->
+				<include name="commons-digester-*.jar"/> <!-- !!! -->
+				<include name="commons-httpclient-*.jar"/> <!-- !!! -->
+			</fileset>
+		</delete>
+<!--
+		<copy overwrite="true" todir="${compiere.dir}/jboss/server/compiere/lib">
+			<fileset dir="${lib.download.dir}">
+				<include name="commons-beanutils-*.jar"/> 
+				<include name="commons-cli-*.jar"/> 
+				<include name="commons-digester-*.jar"/> 
+				<include name="commons-httpclient-*.jar"/> 
+			</fileset>
+		</copy>
+-->
+	</target>
+
+</project>

@@ -1,0 +1,219 @@
+package com.audaxis.compiere.process;
+
+import java.lang.reflect.Constructor;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.logging.Level;
+
+import org.compiere.common.CompiereStateException;
+import org.compiere.model.MDocBaseType;
+import org.compiere.model.MTable;
+import org.compiere.process.DocAction;
+import org.compiere.process.DocumentEngine;
+import org.compiere.process.ProcessInfoParameter;
+import org.compiere.util.Ctx;
+import org.compiere.util.DB;
+import org.compiere.util.DBException;
+import org.compiere.util.Trx;
+
+import com.audaxis.compiere.db.Util;
+import com.audaxis.compiere.model.MOrder;
+import com.audaxis.compiere.util.CompiereException;
+
+public class OrderStatusChange extends SvrProcessExtended {
+
+	private int p_clientId = 0;
+	private int p_orgId = 0;
+	private int p_typeDoc = 0;
+	private int p_typeOA = 0;
+	private Timestamp p_dateOrderedFrom = null;
+	private Timestamp p_dateOrderedTo = null;
+	private String p_docNoFrom = null;
+	private String p_docNoTo = null;
+	private String p_reportOnly = "";
+	private String p_docActionOrig = "";
+	private String p_docAction = null;
+	private String p_isSales = "";
+	private Timestamp p_datePromisedFrom = null;
+	private Timestamp p_datePromisedTo = null;
+	
+	//74610
+	private int p_bpartnerID = 0;
+
+	@Override
+	protected void prepare() {
+		ProcessInfoParameter[] para = getParameter();
+		for (int i = 0; i < para.length; i++)
+		{
+			String name = para[i].getParameterName();
+			if (name.equals("AD_Client_ID"))
+				p_clientId = para[i].getParameterAsInt();
+			else if (name.equals("AD_Org_ID"))
+				p_orgId = para[i].getParameterAsInt();
+			else if (name.equals("C_DocType_ID"))
+				p_typeDoc = para[i].getParameterAsInt();
+			else if (name.equals("Z_TypeOA_ID"))
+				p_typeOA = para[i].getParameterAsInt();
+			else if (name.equals("IsSOTrx"))
+				p_isSales = (String) para[i].getParameter();
+			else if (name.equals("DateOrdered")) {
+				p_dateOrderedFrom = (Timestamp) para[i].getParameter();
+				p_dateOrderedTo = (Timestamp) para[i].getParameter_To();
+			}
+			else if (name.equals("DatePromised")) {
+				p_datePromisedFrom = (Timestamp) para[i].getParameter();
+				p_datePromisedTo = (Timestamp) para[i].getParameter_To();
+			}
+			else if  (name.equals("ReportOnly"))
+				p_reportOnly = (String) para[i].getParameter();
+			else if  (name.equals("DocActionOrig"))
+				p_docActionOrig = (String) para[i].getParameter();
+			else if  (name.equals("DocAction"))
+				p_docAction = (String) para[i].getParameter();
+			if (name.equals("C_BPartner_ID"))
+				p_bpartnerID = para[i].getParameterAsInt();
+			else
+				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+		}
+		
+		if(p_dateOrderedFrom!=null && p_dateOrderedTo == null)
+			throw new CompiereException("Erreur - Date de fin "+(p_isSales.equals("N")?"OA":"ODV")+" non définie");	
+		if(p_dateOrderedFrom==null && p_dateOrderedTo != null)
+			throw new CompiereException("Erreur - Date de début "+(p_isSales.equals("N")?"OA":"ODV")+" non définie");
+		
+		if(p_datePromisedFrom!=null && p_datePromisedTo == null)
+			throw new CompiereException("Erreur - Date de fin "+(p_isSales.equals("N")?"OA":"ODV")+" livraison non définie");	
+		if(p_datePromisedFrom==null && p_datePromisedTo != null)
+			throw new CompiereException("Erreur - Date de début "+(p_isSales.equals("N")?"OA":"ODV")+" livraison non définie");
+
+	}
+
+	@Override
+	protected String doIt() throws Exception {
+
+		String sql1 = "Delete from Z_DocCorrection ";
+		int no1 = DB.executeUpdate(get_Trx(), sql1);
+		int nbr=0;
+		log.fine("save [" + get_Trx() + "] #" + no1 + " - Delete from Z_DocCorrection - getAD_PInstance_ID = " + getAD_PInstance_ID());
+		commit();
+
+		loadDatas();
+
+		StringBuffer sql = new StringBuffer("select Record_ID from Z_DocCorrection where AD_PInstance_ID = ? ");
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement(sql.toString(), get_Trx());
+			pstmt.setInt(1,getAD_PInstance_ID());
+			rs = pstmt.executeQuery();
+			while (rs.next())
+			{ 				
+				if("N".equals(p_reportOnly)) {
+					try{
+						if(p_docAction == null)
+							log.severe("Action cible non valide");
+
+						else{	
+							MOrder mo = new MOrder(getCtx(),rs.getInt(1), get_Trx());
+							mo.setDocAction(p_docAction);
+							DocumentEngine.processIt(mo, p_docAction);
+							if (! mo.save())
+								throw new CompiereStateException("Erreur Enregistrement");	
+							else {
+								nbr++;
+							}
+						}
+
+					}catch (Exception ex) {
+						log.saveError("erreur traitement sur : "+rs.getString(1)+"-", ex);
+					}
+				} 
+
+			}
+
+		}
+		catch (Exception e)
+		{  
+			log.log(Level.SEVERE, sql.toString(), e);
+			throw new DBException(e);
+
+		}
+		finally
+		{
+			Util.closeCursor(pstmt, rs);						
+		}
+
+		return "nombre de documents corrigés :"+nbr;
+	}
+
+	private void loadDatas() {
+
+		ArrayList<Object> params = new ArrayList<Object>();
+		StringBuffer sql= new StringBuffer("INSERT INTO Z_DocCorrection (AD_CLIENT_ID,AD_ORG_ID,AD_PINSTANCE_ID,AD_TABLE_ID,CREATED,DOCACTION,"
+				+ "DOCACTIONORIG,DOCSTATUS,DOCUMENTNO,RECORD_ID," + 
+				"REPORTONLY,DOCORG_ID,C_BPARTNER_ID,DATEACCT,DATEORDERED,DATEPROMISED,C_DOCTYPE_ID,Z_TYPEOA_ID,ISSOTRX) " + 
+				"select ad_client_id, ");
+		if (p_orgId !=0 )		
+			sql.append("co.AD_Org_ID ,");
+		else 		
+			sql.append("0 ,");	
+		
+		sql.append(" ?");
+		params.add(getAD_PInstance_ID());
+		sql.append(" ,259, sysdate,");
+		sql.append(" ?, ?, ");
+		params.add(p_docAction);
+		params.add(p_docActionOrig);
+		sql.append("co.DocStatus, co.DOCUMENTNO, co.C_Order_ID, ");
+		sql.append("?, ");
+		params.add(p_reportOnly);
+		sql.append("co.ad_org_id, ");
+		sql.append("co.c_bpartner_id,");
+		
+		sql.append(" null,");
+		sql.append("co.DateOrdered, co.DatePromised, co.C_DocType_ID, co.Z_TYPEOA_ID, co.ISSOTRX ");
+		sql.append("from C_Order co where co.AD_Client_ID = ? ");
+		params.add(p_clientId);
+
+		if (p_orgId !=0 )	{	
+			sql.append(" and co.AD_Org_ID = ? ");
+			params.add(p_orgId);
+		}
+		if (p_typeDoc !=0 )	{	
+			sql.append(" and co.C_DocType_ID = ? ");
+			params.add(p_typeDoc);
+		}
+		if (p_typeOA !=0 )	{	
+			sql.append(" and co.Z_TypeOA_ID = ? ");
+			params.add(p_typeOA);
+		}
+		sql.append(" and co.ISSOTRX = ? ");
+		params.add(p_isSales);
+		
+		if(p_dateOrderedFrom !=null && p_dateOrderedTo !=null ) {
+			sql.append(" and co.DateOrdered between ? and ? ");
+			params.add(p_dateOrderedFrom);
+			params.add(p_dateOrderedTo);
+		}
+		
+		if(p_datePromisedFrom !=null && p_datePromisedTo !=null ) {
+			sql.append(" and co.DatePromised between ? and ? ");
+			params.add(p_datePromisedFrom);
+			params.add(p_datePromisedTo);
+		}
+		
+
+		if(p_bpartnerID>0) {
+			sql.append(" and co.c_bpartner_id = ? ");
+			params.add(p_bpartnerID);
+		}
+		
+		int no = DB.executeUpdate(get_Trx(), sql.toString(), params.toArray());
+		if (no < 0)
+			throw new CompiereException("Error creating datas");
+	}
+}

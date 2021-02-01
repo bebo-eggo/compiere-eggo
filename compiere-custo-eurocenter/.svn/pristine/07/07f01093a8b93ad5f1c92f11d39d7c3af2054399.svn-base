@@ -1,0 +1,4 @@
+ALTER TABLE C_Order MODIFY Vendor_ID NUMBER(10) DEFAULT NULL;
+ALTER TABLE C_Order ADD SavGenQuotation CHAR(1) NOT NULL;
+ALTER TABLE C_Order ADD SavGenQuotation CHAR(1);
+ALTER TABLE C_Order ADD isQuotGenerated CHAR(1) DEFAULT 'N' CHECK (isQuotGenerated IN ('Y','N')) NOT NULL;

@@ -1,0 +1,1 @@
+update AD_Menu_Trl set Name = 'Réservations clients' where AD_Menu_ID = 1002681 and AD_Language = 'fr_FR';

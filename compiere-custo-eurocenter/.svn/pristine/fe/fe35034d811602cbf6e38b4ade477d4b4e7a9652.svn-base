@@ -1,0 +1,1 @@
+update ad_field set displaylogic='@DocStatus@=''DR'' | @DocStatus@=''IP'' | @DocStatus@=''IN''' where ad_column_id = (select ad_column_id from ad_column where columnname = 'DocAction' and ad_table_id=(select ad_table_id from ad_table where tablename='C_BankStatement')) and ad_tab_id = (select ad_tab_id from ad_tab where value='FERMETURE DE CAISSE ');

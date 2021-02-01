@@ -1,0 +1,26 @@
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'AD_Client_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'AD_OrgTo_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'AD_Org_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'C_BankAccount_From_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'C_BankAccount_To_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'C_ChargeTo_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'C_Charge_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'C_Currency_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'C_DocTypeFrom_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'C_DocTypeTo_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'C_DocType_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'DateAcct' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'DateTrx' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'Description' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'DocAction' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'DocStatus' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'DocumentNo' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'DueDate' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'IsActive' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'PayAmt' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'Processed' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'Processing' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'ZSubPaymentRuleTo_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'ZSubPaymentRule_ID' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+UPDATE AD_Column SET isupdateable = 'Y' ,  isalwaysupdateable = 'Y' WHERE ColumnName LIKE 'Z_PreparePayment' AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName LIKE 'Z_BankTransfert');
+

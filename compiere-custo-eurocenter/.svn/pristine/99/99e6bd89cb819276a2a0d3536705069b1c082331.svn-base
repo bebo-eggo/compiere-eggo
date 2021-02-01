@@ -1,0 +1,4 @@
+update ad_window_trl set name='Fermeture de caisse' where ad_language='fr_FR' and ad_window_id = (select ad_window_id from ad_window where name ='CLOSING CASH');
+update ad_menu_trl set name='Fermeture de caisse' where ad_language='fr_FR' and ad_menu_id = (select ad_menu_id from ad_menu where name ='CLOSING CASH');
+update ad_window_trl set name='Dépôt bancaire' where ad_language='fr_FR' and ad_window_id = (select ad_window_id from ad_window where name ='Deposit Bank');
+update ad_menu_trl set name='Dépôt bancaire' where ad_language='fr_FR' and ad_menu_id = (select ad_menu_id from ad_menu where name ='Deposit Bank');

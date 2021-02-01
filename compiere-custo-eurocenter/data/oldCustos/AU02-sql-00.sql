@@ -1,0 +1,1 @@
+ALTER TABLE C_Order MODIFY Z_OrderStepStatus CHAR(2) DEFAULT '04';

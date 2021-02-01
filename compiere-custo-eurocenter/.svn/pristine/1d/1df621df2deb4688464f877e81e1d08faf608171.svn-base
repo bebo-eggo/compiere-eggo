@@ -1,0 +1,196 @@
+package com.audaxis.compiere.eurocenter.util;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+
+import org.compiere.model.MInvoice;
+import org.compiere.model.MInvoiceLine;
+import org.compiere.model.MOrg;
+import org.compiere.model.X_Z_ProductTax;
+import org.compiere.util.Ctx;
+import org.compiere.util.DB;
+import org.compiere.util.Trx;
+
+public class InvoiceUtil {
+
+	public InvoiceUtil() {
+		// TODO Auto-generated constructor stub
+	}
+	/**
+	 * Description : Si taxeCode != null, on force la création ou la MAJ de la ligne de taxe au montant amount. Si non, on crée les lignes suivant le paramètrage de l'article.
+	 * @param ctx
+	 * @param invoiceID ID de C_Invoice_ID (Mandatory)
+	 * @param productID ID de M_Product_ID de la ligne de facture (Mandatory)
+	 * @param partnerID ID du tiers de facuration (Mandatory)
+	 * @param amout Montant TOTAL de la taxe pour la facture 
+	 * @param taxeCode Code de la taxe à devoir créer pour la facture
+	 * @param trx
+	 */
+	public static void addModifyRecupelLine(Ctx ctx, int invoiceID, int productID, int partnerID, double amout,String taxeCode, boolean auto,Trx trx){
+		// If recupel exist make/Update Recupel Line
+		if (productID > 0 && partnerID > 0){
+			StringBuffer sql = 	new StringBuffer("select max(upper(nvl(substr(bp.taxid,1,2), c.countrycode))) ")
+			.append("from c_bpartner bp ")
+			.append("inner join c_bpartner_location bpl on bpl.c_bpartner_id = bp.c_bpartner_id " )
+			.append("inner join c_location loc on loc.c_location_id = bpl.c_location_id ") 
+			.append("inner join c_country c on c.c_country_id = loc.c_country_id ")
+			.append("where bp.c_bpartner_id = ? and bpl.isactive = 'Y' ");
+			
+			int ref_ID  = DB.getSQLValue(trx, "Select AD_Reference_ID from AD_Reference where Name = 'ListProductTax' ");
+			String ctry = DB.getSQLValueString(trx, sql.toString(), partnerID);
+			if ("BE".equalsIgnoreCase(ctry) || "LU".equalsIgnoreCase(ctry)){
+				//si taxeCode<> null, forcer l'ajout de la taxes.
+				if(taxeCode!=null)
+				{
+					sql = new StringBuffer("select max(c_charge_id) from C_Charge where AD_Client_ID = ? "
+							+ "and ListProductTax = ? ");
+					ArrayList<Object> pa = new ArrayList<Object>();
+					pa.add(ctx.getAD_Client_ID());
+					pa.add(taxeCode);
+					int chargeID = DB.getSQLValue(trx, sql.toString(), pa.toArray());
+					if (chargeID > 0 ) {
+						sql = 	new StringBuffer("select c_invoiceLine_id from c_invoiceline where c_invoice_id = ? and c_charge_id = ? ");
+						int invLineID = DB.getSQLValue(trx, sql.toString(), invoiceID,chargeID);
+						if (invLineID < 1){  // Create New Line
+							MInvoiceLine invrecup = new MInvoiceLine(new MInvoice(ctx, invoiceID, trx));
+							invrecup.setC_Charge_ID(chargeID);
+							invrecup.setQty(1);
+							invrecup.setPrice(new BigDecimal(amout));
+							invrecup.setLineNetAmt(new BigDecimal(amout)); // qty always 1 ( for compute Tax)
+							invrecup.setTax();
+							invrecup.setTaxAmt();
+							invrecup.save(trx);
+						}
+						else {				 // Modify New Line
+							MInvoiceLine invrecup = new MInvoiceLine(ctx,invLineID,trx);
+							invrecup.setPrice(new BigDecimal(amout));
+							invrecup.setLineNetAmt(new BigDecimal(amout)); // // qty always 1 ( for compute Tax)
+							invrecup.setTaxAmt();
+							invrecup.save(trx);
+						}
+					}
+				}else if(auto){
+				//Boucle sur les taxes de l'article
+				int ids[] = X_Z_ProductTax.getAllIDs("Z_ProductTax", " IsActive = 'Y' and M_Product_ID = "+productID, trx);
+				for (int i = 0; i < ids.length; i++) {
+					X_Z_ProductTax pt = new X_Z_ProductTax(ctx, ids[i], trx);
+					//Aller chercher le prix plus la taxe
+					sql = new StringBuffer("select max(c_charge_id) from C_Charge where AD_Client_ID = ? "
+							+ "and ListProductTax = (Select Value from AD_Ref_list where AD_Reference_ID = ? AND UPPER(AD_Ref_list.NAME) = upper(?)) ");
+					ArrayList<Object> pa = new ArrayList<Object>();
+					pa.add(ctx.getAD_Client_ID());
+					pa.add(ref_ID);
+					pa.add(pt.getName());
+					int chargeID = DB.getSQLValue(trx, sql.toString(), pa.toArray());
+					if (chargeID > 0 ) {
+						//Connaitre le somme pour ce C_Tax 
+						sql =new StringBuffer("Select Sum(QtyInvoiced*zpt.PriceStd) from c_invoiceline inner join Z_ProductTax zpt on zpt.M_Product_ID = c_invoiceline.M_Product_ID and UPPER(zpt.Name) = UPPER('"+pt.getName()+"')"
+								+ " where c_invoice_id = ? ");
+						BigDecimal sum = DB.getSQLValueBD(trx, sql.toString(), invoiceID);
+						if(sum == null)
+							continue;
+						double sumtax = sum.doubleValue();
+						if(amout!=0)
+							sumtax = amout;
+						sql = 	new StringBuffer("select c_invoiceLine_id from c_invoiceline where c_invoice_id = ? and c_charge_id = ? ");
+						int invLineID = DB.getSQLValue(trx, sql.toString(), invoiceID,chargeID);
+						if (invLineID < 1){  // Create New Line
+							MInvoiceLine invrecup = new MInvoiceLine(new MInvoice(ctx, invoiceID, trx));
+							invrecup.setC_Charge_ID(chargeID);
+							invrecup.setQty(1);
+							invrecup.setPrice(new BigDecimal(sumtax));
+							invrecup.setLineNetAmt(new BigDecimal(sumtax)); // qty always 1 ( for compute Tax)
+							invrecup.setTax();
+							invrecup.setTaxAmt();
+							invrecup.save(trx);
+						}
+						else {				 // Modify New Line
+							MInvoiceLine invrecup = new MInvoiceLine(ctx,invLineID,trx);
+							invrecup.setPrice(new BigDecimal(sumtax));
+							invrecup.setLineNetAmt(new BigDecimal(sumtax)); // // qty always 1 ( for compute Tax)
+							invrecup.setTaxAmt();
+							invrecup.save(trx);
+						}
+				}}
+				
+				}
+			}	
+		}
+	}
+	
+	public static void addModifyRecupelLine(Ctx ctx, int invoiceID, int partnerID, double amout,String taxeCode,Trx trx){
+		// If recupel exist make/Update Recupel Line
+		if (partnerID > 0){
+			StringBuffer sql = 	new StringBuffer("select max(upper(nvl(substr(bp.taxid,1,2), c.countrycode))) ")
+			.append("from c_bpartner bp ")
+			.append("inner join c_bpartner_location bpl on bpl.c_bpartner_id = bp.c_bpartner_id " )
+			.append("inner join c_location loc on loc.c_location_id = bpl.c_location_id ") 
+			.append("inner join c_country c on c.c_country_id = loc.c_country_id ")
+			.append("where bp.c_bpartner_id = ? and bpl.isactive = 'Y' ");
+			
+			int ref_ID  = DB.getSQLValue(trx, "Select AD_Reference_ID from AD_Reference where Name = 'ListProductTax' ");
+			String ctry = DB.getSQLValueString(trx, sql.toString(), partnerID);
+			if ("BE".equalsIgnoreCase(ctry) || "LU".equalsIgnoreCase(ctry)){
+				//si taxeCode<> null, forcer l'ajout de la taxes.
+				if(taxeCode!=null)
+				{
+					sql = new StringBuffer("select max(c_charge_id) from C_Charge where AD_Client_ID = ? "
+							+ "and ListProductTax = ? ");
+					ArrayList<Object> pa = new ArrayList<Object>();
+					pa.add(ctx.getAD_Client_ID());
+					pa.add(taxeCode);
+					int chargeID = DB.getSQLValue(trx, sql.toString(), pa.toArray());
+					if (chargeID > 0 ) {
+						 // Create New Line
+							MInvoiceLine invrecup = new MInvoiceLine(new MInvoice(ctx, invoiceID, trx));
+							invrecup.setC_Charge_ID(chargeID);
+							invrecup.setQty(1);
+							invrecup.setPrice(new BigDecimal(amout));
+							invrecup.setLineNetAmt(new BigDecimal(amout)); // qty always 1 ( for compute Tax)
+							invrecup.setTax();
+							invrecup.setTaxAmt();
+							invrecup.save(trx);
+					}
+				
+				
+				}
+			}	
+		}
+	}
+
+	public static int getWarehouseIDByCountry(Ctx ctx, int AD_Org_ID, String CountryCode,Trx trx)
+	{
+		StringBuffer sql = 	new StringBuffer("Select M_Warehouse_id, cc.countrycode from M_Warehouse ") 
+		.append("inner join c_location cl on cl.c_location_id = M_Warehouse.c_location_id ")
+		.append("inner join c_country cc on cc.c_country_id = cl.c_country_id ")
+		.append("where M_Warehouse.AD_Org_ID = ? and cc.countrycode = ? ")
+		.append("order by M_Warehouse_id");
+		
+		ArrayList<Object> pa = new ArrayList<Object>();
+		pa.add(AD_Org_ID);
+		pa.add(CountryCode);
+		int WarehouseID = DB.getSQLValue(trx, sql.toString(), pa.toArray());
+		if(WarehouseID<=0)
+		{
+			WarehouseID = MOrg.get(ctx, AD_Org_ID).getM_Warehouse_ID();
+		}
+		
+		return WarehouseID;
+	}
+	
+	public static int getOrgByGLN(Ctx ctx, int AD_Client_ID, String GLN,Trx trx)
+	{
+		StringBuffer sql = 	new StringBuffer("Select Max(AD_Org_ID) from AD_Org where AD_Client_ID = ? and Z_Gln = ?");
+				
+		ArrayList<Object> pa = new ArrayList<Object>();
+		pa.add(AD_Client_ID);
+		pa.add(GLN);
+		int Org_ID = DB.getSQLValue(trx, sql.toString(), pa.toArray());
+		if(Org_ID<=0)
+		{
+			Org_ID = MOrg.get(ctx, Org_ID).getM_Warehouse_ID();
+		}
+		
+		return Org_ID;	
+	}
+}

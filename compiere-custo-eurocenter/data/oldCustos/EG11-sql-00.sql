@@ -1,0 +1,1 @@
+ALTER TABLE C_Order ADD flux_travail CHAR(2);

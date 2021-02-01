@@ -1,0 +1,2 @@
+ALTER TABLE C_Order ADD IsStoreContract CHAR(1) DEFAULT 'N' CHECK (IsStoreContract IN ('Y','N')) NOT NULL;
+ALTER TABLE C_Order ADD Z_SoldeGI NUMBER DEFAULT 0;

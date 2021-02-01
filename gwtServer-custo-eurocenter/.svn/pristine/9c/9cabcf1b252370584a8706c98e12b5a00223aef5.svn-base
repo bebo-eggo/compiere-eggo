@@ -1,0 +1,878 @@
+package org.compiere.gwt.server;
+
+import java.io.*;
+import java.math.*;
+import java.sql.*;
+import java.text.*;
+import java.util.*;
+import java.util.logging.*;
+
+import org.compiere.common.*;
+import org.compiere.common.constants.*;
+
+import org.compiere.framework.*;
+import org.compiere.gwt.client.service.*;
+import org.compiere.model.*;
+import org.compiere.util.*;
+import org.compiere.vos.*;
+import org.compiere.esb.*;
+
+public class DashboardServiceImpl extends CRemoteServiceServlet implements
+DashboardService {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	static CLogger log = CLogger.getCLogger(DashboardServiceImpl.class);
+
+	private static final String USER_QUERY_SQL = "SELECT q.Name, t.AD_Window_ID, t.Name, q.AD_UserQuery_ID, t.AD_Tab_ID from AD_UserQuery q, AD_Tab t WHERE t.AD_Tab_ID = q.AD_Tab_ID AND q.AD_User_ID = ?";
+
+	private static final String RECENT_ITEM_INSERT_SQL = "INSERT INTO AD_RecentItem "
+		+ "(AD_Client_ID,AD_Role_ID,AD_Org_ID,AD_User_ID,CreatedBy,"
+		+ "UpdatedBy, AD_Window_ID, AD_Tab_ID, Record_ID,Name)"
+		+ "VALUES (?,?,?,?,?,?,?,?,?,?)";
+
+	// SQL Assumes same user can not add two recent items at the same exact time
+	private static final String RECENT_ITEM_DELETE_SQL = "DELETE FROM AD_RecentItem recent_outer "
+		+ "where recent_outer.AD_User_ID = ? AND recent_outer.AD_Role_ID=? AND recent_outer.Created = "
+		+ "(select min(recent_inner.Created) FROM "
+		+ "AD_RecentItem recent_inner where recent_inner.AD_User_ID = recent_outer.AD_User_ID AND recent_inner.AD_Role_ID=recent_outer.AD_Role_ID)";
+
+	// SQL Assumes same user can not add two recent items at the same exact time
+	private static final String RECENT_ITEM_DELETE_NODE_SQL = "DELETE FROM AD_RecentItem recent_outer "
+		+ "where recent_outer.AD_User_ID = ? AND recent_outer.AD_Tab_ID = ? AND recent_outer.Record_ID = ? AND recent_outer.AD_Role_ID = ?";
+
+	public List<NodeVO> getRecentItems() {
+		GwtServer server = LoginServiceImpl
+		.getGwtServer(getThreadLocalRequest());
+		Ctx ctx = server.getContext();
+
+		String sql = getRecentItemsSelectSQL(false);
+
+		Object[][] result = QueryUtil.executeQuery(sql, new Object[] {
+				ctx.getAD_Client_ID(), ctx.getAD_Org_ID(), ctx.getAD_Role_ID(),
+				ctx.getAD_User_ID() });
+
+		ArrayList<NodeVO> recentItems = new ArrayList<NodeVO>();
+		for (Object[] row : result) {
+			NodeVO node = new NodeVO();
+			node.entityID = Integer.parseInt(row[0].toString());
+			node.componentId = Integer.parseInt(row[1].toString());
+			node.entityKey = row[2].toString();
+			node.name = row[3].toString();
+			node.nodeType = NodeVO.TYPE_WINDOW;
+			recentItems.add(node);
+		}
+		return recentItems;
+	}
+
+	private String getRecentItemsSelectSQL(boolean count) {
+		StringBuffer sql = new StringBuffer("SELECT ");
+
+		if (count) {
+			sql.append("COUNT(*) ");
+		} else {
+			sql.append("AD_Window_ID, AD_Tab_ID, Record_ID, Name ");
+		}
+
+		sql
+		.append("FROM AD_RecentItem WHERE AD_Client_ID = ? AND AD_Org_ID = ? AND AD_Role_ID = ? AND AD_User_ID = ? ");
+
+		if (!count)
+			sql.append("ORDER BY Created ASC");
+
+		return sql.toString();
+	}
+
+	// TODO: Externalize into preference?
+
+	private static final int MAX_RECENT_ITEMS = 10;
+
+	private static final int MAX_RECENT_LENGTH = 60;
+
+	private static final String RECENT_TRUNCATE = "...";
+
+	public Integer addRecentItem(NodeVO node) {
+		int removed = 0;
+		GwtServer server = LoginServiceImpl
+		.getGwtServer(getThreadLocalRequest());
+		Ctx ctx = server.getContext();
+
+		String sql = getRecentItemsSelectSQL(true);
+		Object[][] result = QueryUtil.executeQuery(sql, (new Object[] {
+		ctx.getAD_Client_ID(), ctx.getAD_Org_ID(), ctx.getAD_Role_ID(),
+		ctx.getAD_User_ID() }));
+
+		int count = ((result == null || result.length == 0) ? -1 : ((BigDecimal) result[0][0]).intValue());
+
+		if (count >= MAX_RECENT_ITEMS) {
+
+			removed = deleteLeastRecentItem(ctx);
+
+		}
+
+		/*
+		 * AD_CLIENT_ID,AD_ROLE_ID,AD_ORG_ID,AD_USER_ID,CREATEDBY," +
+		 * "UPDATEDBY, AD_WINDOW_ID, AD_TAB_ID, AD_RECORD_ID,NAME)" +
+		 */
+		PreparedStatement pstmt = DB.prepareStatement(RECENT_ITEM_INSERT_SQL, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, 
+				null);
+
+		//truncate name to 60 char limit if longer than 60 chars
+		if(node.name.length() >= MAX_RECENT_LENGTH){
+			node.name = node.name.substring(0, MAX_RECENT_LENGTH - 4).concat(RECENT_TRUNCATE);
+		}
+		try {
+			pstmt.setInt(1, ctx.getAD_Client_ID());
+			pstmt.setInt(2, ctx.getAD_Role_ID());
+			pstmt.setInt(3, ctx.getAD_Org_ID());
+			pstmt.setInt(4, ctx.getAD_User_ID());
+			pstmt.setInt(5, ctx.getAD_User_ID());
+			pstmt.setInt(6, ctx.getAD_User_ID());
+			pstmt.setInt(7, node.entityID);
+			pstmt.setInt(8, node.componentId);
+			pstmt.setInt(9, Integer.parseInt(node.entityKey));
+			pstmt.setString(10, node.name);
+			pstmt.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DB.closeStatement(pstmt);
+		}
+
+		return removed;
+	}
+
+	private int deleteLeastRecentItem(Ctx ctx) {
+		// TODO Auto-generated method stub
+		int removed = 0;
+		PreparedStatement pstmt = DB.prepareStatement(RECENT_ITEM_DELETE_SQL, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE,
+				null);
+		try {
+			pstmt.setInt(1, ctx.getAD_User_ID());
+			pstmt.setInt(2, ctx.getAD_Role_ID());
+			removed = pstmt.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}  finally {
+			try {
+				pstmt.close();
+			} catch(Exception e) {
+				throw new CompiereStateException("statement cannot be closed"+e.getCause());
+			}
+		}
+
+		return removed;
+	}
+
+	public Boolean deleteRecentItem(NodeVO node) {
+
+		int removed = 0;
+		GwtServer server = LoginServiceImpl
+		.getGwtServer(getThreadLocalRequest());
+		Ctx ctx = server.getContext();
+
+		PreparedStatement pstmt = DB.prepareStatement(
+				RECENT_ITEM_DELETE_NODE_SQL, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, null);
+		try {
+			pstmt.setInt(1, ctx.getAD_User_ID());
+			pstmt.setInt(2, node.componentId);
+			pstmt.setInt(3, Integer.parseInt(node.entityKey));
+			pstmt.setInt(4, ctx.getAD_Role_ID());
+			removed = pstmt.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				pstmt.close();
+			} catch(Exception e) {
+				throw new CompiereStateException("statement cannot be closed"+e.getCause());
+			}
+		}
+
+		if (removed > 0)
+			return true;
+
+		return false;
+	}
+
+	private static class NodeComparator implements Comparator<NodeVO>, Serializable {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		public NodeComparator() {
+
+		}
+
+		public int compare(NodeVO f1, NodeVO f2) {
+			if (f1.description.equals(f2.description)) {
+				return f1.name.compareTo(f2.name);
+			} else {
+				return f1.description.compareTo(f2.description);
+			}
+
+		}
+
+	}
+
+	public List<NodeVO> getUserQueries() {
+		GwtServer server = LoginServiceImpl
+		.getGwtServer(getThreadLocalRequest());
+		Ctx ctx = server.getContext();
+		ArrayList<NodeVO> queryItems = new ArrayList<NodeVO>();
+		PreparedStatement pstmt = DB.prepareStatement(USER_QUERY_SQL, (Trx) null);
+		try {
+			pstmt.setInt(1, ctx.getAD_User_ID());
+			ResultSet rs = pstmt.executeQuery();
+			try {
+			while (rs.next()) {
+				NodeVO node = new NodeVO();
+				node.entityID = rs.getInt(2);
+				node.componentId = rs.getInt(5);
+
+				node.description = rs.getString(1);
+				node.name = rs.getString(3);
+				node.entityKey = rs.getString(4);
+				node.nodeType = NodeVO.TYPE_WINDOW;
+				node.query = new QueryVO();
+				node.query.onlyCurrentCreated = false;
+				node.query.savedQueryName = rs.getString(1);
+				queryItems.add(node);
+			}
+			}
+			finally {
+			rs.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				pstmt.close();
+			} catch(Exception e) {
+				throw new CompiereStateException("statement cannot be closed"+e.getCause());
+			}
+		}
+
+		Collections.sort(queryItems, new NodeComparator());
+		return queryItems;
+	}	
+
+	private static final DecimalFormat s_format = DisplayType
+	.getNumberFormat(DisplayTypeConstants.Integer);
+
+	public List<GoalVO> getUserGoals(boolean force) {
+		GwtServer server = LoginServiceImpl
+		.getGwtServer(getThreadLocalRequest());
+		Ctx serverCtx = server.getContext();
+		MGoal[] goals = MGoal.getUserGoals(serverCtx);
+		List<GoalVO> lGoals = new ArrayList<GoalVO>();
+
+
+		for (MGoal goal : goals) {
+			goal.updateGoal(force);
+			GoalVO vo = new GoalVO();
+			vo.name = goal.getName();
+			vo.percent = goal.getPercent();
+			vo.goalID = goal.getPA_Goal_ID();
+			vo.red = goal.getColor().getRed();
+			vo.blue = goal.getColor().getBlue();
+			vo.green = goal.getColor().getGreen();
+			StringBuilder text = new StringBuilder();
+			if (goal.getDescription() != null)
+				text.append(goal.getDescription()).append(": ");
+			text.append(s_format.format(goal.getMeasureActual()));
+			if (goal.isTarget())
+				text.append(" ").append(Msg.getMsg(serverCtx, "of")).append(
+				" ").append(s_format.format(goal.getMeasureTarget()));
+			vo.description = text.toString();
+			lGoals.add(vo);
+		}
+
+		return lGoals;
+	}
+
+	public GoalDetailVO getGoalDetails(int goalID) {
+		GoalDetailVO vo = new GoalDetailVO();
+		GwtServer server = LoginServiceImpl
+		.getGwtServer(getThreadLocalRequest());
+		Ctx ctx = server.getContext();
+		MGoal goal = new MGoal(ctx, goalID, null);
+		if (goal != null) {
+
+			vo.nameLabel = goal.getXAxisText();
+			vo.valueLabel = goal.getName();
+			loadGoalDetails(ctx, goal, vo);
+
+		}
+		return vo;
+	}
+
+	private void loadGoalDetails(Ctx ctx, MGoal m_goal, GoalDetailVO vo) {
+
+		Query query = null;
+		double maxValue = 0;
+
+		MMeasure measure = m_goal.getMeasure();
+		if (measure == null) {
+			log.warning("No Measure for " + m_goal);
+			return;
+		}
+		MRole role = MRole.get(ctx, ctx.getAD_Role_ID(), ctx.getAD_User_ID(), false);
+		if (X_PA_Measure.MEASURETYPE_Calculated.equals(measure.getMeasureType())) {
+			MMeasureCalc mc = MMeasureCalc.get(ctx, measure
+					.getPA_MeasureCalc_ID());
+			String sql = mc.getSqlBarChart(m_goal.getRestrictions(false),
+					m_goal.getMeasureDisplay(), m_goal.getDateFrom(),m_goal.getDateTo(), role); // logged
+			// in
+			// role
+			PreparedStatement pstmt = null;
+
+			try {
+				pstmt = DB.prepareStatement(sql, (Trx) null);
+				ResultSet rs = pstmt.executeQuery();
+
+				while (rs.next()) {
+					BigDecimal data = rs.getBigDecimal(1);
+					Timestamp date = rs.getTimestamp(2);
+					if(data.doubleValue() > maxValue){
+						maxValue = data.doubleValue();
+						vo.maxValue = maxValue;
+					}
+					query = mc.getQuery(m_goal.getRestrictions(false), m_goal
+							.getMeasureDisplay(), date, role); // logged
+					vo.addDetailRow(getNode(query), formatDate(date, m_goal.getMeasureDisplay()), data
+							.doubleValue());											// in
+					// role
+				}
+				rs.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println(sql);
+				log.log(Level.SEVERE, sql, e);
+			} finally {
+				try {
+					pstmt.close();
+				} catch(Exception e) {
+					throw new CompiereStateException("statement cannot be closed"+e.getCause());
+				}
+			}
+
+		} else if (X_PA_Measure.MEASURETYPE_Achievements.equals(measure
+				.getMeasureType())) {
+			if (X_PA_Measure.MEASUREDATATYPE_StatusQtyAmount.equals(measure
+					.getMeasureDataType())) {
+
+				MAchievement[] achievements = MAchievement.get(measure);
+				for (MAchievement achievement : achievements) {
+					query = Query.getEqualQuery("PA_Measure_ID", achievement
+							.getPA_Measure_ID());
+					double value = achievement.getManualActual().doubleValue();
+					if(value > maxValue){
+						maxValue = value;
+						vo.maxValue = maxValue;
+					}
+					vo.addDetailRow(getNode(query), achievement.getName(),
+							value);
+				}
+			} else // MMeasure.MEASUREDATATYPE_QtyAmountInTime
+			{
+				String MeasureDisplay = m_goal.getMeasureDisplay();
+				String trunc = "D";
+				if (X_PA_Goal.MEASUREDISPLAY_Year.equals(MeasureDisplay))
+					trunc = "Y";
+				else if (X_PA_Goal.MEASUREDISPLAY_Quarter.equals(MeasureDisplay))
+					trunc = "Q";
+				else if (X_PA_Goal.MEASUREDISPLAY_Month.equals(MeasureDisplay))
+					trunc = "MM";
+				else if (X_PA_Goal.MEASUREDISPLAY_Week.equals(MeasureDisplay))
+					trunc = "W";
+				// else if (MGoal.MEASUREDISPLAY_Day.equals(MeasureDisplay))
+				// trunc = "D";
+				trunc = "TRUNC(DateDoc,'" + trunc + "')";
+				StringBuffer sql = new StringBuffer(
+				"SELECT SUM(ManualActual), ")
+				.append(trunc)
+				.append(
+				" FROM PA_Achievement WHERE PA_Measure_ID=? AND IsAchieved='Y' ")
+				.append("GROUP BY ").append(trunc).append(" ORDER BY ")
+				.append(trunc);
+				PreparedStatement pstmt = null;
+				try {
+					pstmt = DB.prepareStatement(sql.toString(), (Trx) null);
+					pstmt.setInt(1, measure.getPA_Measure_ID());
+					ResultSet rs = pstmt.executeQuery();
+					while (rs.next()) {
+						BigDecimal data = rs.getBigDecimal(1);
+						if(data.doubleValue() > maxValue){
+							maxValue = data.doubleValue();
+							vo.maxValue = maxValue;
+						}			
+						Timestamp date = rs.getTimestamp(2);
+
+						query = Query.getEqualQuery("PA_Measure_ID", m_goal
+								.getPA_Measure_ID());
+						vo.addDetailRow(getNode(query),formatDate(date, m_goal.getMeasureDisplay()), data
+								.doubleValue());
+					}
+					rs.close();
+				} catch (Exception e) {
+					log.log(Level.SEVERE, sql.toString(), e);
+				} finally {
+					try {
+						pstmt.close();
+					} catch(Exception e) {
+						throw new CompiereStateException("statement cannot be closed"+e.getCause());
+					}
+				}
+
+			} // Achievement in time
+		} // Achievement
+
+		// Request
+		else if (X_PA_Measure.MEASURETYPE_Request.equals(measure.getMeasureType())) {
+			MRequestType rt = MRequestType.get(ctx, measure
+					.getR_RequestType_ID());
+			String sql = rt.getSqlBarChart(m_goal.getRestrictions(false),
+					m_goal.getMeasureDisplay(), measure.getMeasureDataType(),
+					null, role); // logged in role
+			PreparedStatement pstmt = null;
+			try {
+				pstmt = DB.prepareStatement(sql, (Trx) null);
+				ResultSet rs = pstmt.executeQuery();
+				while (rs.next()) {
+					BigDecimal data = rs.getBigDecimal(1);
+					if(data.doubleValue() > maxValue){
+						maxValue = data.doubleValue();
+						vo.maxValue = maxValue;
+					}
+					String name = null;
+					int R_Status_ID = rs.getInt(3);
+
+					Timestamp date = null;
+					if (R_Status_ID == 0) {
+						date = rs.getTimestamp(2);
+						name = formatDate(date, m_goal.getMeasureDisplay());
+					} else {
+						MStatus status = MStatus.get(ctx, R_Status_ID);
+						name = status.getName();
+					}
+
+					query = rt.getQuery(m_goal.getRestrictions(false), m_goal
+							.getMeasureDisplay(), date, R_Status_ID, MRole
+							.getDefault(ctx, false)); // logged in role
+					vo.addDetailRow(getNode(query), name, data.doubleValue());
+
+				}
+				rs.close();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, sql, e);
+			} finally {
+				try {
+					pstmt.close();
+				} catch(Exception e) {
+					throw new CompiereStateException("statement cannot be closed"+e.getCause());
+				}
+			}
+
+		} // Request
+
+		// Project
+		else if (X_PA_Measure.MEASURETYPE_Project.equals(measure.getMeasureType())) {
+			MProjectType pt = MProjectType.get(ctx, measure
+					.getC_ProjectType_ID());
+			String sql = pt.getSqlBarChart(m_goal.getRestrictions(false),
+					m_goal.getMeasureDisplay(), measure.getMeasureDataType(),
+					null, role); // logged in role
+			PreparedStatement pstmt = null;
+			try {
+				pstmt = DB.prepareStatement(sql, (Trx) null);
+				ResultSet rs = pstmt.executeQuery();
+				while (rs.next()) {
+					BigDecimal data = rs.getBigDecimal(1);
+					if(data.doubleValue() > maxValue){
+						maxValue = data.doubleValue();
+						vo.maxValue = maxValue;
+					}
+					Timestamp date = rs.getTimestamp(2);
+					int id = rs.getInt(3);
+
+					// BarGraphColumn bgc = new BarGraphColumn(pt, data, id);
+					// bgc.setLabel(date, m_goal.getMeasureDisplay());
+
+					query = pt.getQuery(m_goal.getRestrictions(false), m_goal
+							.getMeasureDisplay(), date, id, role); // logged
+					vo.addDetailRow(getNode(query), formatDate(date, m_goal.getMeasureDisplay()), data
+							.doubleValue());													// role
+				}
+				rs.close();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, sql, e);
+			} finally {
+				try {
+					pstmt.close();
+				} catch(Exception e) {
+					throw new CompiereStateException("statement cannot be closed"+e.getCause());
+				}
+			}
+
+		} // Project
+
+		int startValue = 0;
+		// truncate List to last 20 results
+		if (vo.rows.size() > 20)
+			startValue = vo.rows.size() - 20;
+		for (int i = 0; i < startValue; i++) {
+			vo.rows.remove(0);
+		}
+
+	} // loadData
+
+	private NodeVO getNode(Query query) {
+		NodeVO node = getNode(query.getTableName());
+		if(node != null){
+			QueryVO vo = new QueryVO();
+			vo.restrictions = new ArrayList<QueryRestrictionVO>();
+			vo.onlyCurrentCreated = false;
+			int count = query.getRestrictionCount();
+			for(int i =0; i< count; i++){
+				QueryRestrictionVO restriction = new QueryRestrictionVO();
+				//restriction.AndCondition = query.
+				restriction.DirectWhereClause = query.getWhereClause(i);
+				restriction.InfoDisplay = query.getInfoDisplay(i);
+				restriction.InfoDisplay_to = query.getInfoDisplay_to(i);
+				restriction.Operator = query.getOperator(i);
+				restriction.ColumnName = query.getColumnName(i);
+				Object codeFrom = query.getCode(i);
+				if(codeFrom != null)
+					restriction.Code = query.getCode(i).toString();
+				Object codeTo = query.getCodeTo(i);
+				if(codeTo != null)
+					restriction.Code_to = codeTo.toString();
+				vo.restrictions.add(restriction);
+			}
+			node.query = vo;
+		}
+		return node;
+	}
+
+	private String formatDate(Timestamp date, String MeasureDisplay){
+		SimpleDateFormat format = DisplayType.getDateFormat(DisplayTypeConstants.Date);
+		String text = format.format(date);
+		//	Month only
+		if (X_PA_Goal.MEASUREDISPLAY_Month.equals(MeasureDisplay)
+				|| X_PA_Goal.MEASUREDISPLAY_Quarter.equals(MeasureDisplay))
+		{
+			String pattern = format.toPattern();
+			String mmText = text;
+			int index = pattern.indexOf("dd");
+			if (index == 0)			//	dd.MM.yyyy
+				mmText = text.substring(3);
+			else if (index > 0)		//	MM/dd/yyyy
+			{
+				mmText = text.substring(0, index-1);
+				if (text.length() > index+2)
+					mmText += text.substring(index+2);
+			}
+			text = mmText;
+		}
+		return text;
+	}
+
+	private static final String WINDOW_SQL = "SELECT AD_Window.Name, " + 
+	"AD_Table.AD_Window_ID FROM AD_Table INNER JOIN AD_Window ON " +
+	"AD_Window.AD_Window_ID = AD_Table.AD_Window_ID WHERE AD_Table.TableName = ?";
+
+	public NodeVO getNode(String tableName) {
+		NodeVO node = null;
+
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = DB.prepareStatement(WINDOW_SQL, (Trx) null);
+			pstmt.setString(1, tableName);
+			ResultSet rs = pstmt.executeQuery();
+			try {
+			if (rs.next()) {
+				String windowName = rs.getString(1);
+				if(windowName != null){
+					node = new NodeVO();
+					node.nodeType = NodeVO.TYPE_WINDOW;
+					node.name = windowName;
+					node.entityID = rs.getInt(2);
+				}
+			}
+			}
+			finally {
+			rs.close();
+			}
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, WINDOW_SQL, e);
+		} finally {
+			try {
+				pstmt.close();
+			} catch(Exception e) {
+				throw new CompiereStateException("statement cannot be closed"+e.getCause());
+			}
+		}
+
+		// Nothing to Zoom to
+		return node;
+	}
+	//118571
+	@Override
+	public ArrayList<NodeVO> getQuickItems() {
+
+		ArrayList<NodeVO> list = new ArrayList<NodeVO>();
+		return list;
+	}
+
+	@Override
+	public ArrayList<NodeVO> getQuickItems(WindowCtx windowCtx, int AD_Tab_ID) {
+
+		ArrayList<NodeVO> list = new ArrayList<NodeVO>();
+		GwtServer server = LoginServiceImpl
+				.getGwtServer(getThreadLocalRequest());
+		Ctx ctx = server.getContext();		
+		try{
+			int	result=DB.getSQLValue((Trx)null, "SELECT AD_QuickInfo_ID FROM AD_Tab WHERE AD_Tab_ID=?", AD_Tab_ID);
+			if(result != 0) {
+				int AD_QuickInfo_ID = result;
+				String sql = "SELECT SelectClause,Name, AD_Reference_ID, AD_Window_ID, AD_Element_ID, AD_QuickInfoLine_ID,AD_Reference_Value_ID, "
+						//// #52893
+						+" FromClause,WhereClause,OtherClause,DisplayLogic FROM AD_QuickInfoLine WHERE  AD_QuickInfo_ID=? AND IsActive='Y' ORDER BY SeqNo";
+				Object[][] queryResult = QueryUtil.executeQuery((Trx)null, sql, AD_QuickInfo_ID);
+				for(Object[] e : queryResult) {    
+
+					// #52893               	
+					String displayLogic=(String)e[10];
+					if (displayLogic != null && displayLogic.trim().length() > 1) {
+						boolean isDisplay = isDisplayed(1,displayLogic, ctx);
+						if (!isDisplay)
+							continue;
+					}                	
+					// #52893                	
+					String SelectClause = (String) e[0];
+					String FromClause=(String)e[7];
+					String WhereClause=(String)e[8];
+					String OtherClause=(String)e[9];        
+					String SQL= "SELECT " +SelectClause+" FROM "+FromClause;
+					if(WhereClause != null && WhereClause.length()>0){
+						if(WhereClause.trim().length()>0)
+							SQL=SQL+" WHERE "+WhereClause;
+					}                    
+					String newSQL = Evaluator.replaceVariables(SQL, ctx, windowCtx);
+					MRole role = MRole.get(ctx, ctx.getAD_Role_ID(), ctx.getAD_User_ID(), false);
+					AccessSqlParser asp = new AccessSqlParser(newSQL.toUpperCase());
+					AccessSqlParser.TableInfo[] ti = asp.getTableInfo(asp.getMainSqlIndex());
+					//Anomalie #44530 (Entity Type : 1CGK) 380 - quick Info Widget n'affiche pas tout
+					int displayType = ((BigDecimal) e[2]).intValue();			
+					if(displayType==DisplayTypeConstants.URL)
+                    	newSQL= role.addAccessSQL(newSQL, ti[0].getTableName().toUpperCase(),  true,  false);
+                    else
+                    	newSQL= role.addAccessSQL(newSQL.toUpperCase(), ti[0].getTableName().toUpperCase(),  true,  false);
+					if(OtherClause != null && OtherClause.length()>0)
+						newSQL= newSQL+" "+OtherClause;
+					Object[][] rows=null;				
+					rows = QueryUtil.executeQuery((Trx)null,newSQL, new Object[]{});
+						
+					if(displayType==DisplayTypeConstants.TableDir) {
+						int value =-1; 
+						NodeVO node1 = new NodeVO();
+						if(rows.length > 0 && rows[0][0] != null){
+							value = ((BigDecimal)rows[0][0]).intValue();
+							node1.name = e[1]+" : "+ value;
+							if(e[4]!=null)
+							{														
+								//Get the value of identifier columns
+								Language sysLanguage=  Env.getLanguage(ctx);
+								int elementID= ((BigDecimal)e[4]).intValue();
+								M_Element element = new M_Element(ctx,elementID,(Trx)null);
+								String columnName= element.getColumnName();
+								String tableName=null;
+								if (columnName.endsWith("_ID"))
+									tableName=columnName.substring(0, columnName.length()-3);
+								else 
+									continue;								
+								//ZCOM999 StringBuffer identifiercolName= MLookupFactory.getLookup_DisplayColumn( sysLanguage,tableName);
+								StringBuffer identifiercolName= MLookupFactory.getLookup_DisplayColumn( sysLanguage,tableName, true); //ZCOM999
+
+								if(identifiercolName != null && identifiercolName.length()!=0)
+								{
+									String from = tableName;
+									Object[][] identifier=null;
+									if (identifiercolName.indexOf(tableName+"_Trl.")!=-1){
+										from = tableName + " INNER JOIN "+ tableName + "_Trl ON ("+ tableName+"."+columnName+
+												"="+tableName+"_Trl."+columnName + " AND "+tableName+"_Trl."+"AD_Language=?"+")"  ;
+										String sql1= "SELECT "+ identifiercolName + " FROM " + from+ " WHERE " + tableName+"."+columnName+ " = ?";
+										identifier = QueryUtil.executeQuery((Trx)null, sql1,sysLanguage.getAD_Language(),value);
+									}
+									else{
+										String sql1= "SELECT "+ identifiercolName + " FROM " + from+ " WHERE " + tableName+"."+columnName+ " = ?";
+										identifier = QueryUtil.executeQuery((Trx)null, sql1,value);
+									}
+									if(identifier.length > 0 && identifier[0][0] != null)
+										node1.name = e[1]+" : "+identifier[0][0].toString();
+								}	
+								node1.entityKey = "&columnName=" + columnName + "&Record_ID="
+										+ Integer.toString(value);
+							}
+						}
+						else
+							node1.name = e[1]+" : ";
+
+						if (e[3] != null){
+							if(e[3] instanceof BigDecimal)
+								node1.entityID = ((BigDecimal)e[3]).intValue();
+							else
+								node1.entityID = (Integer) e[3];
+							node1.nodeType = NodeVO.TYPE_QUICKINFO;
+						}
+						else
+							node1.nodeType = NodeVO.TYPE_QUICKINFO_TEXT;
+						node1.mode = NodeVO.Mode.SINGLE;
+						list.add(node1);
+					}
+					else if (displayType==DisplayTypeConstants.URL){					 
+						NodeVO node1 = new NodeVO();
+						node1.nodeType = NodeVO.TYPE_QUICKINFO_TEXT;
+						if(rows.length > 0 && rows[0][0] != null){						
+							node1.name = e[1]+" : "+rows[0][0];
+							if(e[3]!=null)
+							{
+								node1.nodeType = NodeVO.TYPE_QUICKINFO;	
+								node1.mode = NodeVO.Mode.MULTI;
+								if(e[3] instanceof BigDecimal)
+									node1.entityID = ((BigDecimal)e[3]).intValue();
+								else
+									node1.entityID = (Integer) e[3];
+								int index=newSQL.toUpperCase().indexOf("WHERE");
+								if  ( index >-1 && (index+5)< newSQL.length())
+								{
+									QueryVO vo = new QueryVO();
+									String whereClause = newSQL.substring(index+5) ;
+									QueryRestrictionVO res = new QueryRestrictionVO(whereClause);
+									ArrayList<QueryRestrictionVO> restrictions = new ArrayList<QueryRestrictionVO>();
+									restrictions.add(res);
+									vo.restrictions = restrictions;
+									node1.query=vo;
+									Object keyvalue = e[5];						 
+									if(keyvalue!= null)
+										node1.entityKey=keyvalue.toString()+"";	
+								}
+							}						
+						}
+						else
+							node1.name = e[1]+" : ";
+						list.add(node1);
+					}
+					else if(displayType == DisplayTypeConstants.Date )
+					{
+						Language sysLanguage=  Env.getLanguage(ctx);
+						NodeVO node1 = new NodeVO();
+						java.util.Date value= null;
+						java.sql.Date date=null;
+						if(rows.length > 0 && rows[0][0] != null)
+							value = (java.util.Date)rows[0][0];
+						if (value !=null)
+						{
+							date = new java.sql.Date(value.getTime());
+							node1.name = e[1]+" : "+sysLanguage.getDateFormat().format(date);
+						}
+						else
+							node1.name = e[1]+" : ";
+						node1.nodeType = NodeVO.TYPE_QUICKINFO_TEXT;
+						list.add(node1);
+					}
+					else if(displayType == DisplayTypeConstants.DateTime )
+					{
+						Language sysLanguage=  Env.getLanguage(ctx);
+						NodeVO node1 = new NodeVO();
+						Timestamp value= null;
+						if(rows.length > 0 && rows[0][0] != null)
+							value = (Timestamp)rows[0][0];	
+						if (value !=null)
+							node1.name = e[1]+" : "+ sysLanguage.getDateTimeFormat().format(value);
+						else
+							node1.name = e[1]+" : ";
+						node1.nodeType = NodeVO.TYPE_QUICKINFO_TEXT;
+						list.add(node1);
+					}
+					else if(displayType == DisplayTypeConstants.List )
+					{
+						NodeVO node1 = new NodeVO();
+						if(rows.length > 0 && rows[0][0] != null)
+						{
+							if (e[6] != null)
+							{
+								int value=-1;
+								if(e[6] instanceof BigDecimal)
+									value = ((BigDecimal)e[6]).intValue();
+								else
+									value = ((Integer) e[6]).intValue();
+								String name= MRefList.getListName(ctx, value, rows[0][0].toString());
+								node1.name = e[1]+" : "+ name;
+							}
+							else
+								node1.name = e[1]+" : "+ rows[0][0];					
+						}
+						else
+							node1.name = e[1]+" : ";
+						node1.nodeType = NodeVO.TYPE_QUICKINFO_TEXT;
+						list.add(node1);
+					}
+					else
+					{
+						NodeVO node1 = new NodeVO();
+						if(rows.length > 0 && rows[0][0] != null)	
+							node1.name = e[1]+" : "+ rows[0][0];
+						else
+							node1.name = e[1]+" : ";
+						node1.nodeType = NodeVO.TYPE_QUICKINFO_TEXT;
+						list.add(node1);
+					}
+
+				}
+			} }catch(Exception ex){
+				ex.printStackTrace();
+
+			}
+		return list;
+	}
+
+	public String putQuickNode( NodeVO node)
+	{
+		GwtServer server = LoginServiceImpl
+				.getGwtServer(getThreadLocalRequest());
+		Ctx ctx = server.getContext();
+		NodeVO node1 = new NodeVO();
+		node1.entityID= node.entityID;
+		node1.mode=NodeVO.Mode.MULTI;
+		node1.nodeType = NodeVO.TYPE_WINDOW;
+		node1.query= node.query;
+		MWindow win = new MWindow(ctx,node1.entityID,(Trx)null);	
+		node1.name = win.getName();
+		server.putNode(node.entityKey, node1);
+		return node.entityKey;
+	}	
+
+	public NodeVO getQuickNode(String key) {
+		GwtServer server = LoginServiceImpl.getGwtServer(getThreadLocalRequest());
+		return server.getNode(key);
+	}
+	public boolean isDisplayed (int WindowNO,String DisplayLogic,Ctx ctx)
+	{			
+
+		if ((DisplayLogic==null)||DisplayLogic.equals(""))
+			return true;
+
+		boolean retValue = Evaluator.evaluateLogic(ctx.getCtx(WindowNO),DisplayLogic);
+		return retValue;
+
+	}
+}

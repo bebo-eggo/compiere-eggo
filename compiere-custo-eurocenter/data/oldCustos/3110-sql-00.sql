@@ -1,0 +1,1 @@
+ALTER TABLE C_Charge ADD ListProductTax CHAR(3);

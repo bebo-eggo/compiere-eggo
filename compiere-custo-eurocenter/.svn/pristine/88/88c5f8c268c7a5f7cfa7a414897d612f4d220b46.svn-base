@@ -1,0 +1,1 @@
+ALTER TABLE ZSubPaymentRule ADD IsClosingCash CHAR(1) DEFAULT 'N' CHECK (IsClosingCash IN ('Y','N'));

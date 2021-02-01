@@ -1,0 +1,1 @@
+update AD_Column set AD_Process_ID = (Select MAX(AD_Process_ID) from AD_Process where value = 'PrintECHPayment') where AD_Column_ID = 1019591;

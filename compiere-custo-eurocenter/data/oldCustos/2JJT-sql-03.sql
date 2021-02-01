@@ -1,0 +1,2 @@
+update AD_Field set MRSEQNO = 160 
+where ad_column_id = (select ad_column_id from ad_column where columnname = 'QtyInvoiced' and ad_table_id in (select ad_table_id from ad_table where tablename = 'Z_IntrastatReport'))  and ad_tab_id in (select ad_tab_id from ad_tab where value = '1000552' and ad_window_id in (select ad_window_id from ad_window where value = 'Declaration TVA INTERVAT'));

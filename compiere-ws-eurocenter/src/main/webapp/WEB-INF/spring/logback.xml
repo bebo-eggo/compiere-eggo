@@ -1,0 +1,33 @@
+<configuration scan="true" scanPeriod="10 seconds">
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    	<encoder>
+      		<!--  <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern> -->
+      		<!--  (%file:%line)  -->
+      		<pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg %n</pattern>
+
+    	</encoder>
+  	</appender>
+  	
+  	<logger name="ch.qos" level="INFO" />
+  	<logger name="org.springframework" level="INFO" />
+  	<logger name="com.audaxis" level="DEBUG" />
+  	<logger name="org.compiere.model" level="DEBUG" />
+  	
+  	<logger name="com.audaxis.compiere.spring" level="INFO" />
+  	
+  	<!-- Pour debugger les exceptions -->
+  	<logger name="com.audaxis.compiere.exception" level="WARN" />
+  
+  	<!-- Pour debugger les offset / limit -->
+  	<logger name="com.audaxis.compiere.service.sql" level="ALL" />
+
+  	<!-- Pour debugger le Cache -->
+  	<logger name="net.sf.ehcache" level="INFO" />
+  	<logger name="org.springframework.cache" level="ALL" />
+  	
+  	<root level="WARN">
+    	<appender-ref ref="STDOUT" />
+  	</root>
+  	
+</configuration>

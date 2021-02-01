@@ -1,0 +1,1 @@
+update ad_field set Defaultvalue='@SQL=SELECT m_pricelist_id FROM m_pricelist where Issopricelist=''N'' and AD_Client_ID=@#AD_Client_ID@' where Ad_Field_Id =(select Ad_Field_Id from ad_field f inner join ad_tab b on B.Ad_Tab_Id=F.Ad_Tab_Id where b.value='Purchase Order_294' and f.name='Price List');

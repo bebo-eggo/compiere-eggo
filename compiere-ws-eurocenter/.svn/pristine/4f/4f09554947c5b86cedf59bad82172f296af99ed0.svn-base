@@ -1,0 +1,397 @@
+package com.audaxis.erp.service;
+
+import java.math.BigDecimal;
+
+import org.compiere.model.MDocType;
+import org.compiere.model.MInOut;
+import org.compiere.model.MLocator;
+import org.compiere.model.MMovement;
+import org.compiere.model.MMovementConfirm;
+import org.compiere.model.MMovementLine;
+import org.compiere.model.MOrg;
+import org.compiere.model.MWarehouse;
+import org.compiere.process.DocumentEngine;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.audaxis.compiere.service.CompiereSessionFullService;
+import com.audaxis.erp.json.Movement;
+import com.audaxis.erp.json.MovementLines;
+import com.audaxis.erp.json.SetInOutResult;
+import com.audaxis.erp.json.SetMovementResult;
+
+import Util.WSUtil;
+
+@Component
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+@CacheConfig(cacheNames="common")
+public class SetMovementService extends CompiereSessionFullService implements ISetMovementService{
+
+	@Autowired
+	protected ISessionService sessionService;
+	
+	private int client_ID = 0;
+	
+	private MOrg org = null;
+	private MWarehouse MWFrom = null;
+	private MWarehouse MWTo = null;
+	private MDocType md = null;
+	private MLocator [] mlsFrom = null;
+	private MLocator [] mlsTo = null;
+	private MMovement mm = null;
+	
+	@Override
+	public SetMovementResult setMovement(Movement mov) {
+		SetMovementResult ret = new SetMovementResult();
+		ret.error = SetMovementResult.E000;
+		//validate IDsession
+		//ret = validateSession(inout);
+		client_ID = getCtx().getAD_Client_ID();
+		if(client_ID == 0)
+		{
+			ret.error = SetMovementResult.E002;
+			ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E002);
+			ret.m_Movement_ID = 0;
+			log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E002), "", ret.errordesc));
+			return ret;
+		}
+		
+		if(mov.NO_MOVEMENT !=null && mov.NO_MOVEMENT.length()>0)
+		{
+			mm = WSUtil.getMovementByDocNo(getCtx(), mov.NO_MOVEMENT, get_Trx());
+			if(mm == null)
+			{
+				ret.error = SetMovementResult.E010;
+				ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E010)+" : "+mov.NO_MOVEMENT;
+				ret.m_Movement_ID = 0;
+				log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E010), "", ret.errordesc));
+				return ret;
+			}
+		}
+		
+		if(!mov.DOCACTION.equals("CO") && !mov.DOCACTION.equals("DR") && !mov.DOCACTION.equals("VO"))
+		{
+			ret.error = SetMovementResult.E050;
+			ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E050);
+			ret.m_Movement_ID = 0;
+			log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E050), "", ret.errordesc));
+			return ret;
+		}
+		
+		if(mov.MAG != null && mov.MAG.length()>0){
+			org = WSUtil.getOrgByValue(getCtx(),client_ID,mov.MAG);
+			if(org == null)
+			{
+				ret.error = SetMovementResult.E040;
+				ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E040);
+				ret.m_Movement_ID = 0;
+				log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E040), "", ret.errordesc));
+				return ret;
+			}
+		}
+		
+		if(mov.TYPEDOC != null && mov.TYPEDOC.length()>0){
+			md = WSUtil.getDocTypeByName(getCtx(), client_ID, mov.TYPEDOC);
+			if(md == null)
+			{
+				ret.error = SetMovementResult.E020;
+				ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E020);
+				ret.m_Movement_ID = 0;
+				log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E020), "", ret.errordesc));
+				return ret;
+			}
+		}
+		
+		for( MovementLines mouvLines : mov.movementLines_set){
+			if(mouvLines.QTY.equals("0"))
+			{
+				ret.error = SetMovementResult.E104;
+				ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E104);
+				ret.m_Movement_ID = 0;
+				ret.documentNo = "";
+				log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E104), "", ret.errordesc));
+				return ret;
+			}
+		}
+		
+		for( MovementLines mouvLines : mov.movementLines_set){
+			if(mouvLines.PRODUCT!=null && mouvLines.PRODUCT.length()>0 
+					&& WSUtil.isProductExist(getCtx(), client_ID, mouvLines.PRODUCT) == null)
+			{
+				ret.error = SetMovementResult.E102;
+				ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E102)+" : "+mouvLines.PRODUCT;
+				ret.m_Movement_ID = 0;
+				ret.documentNo = "";
+				log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E102), "", ret.errordesc));
+				return ret;
+			}
+		}
+		for( MovementLines mouvLines : mov.movementLines_set){
+			if(mouvLines.ENTREPOT_FROM != null && mouvLines.ENTREPOT_FROM.length()>0){
+				MWFrom = WSUtil.getWarehouseByValue(getCtx(), org.getAD_Org_ID(), mouvLines.ENTREPOT_FROM);
+				if(MWFrom == null)
+				{
+					ret.error = SetMovementResult.E041;
+					ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E041);
+					ret.m_Movement_ID = 0;
+					log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E041), "", ret.errordesc));
+					return ret;
+				}else
+					mlsFrom = WSUtil.getWithWhereClause(getCtx(), MWFrom.getM_Warehouse_ID(),null);
+			}
+			if(mouvLines.ENTREPOT_TO != null && mouvLines.ENTREPOT_TO.length()>0){
+				MWTo = WSUtil.getWarehouseByValue(getCtx(), org.getAD_Org_ID(), mouvLines.ENTREPOT_TO);
+				if(MWTo == null)
+				{
+					ret.error = SetMovementResult.E041;
+					ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E041);
+					ret.m_Movement_ID = 0;
+					log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E041), "", ret.errordesc));
+					return ret;
+				}else
+					mlsTo = WSUtil.getWithWhereClause(getCtx(), MWTo.getM_Warehouse_ID(),null);
+			}
+		}
+		
+		if(MWFrom!=null)
+		{
+			for( MovementLines mouvLines : mov.movementLines_set){
+				boolean exist2 = false;
+				String line2 = null;
+					if(mouvLines.EMPL_FROM!=null && mouvLines.EMPL_FROM.length()>0)
+					{
+						
+						for (int j = 0; j < mlsFrom.length; j++) {
+							exist2 = mouvLines.EMPL_FROM.equals(""+mlsFrom[j].getValue());
+							line2 = mouvLines.EMPL_FROM;
+							if(exist2)
+								break;
+						}
+					}else
+						exist2 = true;
+					if(!exist2)
+					{
+						ret.error = SetMovementResult.E103;
+						ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E103+" : "+line2);
+						ret.m_Movement_ID = 0;
+						ret.documentNo = "";
+						log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E103), "", ret.errordesc));
+						return ret;
+					}
+			}
+		}
+		if(MWTo!=null)
+		{
+			for( MovementLines mouvLines : mov.movementLines_set){
+				boolean exist2 = false;
+				String line2 = null;
+					if(mouvLines.EMPL_TO!=null && mouvLines.EMPL_TO.length()>0)
+					{
+						for (int j = 0; j < mlsTo.length; j++) {
+							exist2 = mouvLines.EMPL_TO.equals(""+mlsTo[j].getValue());
+							line2 = mouvLines.EMPL_TO;
+							if(exist2)
+								break;
+						}
+					}else
+						exist2 = true;
+					if(!exist2)
+					{
+						ret.error = SetMovementResult.E103;
+						ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E103+" : "+line2);
+						ret.m_Movement_ID = 0;
+						ret.documentNo = "";
+						log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E103), "", ret.errordesc));
+						return ret;
+					}
+			}
+		}
+		
+		for( MovementLines mouvLines : mov.movementLines_set){
+			if(mouvLines.ENTREPOT_FROM.equals(mouvLines.ENTREPOT_TO) && mouvLines.EMPL_FROM.equals(mouvLines.EMPL_TO))
+			{
+				ret.error = SetMovementResult.E105;
+				ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E105+" : "+mouvLines.EMPL_FROM);
+				ret.m_Movement_ID = 0;
+				ret.documentNo = "";
+				log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E105), "", ret.errordesc));
+				return ret;
+			}
+		}
+		
+		if(mm==null)
+		{
+			//CREATE
+			mm = new MMovement(getCtx(), 0, get_Trx());
+			mm.setAD_Org_ID(org.getAD_Org_ID());
+			mm.set_Value("POReference", mov.POReference);
+			mm.setDescription(mov.DESCRIPTION);
+			mm.setDocStatus(MMovement.DOCSTATUS_Drafted);
+			mm.setDocAction(MMovement.DOCACTION_Complete);
+			mm.setMovementDate(WSUtil.parsedate(mov.MOVEMENTDATE));
+			mm.setC_DocType_ID(md.getC_DocType_ID());
+			if(!mm.save())
+			{
+				ret.error = SetMovementResult.E051;
+				ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E051);
+				ret.m_Movement_ID = 0;
+				ret.documentNo = "";
+				log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E051), "", ret.errordesc));
+				return ret;
+			}
+			for( MovementLines mouvLines : mov.movementLines_set){
+				MMovementLine mml = new MMovementLine(mm);
+				mml.setM_Product_ID( WSUtil.isProductExist(getCtx(), client_ID, mouvLines.PRODUCT).getM_Product_ID());
+				mml.set_Value("M_Warehouse_ID", MWFrom.getM_Warehouse_ID());
+				for (int j = 0; j < mlsFrom.length; j++) {
+					if(mouvLines.EMPL_FROM.equals(""+mlsFrom[j].getValue()))
+					{
+						mml.setM_Locator_ID(+mlsFrom[j].getM_Locator_ID());
+					}
+				}
+				mml.set_Value("M_WarehouseTo_ID", MWTo.getM_Warehouse_ID());
+				for (int j = 0; j < mlsTo.length; j++) {
+					if(mouvLines.EMPL_TO.equals(""+mlsTo[j].getValue()))
+					{
+						mml.setM_LocatorTo_ID(+mlsTo[j].getM_Locator_ID());
+					}
+				}
+				mml.setMovementQty(new BigDecimal(mouvLines.QTY));
+				mml.save();
+			}
+			
+			if(mov.DOCACTION.equals("CO"))
+			{
+				mm.setDocAction("CO");
+				mm.save();
+				if(!DocumentEngine.processIt(mm, MMovement.DOCSTATUS_Completed))
+				{
+					ret.error = SetMovementResult.E506;
+					ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E506);
+					ret.m_Movement_ID = mm.getM_Movement_ID();
+					ret.documentNo = mm.getDocumentNo();			
+					log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E506), "", ret.errordesc));
+					return ret;
+				}
+				mm.save();
+				ret.error = SetMovementResult.E503;
+				ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E503);
+				ret.m_Movement_ID = mm.getM_Movement_ID();
+				ret.documentNo = mm.getDocumentNo();		
+				log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E503), "", ret.errordesc));
+				return ret;
+			}
+		}
+		else
+		{
+			//UPDATE
+			if(mm.getDocStatus().equals("DR") && mov.DOCACTION.equals("CO"))
+			{
+				mm.set_Value("POReference", mov.POReference);
+				mm.setDescription(mov.DESCRIPTION);
+				mm.setDocStatus(MMovement.DOCSTATUS_Drafted);
+				mm.setDocAction(MMovement.DOCACTION_Complete);
+				mm.setMovementDate(WSUtil.parsedate(mov.MOVEMENTDATE));
+				mm.setC_DocType_ID(md.getC_DocType_ID());
+				if(!mm.save())
+				{
+					ret.error = SetMovementResult.E051;
+					ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E051);
+					ret.m_Movement_ID = 0;
+					ret.documentNo = "";
+					log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E051), "", ret.errordesc));
+					return ret;
+				}
+				for( MovementLines mouvLines : mov.movementLines_set){
+					MMovementLine mml = new MMovementLine(mm);
+					mml.setM_Product_ID( WSUtil.isProductExist(getCtx(), client_ID, mouvLines.PRODUCT).getM_Product_ID());
+					mml.set_Value("M_Warehouse_ID", MWFrom.getM_Warehouse_ID());
+					for (int j = 0; j < mlsFrom.length; j++) {
+						if(mouvLines.EMPL_FROM.equals(""+mlsFrom[j].getValue()))
+						{
+							mml.setM_Locator_ID(+mlsFrom[j].getM_Locator_ID());
+						}
+					}
+					mml.set_Value("M_WarehouseTo_ID", MWTo.getM_Warehouse_ID());
+					for (int j = 0; j < mlsTo.length; j++) {
+						if(mouvLines.EMPL_TO.equals(""+mlsTo[j].getValue()))
+						{
+							mml.setM_LocatorTo_ID(+mlsTo[j].getM_Locator_ID());
+						}
+					}
+					mml.setMovementQty(new BigDecimal(mouvLines.QTY));
+					mml.save();
+				}
+				
+				mm.setDocAction("CO");
+				mm.save();
+				if(!DocumentEngine.processIt(mm, MMovement.DOCACTION_Complete))
+				{
+					if(md.isInTransit()){
+						MMovementConfirm []mmc = mm.getConfirmations(true);
+						ret.error = SetMovementResult.E106;
+						ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E106)+" : Confirmation : "+mmc[0].getDocumentNo();
+						ret.m_Movement_ID = mm.getM_Movement_ID();
+						ret.documentNo = mm.getDocumentNo();				
+						log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E106), "", ret.errordesc));
+						return ret;
+					}else{
+						ret.error = SetMovementResult.E506;
+						ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E506);
+						ret.m_Movement_ID = mm.getM_Movement_ID();
+						ret.documentNo = mm.getDocumentNo();				
+						log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E506), "", ret.errordesc));
+						return ret;
+					}
+				}
+				mm.save();
+				ret.error = SetMovementResult.E502;
+				ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E502);
+				ret.m_Movement_ID = mm.getM_Movement_ID();
+				ret.documentNo = mm.getDocumentNo();				
+				log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E502), "", ret.errordesc));
+				return ret;
+			}
+				if(mm.getDocStatus().equals("CO") && mov.DOCACTION.equals("VO"))
+				{
+					//Annulation
+					mm.setDocAction("VO");
+					mm.save();
+					if(!DocumentEngine.processIt(mm, MMovement.DOCACTION_Void))
+					{
+						ret.error = SetMovementResult.E506;
+						ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E506);
+						ret.m_Movement_ID = mm.getM_Movement_ID();
+						ret.documentNo = mm.getDocumentNo();				
+						log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E506), "", ret.errordesc));
+						return ret;
+					}
+					mm.save();
+					ret.error = SetMovementResult.E502;
+					ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E502);
+					ret.m_Movement_ID = mm.getM_Movement_ID();
+					ret.documentNo = mm.getDocumentNo();				
+					log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E502), "", ret.errordesc));
+					return ret;
+				}
+				if(mm.getDocStatus().equals("IP"))
+				{
+					if(md.isInTransit()){
+						MMovementConfirm []mmc = mm.getConfirmations(true);
+						ret.error = SetMovementResult.E509;
+						ret.errordesc = SetMovementResult.getErrorMsg(SetMovementResult.E509)+" : Confirmation : "+mmc[0].getDocumentNo();
+						ret.m_Movement_ID = mm.getM_Movement_ID();
+						ret.documentNo = mm.getDocumentNo();				
+						log.info(String.format(SetMovementResult.getErrorMsg(SetMovementResult.E509), "", ret.errordesc));
+						return ret;
+					}
+				}	
+		}
+		
+		return ret;
+	}
+
+}
