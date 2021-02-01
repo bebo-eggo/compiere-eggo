@@ -157,7 +157,7 @@ public abstract class Doc implements AccountingInterface
 	public static String postImmediate (MAcctSchema[] ass,
 			int AD_Table_ID, int Record_ID, boolean force, Trx trx)
 	{
-		//#50749: Problème de locking dans processus de recomptabilisation
+		//#50749: ProblÃ¨me de locking dans processus de recomptabilisation
 		boolean isCloseTrx = false;
 		if(trx==null)
 		{
@@ -303,8 +303,10 @@ public abstract class Doc implements AccountingInterface
 	protected String			p_Error = null;
 	
 	//63043
-	/** à Nouveau					*/
+	/** Ã  Nouveau					*/
 	public boolean					m_IsAN = false;
+	
+	public boolean					m_IsAN2 = false;
 
 
 	public boolean isAN() {
