@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="EGGO_CourrierLivraison" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="5" isFloatColumnFooter="true" resourceBundle="traduction">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="26"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[1094453]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select
+o.C_DOCTYPE_ID,
+o.c_order_id,
+  SUBSTR(pv.name2,0,1)
+  || '.'
+  || pv.name Vendor,
+o.poreference,
+o.ad_client_id,
+o.ad_org_id,
+o.c_bpartner_location_id,
+o.bill_location_id,
+o.c_bpartner_id,
+o.C_DOCTYPE_ID,
+orgi.ISEGGO,
+orgi.ISPOS,
+getTypeOrg(o.ad_org_id) as typeorg,
+CASE WHEN  o.dateOrdered < TO_DATE('01/08/2015','DD/MM/YYYY') THEN 2 else 1 end as CAS,
+pc.AD_LANGUAGE,
+CASE WHEN  o.dateOrdered < TO_DATE('24/10/2017','DD/MM/YYYY') THEN 1 else 2 end as CASL
+from c_order o
+-- monteur
+left join c_bpartner monteur on monteur.c_bpartner_id = o.monteur_id and (monteur.IsMonteur='Y' OR monteur.IsEmployee='Y')
+--vendor information
+left join ad_user av on (av.ad_user_id = o.SalesRep_ID)
+left join c_project proj on (proj.c_project_ID = o.c_project_ID)
+left join c_bpartner pv on (pv.c_bpartner_id = av.c_bpartner_id)
+-- Customer information.
+left join c_bpartner pc on (pc.c_bpartner_id = o.c_bpartner_id)
+left join ad_user ac on (ac.c_bpartner_id = pc.c_bpartner_id and ac.ISEGGO = 'Y')
+left join
+    (SELECT sch.c_order_id,  SUM(sch.totalamt) as totalamt, SUM(ops.PayAmt) as PayAmt
+     FROM z_orderpaymschedule sch
+     LEFT join z_typeecheance tysch on (tysch.z_typeecheance_id = sch.z_typeecheance_id)
+     LEFT join (select Z_ORDERPAYMSCHEDULE_ID, sum(PayAmt) as PayAmt from Z_ORDERPAYMENT WHERE C_Payment_ID > 0 group by Z_ORDERPAYMSCHEDULE_ID) ops on ops.Z_ORDERPAYMSCHEDULE_ID = sch.Z_ORDERPAYMSCHEDULE_ID
+     WHERE VALUE NOT IN('04','06','10','11')
+     GROUP BY sch.c_order_id
+     ) pay on pay.c_order_id = o.c_order_id
+-- Delivery Adresse.
+left join c_bpartner_location blc on (blc.c_bpartner_location_id = o.bill_location_id and blc.isbillto = 'Y')
+left join c_location lc on (lc.c_location_id = blc.c_location_id)
+left join c_country coc on (coc.c_country_id = lc.c_country_id)
+left join ad_orginfo orgi on o.AD_ORG_ID = orgi.AD_ORG_ID
+where o.c_order_id  = $P{RECORD_ID}]]>
+	</queryString>
+	<field name="C_DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="C_ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="VENDOR" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="BILL_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_ID" class="java.math.BigDecimal"/>
+	<field name="ISEGGO" class="java.lang.String"/>
+	<field name="ISPOS" class="java.lang.String"/>
+	<field name="TYPEORG" class="java.lang.String"/>
+	<field name="CAS" class="java.math.BigDecimal"/>
+	<field name="AD_LANGUAGE" class="java.lang.String"/>
+	<field name="CASL" class="java.math.BigDecimal"/>
+	<title>
+		<band height="275" splitType="Stretch">
+			<image>
+				<reportElement x="15" y="22" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{AD_ORG_ID}.doubleValue()!=1000476]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/eggo_ico.jpg"]]></imageExpression>
+			</image>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="188" y="253" width="173" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{VENDOR}]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="15" y="104" width="260" height="71"/>
+				<subreportParameter name="AD_ORG_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/subreportOrg_Gest.jasper"]]></subreportExpression>
+			</subreport>
+			<textField>
+				<reportElement x="112" y="195" width="330" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevry.mail}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement mode="Transparent" x="96" y="195" width="362" height="20"/>
+			</rectangle>
+			<textField>
+				<reportElement x="28" y="233" width="160" height="20"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevery.mail.ref.commande}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="28" y="253" width="160" height="20"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[(($F{C_DOCTYPE_ID} == 1005282) || ($F{C_DOCTYPE_ID} == 1005180) || ($F{C_DOCTYPE_ID} == 1004141)) ? $R{delevery.mail.plac.conseil}:$R{delevery.mail.cuis.conseil}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="188" y="233" width="173" height="20"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{POREFERENCE}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="29" y="274" width="286" height="1"/>
+			</line>
+			<subreport>
+				<reportElement x="296" y="93" width="243" height="82"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_BPartner_Location_ID">
+					<subreportParameterExpression><![CDATA[$F{BILL_LOCATION_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_InfoClient.jasper"]]></subreportExpression>
+			</subreport>
+			<image>
+				<reportElement x="15" y="22" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{AD_ORG_ID}.doubleValue()==1000476]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/LogoEggoPro.jpg"]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="13" splitType="Prevent">
+			<subreport>
+				<reportElement x="28" y="4" width="511" height="9">
+					<printWhenExpression><![CDATA[!$F{TYPEORG}.equals( "NEC" ) && $F{AD_CLIENT_ID}!=1000024]]></printWhenExpression>
+				</reportElement>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_Order_ID">
+					<subreportParameterExpression><![CDATA[$F{C_ORDER_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_CiviliteClient.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport isUsingCache="false">
+				<reportElement x="28" y="4" width="511" height="9">
+					<printWhenExpression><![CDATA[$F{TYPEORG}.equals( "NEC" )]]></printWhenExpression>
+				</reportElement>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_Order_ID">
+					<subreportParameterExpression><![CDATA[$F{C_ORDER_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_CiviliteClient_KM.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement x="28" y="0" width="511" height="9">
+					<printWhenExpression><![CDATA[!$F{TYPEORG}.equals( "NEC" ) && $F{AD_CLIENT_ID}==1000024]]></printWhenExpression>
+				</reportElement>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_Order_ID">
+					<subreportParameterExpression><![CDATA[$F{C_ORDER_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_CiviliteClient_LUX.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<pageFooter>
+		<band height="40" splitType="Stretch">
+			<subreport>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="0" width="555" height="40" isPrintWhenDetailOverflows="true"/>
+				<subreportParameter name="Ad_client_id">
+					<subreportParameterExpression><![CDATA[$F{AD_CLIENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CASL">
+					<subreportParameterExpression><![CDATA[$F{CASL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CAS">
+					<subreportParameterExpression><![CDATA[$F{CAS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/subreportfooter.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageFooter>
+</jasperReport>

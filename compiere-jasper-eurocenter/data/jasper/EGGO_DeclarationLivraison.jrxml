@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="EGGO_ReportDeclarationLivraison" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="5" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.1000000000000014"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="133"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[1093551]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+  o.c_order_id,
+  l.address1,
+  l.address2,
+  l.City,
+  o.ad_org_id,
+  l.Postal,
+  co.name AS Country,
+  o.documentno,
+  o.poreference,
+  s.totalamt Total,
+  g.name Civilite, p.name2 || ' ' || p.name ClientName,
+  sysdate CurrentDate,
+  z_orgcredit OrganisationCredit,
+  z_numAccept,
+  spr.name as sousMethPai,
+  spr.taxid as tva,
+  o.ad_client_id,
+  trim(lb.address1 || ' ' || lb.postal || ' ' || lb.city) as adresse_banque,
+  o.bill_location_id,
+  o.C_DOCTYPE_ID,
+getTypeOrg(o.ad_org_id) as typeorg, p.AD_Language
+FROM c_order o
+--customer
+LEFT JOIN c_bpartner p ON (p.c_bpartner_id = o.Bill_BPartner_ID)
+LEFT JOIN c_greeting g on (g.c_greeting_id = p.c_greeting_id)
+--adresse information
+LEFT JOIN c_bpartner_location bl ON (bl.c_bpartner_location_id = o.C_BPartner_Location_ID)
+LEFT JOIN c_location l ON (l.c_location_id = bl.c_location_id)
+LEFT JOIN c_country co ON (co.c_country_id = l.c_country_id)
+-- echéance information
+LEFT JOIN z_orderpaymschedule s ON (s.c_order_id        = o.c_order_id AND s.z_typeecheance_id in
+(Select z_typeecheance.z_typeecheance_id from z_typeecheance where z_typeecheance.AD_Client_ID = s.AD_Client_ID and z_typeecheance.ISFINANCEMENT = 'Y' ))
+LEFT JOIN z_typeecheance zte on (zte.z_typeecheance_id =s.z_typeecheance_id)
+LEFT JOIN zsubpaymentrule spr on(spr.zsubpaymentrule_id = zte.zsubpaymentrule_id)
+--adresse banque
+LEFT JOIN c_location lb ON (lb.c_location_id = spr.c_location_id)
+LEFT JOIN c_country co ON (co.c_country_id = lb.c_country_id)
+ where o.c_order_id = $P{RECORD_ID}]]>
+	</queryString>
+	<field name="C_ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="ADDRESS1" class="java.lang.String"/>
+	<field name="ADDRESS2" class="java.lang.String"/>
+	<field name="CITY" class="java.lang.String"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="POSTAL" class="java.lang.String"/>
+	<field name="COUNTRY" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="TOTAL" class="java.math.BigDecimal"/>
+	<field name="CIVILITE" class="java.lang.String"/>
+	<field name="CLIENTNAME" class="java.lang.String"/>
+	<field name="CURRENTDATE" class="java.sql.Timestamp"/>
+	<field name="ORGANISATIONCREDIT" class="java.lang.String"/>
+	<field name="Z_NUMACCEPT" class="java.lang.String"/>
+	<field name="SOUSMETHPAI" class="java.lang.String"/>
+	<field name="TVA" class="java.lang.String"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="ADRESSE_BANQUE" class="java.lang.String"/>
+	<field name="BILL_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="C_DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="TYPEORG" class="java.lang.String"/>
+	<field name="AD_Language" class="java.lang.String"/>
+	<title>
+		<band height="182" splitType="Stretch">
+			<image>
+				<reportElement x="15" y="22" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{TYPEORG}.equals( "GO" )]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL} + "/eggo_ico.jpg"]]></imageExpression>
+			</image>
+			<subreport>
+				<reportElement x="15" y="109" width="260" height="71"/>
+				<subreportParameter name="AD_ORG_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/subreportOrg_Gest.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement x="300" y="92" width="243" height="82"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_BPartner_Location_ID">
+					<subreportParameterExpression><![CDATA[$F{BILL_LOCATION_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/SubReport_InfoClient.jasper"]]></subreportExpression>
+			</subreport>
+			<image>
+				<reportElement x="15" y="39" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{TYPEORG}.equals( "NEC" )]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL} + "/LogoNEC.png"]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="496" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="269" y="323" width="183" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{POREFERENCE}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="15" y="445" width="160" height="1"/>
+			</line>
+			<line>
+				<reportElement x="345" y="446" width="160" height="1"/>
+			</line>
+			<textField isBlankWhenNull="true">
+				<reportElement x="269" y="243" width="182" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{SOUSMETHPAI}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="269" y="303" width="183" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{Z_NUMACCEPT}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement mode="Transparent" x="116" y="70" width="330" height="20"/>
+			</rectangle>
+			<textField>
+				<reportElement x="116" y="70" width="330" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevry.declaration}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="44" y="128" width="491" height="37"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{C_DOCTYPE_ID} == 1005282 || $F{C_DOCTYPE_ID} == 1005180|| $F{C_DOCTYPE_ID} == 1004141) ? $R{delevry.declaration.text1.plac}:$R{delevry.declaration.text1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="44" y="175" width="491" height="24"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{TYPEORG}.equals( "GO" )? $R{delevry.declaration.text2} : $R{delevry.declaration.text3}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="243" width="257" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevry.declaration.banc}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="303" width="257" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevry.declaration.finance.contract}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="323" width="257" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevry.declaration.doss.number}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="345" y="392" width="101" height="19"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{signature}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="15" y="392" width="101" height="19"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{date}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="269" y="263" width="266" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ADRESSE_BANQUE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="FixRelativeToBottom" x="269" y="283" width="100" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{TVA}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="405" y="458" width="100" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{CLIENTNAME}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<pageFooter>
+		<band height="50" splitType="Stretch">
+			<subreport runToBottom="true">
+				<reportElement positionType="FixRelativeToBottom" x="0" y="0" width="555" height="50" isPrintWhenDetailOverflows="true"/>
+				<subreportParameter name="Ad_client_id">
+					<subreportParameterExpression><![CDATA[$F{AD_CLIENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_Language}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CAS">
+					<subreportParameterExpression><![CDATA[new BigDecimal(1)]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/subreportfooter.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageFooter>
+</jasperReport>

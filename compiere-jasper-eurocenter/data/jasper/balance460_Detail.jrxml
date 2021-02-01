@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Balance_Tiers" pageWidth="594" pageHeight="842" columnWidth="534" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="DateFrom" class="java.util.Date">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Client_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Org_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[new java.lang.Double(0)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_BP_Group_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[new java.lang.Double(0)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_BPartner_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[new java.lang.Double(0)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Summary" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BP_GROUP_FROM" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BP_GROUP_TO" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["ZZZZZZZZ"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="excel" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SORTBYNAME" class="java.lang.Double" isForPrompting="false">
+		<defaultValueExpression><![CDATA[new Double(5)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_Country_ID" class="java.lang.Double" isForPrompting="false">
+		<defaultValueExpression><![CDATA[new java.lang.Double(0)]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[Select * from (SELECT tam.ad_client_id,
+ 0 as AD_Org_ID,
+  'Y'     AS IsActive,
+  sysdate AS updated,
+  100     AS updateby,
+  sysdate AS created,
+  100     AS createdby,
+  tam.c_BPartner_ID,
+  tam.c_BP_Group_id,
+  tam.bpvalue,
+  tam.bpname,
+  tam.bpgname,
+  sum(DOCAMTDB) as Debit,
+  sum(DOCAMTCR) as credit,
+ sum(DOCAMTDB) - sum(DOCAMTCR) as Solde,
+ tam.projet
+FROM
+(
+
+SELECT ad_client_id,
+    C_BPartner_ID,
+    bpvalue,
+    c_BP_group_id,
+    bpname,
+    bpgname,
+    SUM(DOCAMTDB) as DOCAMTDB,
+    SUM(DOCAMTCR) as DOCAMTCR,
+    Projet,
+    account
+  FROM
+
+(
+SELECT fa.ad_client_id AS ad_client_id,
+      bp.c_BP_Group_id      AS c_BP_group_id,
+      fa.ACCOUNT_ID         AS faccount,
+      bp.C_BPARTNER_ID      AS c_BPartner_id,
+      bp.value              AS bpvalue,
+      bp.name               AS bpname,
+      bpg.name              AS bpgname,
+      bp.SO_creditlimit creditLimit,
+      unistr(j.tablename) AS doctype,
+      j.documentno
+      || '                           '
+      || j.zfact_acct_id AS documentno,
+      ev.value           AS acctno,
+      TRUNC(fa.dateacct) AS dateacct,
+
+      0   AS DOCSOLDE,
+
+     fa.amtacctdr AS DOCAMTDB ,
+     fa.amtacctcr AS DOCAMTCR,
+     CASE
+        WHEN (fa.ad_table_id = 335)
+        THEN
+          (SELECT DISTINCT bs.NAME
+          FROM C_BankStatementLine bsl
+          INNER JOIN C_BankStatement bs
+          ON bs.C_BankStatement_ID = bsl.C_BankStatement_ID
+          AND bs.docstatus        IN ('CO','CL')
+          WHERE bsl.C_Payment_ID   = fa.record_id
+          )
+        ELSE NULL
+      END AS Extrait,
+     (select max(POreference) from c_invoice where c_BPartner_ID= fa.C_BPartner_ID) as Projet,
+     ev.value as account
+    FROM fact_acct fa
+    INNER JOIN c_bpartner bp
+    ON bp.C_BPartner_ID = fa.C_BPartner_ID
+    INNER JOIN c_bp_group bpg
+    ON bp.C_BP_Group_ID = bpg.C_BP_Group_ID
+    LEFT OUTER JOIN gl_category glc
+    ON glc.gl_category_id = fa.gl_category_id
+    INNER JOIN c_elementvalue ev
+    ON ev.c_elementvalue_id = fa.account_id
+    INNER JOIN z_journal j
+    ON j.zfact_acct_id = fa.fact_acct_id
+    where fa.ad_client_id = $P{AD_Client_ID} and
+     ( bp.C_BPartner_ID    =$P{C_BPartner_ID}
+    OR $P{C_BPartner_ID}  IS NULL
+    OR $P{C_BPartner_ID}  = 0 )
+
+   AND ( fa.AD_Org_ID      = $P{AD_Org_ID}
+OR $P{AD_Org_ID}      IS NULL
+OR $P{AD_Org_ID}       = 0 )
+
+    AND ( bp.C_BP_Group_ID    = $P{C_BP_Group_ID}
+OR $P{C_BP_Group_ID}  IS NULL
+OR $P{C_BP_Group_ID}   = 0 )
+    and ((fa.ACCOUNT_ID in (select c_elementvalue_id from C_ELEMENTVALUE where value = '460000') and fa.ad_client_id=1000000) OR (fa.ACCOUNT_ID in (select c_elementvalue_id from C_ELEMENTVALUE where value ='431000') and fa.ad_client_id=1000024))
+AND (TRUNC(fa.DateAcct) <= $P{DateFrom} )
+    )
+
+     GROUP BY ad_client_id,
+    c_BPartner_ID,
+    c_BP_Group_id,
+    faccount,
+    bpvalue,
+    bpname,
+    bpgname,
+    projet,
+    account
+    )
+    tam
+
+GROUP BY tam.ad_client_id,
+  tam.c_BPartner_ID,
+  tam.c_BP_Group_id,
+  tam.bpvalue,
+  tam.bpname,
+  tam.bpgname,
+  tam.projet)tt where tt.Solde<>0]]>
+	</queryString>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="ISACTIVE" class="java.lang.String"/>
+	<field name="UPDATED" class="java.sql.Timestamp"/>
+	<field name="UPDATEBY" class="java.math.BigDecimal"/>
+	<field name="CREATED" class="java.sql.Timestamp"/>
+	<field name="CREATEDBY" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_ID" class="java.math.BigDecimal"/>
+	<field name="C_BP_GROUP_ID" class="java.math.BigDecimal"/>
+	<field name="BPVALUE" class="java.lang.String"/>
+	<field name="BPNAME" class="java.lang.String"/>
+	<field name="BPGNAME" class="java.lang.String"/>
+	<field name="DEBIT" class="java.math.BigDecimal"/>
+	<field name="CREDIT" class="java.math.BigDecimal"/>
+	<field name="SOLDE" class="java.math.BigDecimal"/>
+	<field name="PROJET" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<columnHeader>
+		<band height="55" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText-2" mode="Opaque" x="216" y="30" width="58" height="23" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Bottom" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="6" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA["Débit"]]></text>
+			</staticText>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-6" x="60" y="30" width="85" height="23"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Bottom">
+					<font size="6" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Nom"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-7" x="2" y="30" width="58" height="23"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Bottom">
+					<font size="6" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Réf."]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="197" y="13" width="196" height="16" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$P{DateFrom}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-5" x="0" y="13" width="197" height="17"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Balance #460000/431000 détail"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-8" x="334" y="30" width="72" height="23"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Bottom">
+					<font size="6" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Solde"]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-2" mode="Opaque" x="274" y="30" width="60" height="23" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Bottom" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="6" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA["Crédi"]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-8" x="406" y="30" width="102" height="23"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Bottom">
+					<font size="6" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Projet"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-6" x="145" y="30" width="71" height="23"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Bottom">
+					<font size="6" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Organisation"]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="12" splitType="Stretch">
+			<printWhenExpression><![CDATA[(new java.lang.Boolean($P{Summary}.equals("N")))]]></printWhenExpression>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="3" y="2" width="57" height="9" isPrintInFirstWholeBand="true" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{BPVALUE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="334" y="2" width="72" height="10" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="6"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{SOLDE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement key="textField-4" mode="Opaque" x="274" y="2" width="60" height="9" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="6"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{CREDIT}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" isPrintRepeatedValues="false" mode="Opaque" x="60" y="2" width="85" height="9" isPrintInFirstWholeBand="true" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="6" isBold="false" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{BPNAME}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="216" y="2" width="58" height="9"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{DEBIT}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="406" y="2" width="102" height="9"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PROJET}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" isPrintRepeatedValues="false" mode="Opaque" x="145" y="2" width="71" height="9" isPrintInFirstWholeBand="true" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="6" isBold="false" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{BPNAME}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

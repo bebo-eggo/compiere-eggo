@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="EGGO_PayOtherMag" language="groovy" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="AD_Org_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[0]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_BPartner_ID" class="java.lang.Double"/>
+	<parameter name="ValidFrom" class="java.util.Date"/>
+	<parameter name="ValidTo" class="java.util.Date"/>
+	<parameter name="AD_Client_ID" class="java.lang.Double"/>
+	<parameter name="Z_PayOtherOrg_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[Select ao.Name as nameao, cb.name as NameCB, cp.documentno, cp.payamt, ao2.Name as nameDest, cp.datetrx from C_Payment cp
+inner join C_BPartner cb on cb.C_BPartner_ID = cp.c_bpartner_id
+inner join AD_Org ao on ao.ad_org_id = cp.ad_org_id
+inner join AD_Org ao2 on ao2.ad_org_id = cp.z_payotherorg_id
+where  ($P{AD_Org_ID}=0 and  ao.AD_Org_ID in (Select AD_Org_ID from AD_Org where AD_Client_ID =$P{AD_Client_ID})
+OR (ao.AD_Org_ID = $P{AD_Org_ID} and ao.AD_Org_ID in (Select AD_Org_ID from AD_Org where AD_Org.AD_Org_ID = $P{AD_Org_ID} and AD_Org.AD_Client_ID =$P{AD_Client_ID})))
+AND  ( ($P{ValidFrom} is not null and cp.datetrx>= $P{ValidFrom} ) OR ($P{ValidFrom} is null and cp.datetrx>= TO_DATE('01/01/2013','DD/MM/YYYY') ))
+AND  ( ($P{ValidTo} is not null and cp.datetrx< $P{ValidTo} ) OR ($P{ValidTo} is null and cp.datetrx= Sysdate ))
+AND (( $P{Z_PayOtherOrg_ID}=0 and cp.z_payotherorg_id in (Select AD_Org_ID from AD_Org where AD_Org.AD_Client_ID =$P{AD_Client_ID})) OR( $P{Z_PayOtherOrg_ID}!=0 and cp.z_payotherorg_id = $P{Z_PayOtherOrg_ID} ))
+order by ao.Name, ao2.Name]]>
+	</queryString>
+	<field name="NAMEAO" class="java.lang.String"/>
+	<field name="NAMECB" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="PAYAMT" class="java.math.BigDecimal"/>
+	<field name="NAMEDEST" class="java.lang.String"/>
+	<field name="DATETRX" class="java.sql.Timestamp"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="32" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="802" height="32"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" lineSpacing="Single">
+					<font size="16" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Paiement autres magasin]]></text>
+			</staticText>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="32" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="104" height="32"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Magasin"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="104" y="0" width="178" height="32"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Tiers"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="386" y="0" width="104" height="32"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Montant paiement"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="490" y="0" width="104" height="32"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Magasin destination"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="594" y="0" width="87" height="32"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Date"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="282" y="0" width="104" height="32"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["No pièces"]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="104" height="20"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NAMEAO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="104" y="0" width="178" height="20"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NAMECB}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="282" y="0" width="104" height="20"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="386" y="0" width="104" height="20"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single"/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{PAYAMT}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="490" y="0" width="104" height="20"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NAMEDEST}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="594" y="0" width="87" height="20"/>
+				<box leftPadding="2">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single"/>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATETRX}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

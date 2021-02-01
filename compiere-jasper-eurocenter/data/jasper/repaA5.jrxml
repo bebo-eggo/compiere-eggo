@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="repa" language="groovy" pageWidth="421" pageHeight="595" columnWidth="393" leftMargin="14" rightMargin="14" topMargin="11" bottomMargin="11">
+	<property name="ireport.zoom" value="1.3660269107301422"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="174"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select
+H.*,
+B.*,
+D.*
+from  RV_PRINTTICKETHDR H
+inner join RV_PRINTTICKETDETAIL D on d.order_id=H.order_id
+inner join RV_PRINTTICKETPARTNER B on b.order_id = H.order_id
+where H.Order_ID = $P{RECORD_ID} AND D.isStocked='Y' AND D.QTYEntered < 0]]>
+	</queryString>
+	<field name="ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="AD_CLIENT_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ADDRESS1" class="java.lang.String"/>
+	<field name="AD_ORG_POSTAL" class="java.lang.String"/>
+	<field name="AD_ORG_CITY" class="java.lang.String"/>
+	<field name="AD_ORG_PHONE" class="java.lang.String"/>
+	<field name="AD_ORG_FAX" class="java.lang.String"/>
+	<field name="AD_ORG_TAXID" class="java.lang.String"/>
+	<field name="DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="DOCUMENTNAME" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="SALESREP_CODE" class="java.lang.String"/>
+	<field name="SALESREP_NAME" class="java.lang.String"/>
+	<field name="SALESREPPHONE" class="java.lang.String"/>
+	<field name="GRANDTOTAL" class="java.math.BigDecimal"/>
+	<field name="GRANDTOTALHT" class="java.math.BigDecimal"/>
+	<field name="DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="BPID" class="java.math.BigDecimal"/>
+	<field name="PAIDAMT" class="java.math.BigDecimal"/>
+	<field name="TOTPAYAMT" class="java.math.BigDecimal"/>
+	<field name="NAME" class="java.lang.String"/>
+	<field name="VALUE" class="java.lang.String"/>
+	<field name="FIRSTNAME" class="java.lang.String"/>
+	<field name="PHONE" class="java.lang.String"/>
+	<field name="PHONE2" class="java.lang.String"/>
+	<field name="EMAIL" class="java.lang.String"/>
+	<field name="TAXID" class="java.lang.String"/>
+	<field name="GREETING" class="java.lang.String"/>
+	<field name="SHIP_NAME" class="java.lang.String"/>
+	<field name="SHIP_ADDRESS1" class="java.lang.String"/>
+	<field name="SHIP_ADDRESS2" class="java.lang.String"/>
+	<field name="SHIP_NUMBER" class="java.lang.String"/>
+	<field name="SHIP_BOX" class="java.lang.String"/>
+	<field name="SHIP_POSTAL" class="java.lang.String"/>
+	<field name="SHIP_CITY" class="java.lang.String"/>
+	<field name="SHIP_COUNTRY" class="java.lang.String"/>
+	<field name="INV_ADDRESS1" class="java.lang.String"/>
+	<field name="INV_ADDRESS2" class="java.lang.String"/>
+	<field name="INV_NUMBER" class="java.lang.String"/>
+	<field name="INV_BOX" class="java.lang.String"/>
+	<field name="INV_POSTAL" class="java.lang.String"/>
+	<field name="INV_CITY" class="java.lang.String"/>
+	<field name="INV_COUNTRY" class="java.lang.String"/>
+	<field name="ORDERLINE_ID" class="java.math.BigDecimal"/>
+	<field name="M_PRODUCT_NAME" class="java.lang.String"/>
+	<field name="M_PRODUCT_VALUE" class="java.lang.String"/>
+	<field name="M_PRODUCT_DESCRIPTION" class="java.lang.String"/>
+	<field name="QTYENTERED" class="java.math.BigDecimal"/>
+	<field name="PRICEENTERED" class="java.math.BigDecimal"/>
+	<field name="RATE" class="java.math.BigDecimal"/>
+	<field name="PRICEENTEREDHT" class="java.math.BigDecimal"/>
+	<field name="TOTALLINE" class="java.math.BigDecimal"/>
+	<field name="SERIALNUMBER" class="java.lang.String"/>
+	<field name="ACCESSORIES" class="java.lang.String"/>
+	<field name="PURCHASEDATE" class="java.sql.Timestamp"/>
+	<field name="PRODUCTSTATE" class="java.lang.String"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="DISCOUNT" class="java.math.BigDecimal"/>
+	<field name="DEPOSITDATE" class="java.sql.Timestamp"/>
+	<field name="ISSTOCKED" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band height="192" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText" x="94" y="10" width="299" height="28"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="18" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[SON IMAGE ELECTRO TELECOM MULTIMEDIA]]></text>
+			</staticText>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="224" y="56" width="169" height="68"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{GREETING} == null ? "" :$F{GREETING}+'\n')+
+($F{NAME}== null ? "" :$F{NAME}+' ')+
+($F{FIRSTNAME} == null ? "" : $F{FIRSTNAME}+'\n')+
+($F{INV_NUMBER} == null ? "" :$F{INV_NUMBER}+',')+
+($F{INV_ADDRESS1} == null ? "" :$F{INV_ADDRESS1}+'\n')+
+($F{INV_ADDRESS2} == null ? "" :$F{INV_ADDRESS2}+'\n')+
+($F{INV_BOX} == null ? "" :$F{INV_BOX}+'\n')+
+($F{INV_POSTAL} == null || $F{INV_POSTAL}.trim().isEmpty() ? "":$F{INV_POSTAL}) +" "+ ($F{INV_CITY} == null ? "" :$F{INV_CITY})+ '\n'+
+($F{PHONE} == null || $F{PHONE}.trim().isEmpty() ? "" : "Tel : "+$F{PHONE}+'\n')+
+($F{PHONE2} == null || $F{PHONE2}.trim().isEmpty() ? "" : "GSM : "+$F{PHONE2}+'\n')]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="6" y="77" width="218" height="64"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{AD_ORG_NAME} == null ? "" :$F{AD_ORG_NAME}+ '\n') +
+($F{AD_ORG_ADDRESS1} == null ? "" :$F{AD_ORG_ADDRESS1}+ '\n' )+
+($F{AD_ORG_POSTAL} == null ? "" :$F{AD_ORG_POSTAL}+ ' ' )+
+($F{AD_ORG_CITY} == null ? "" :$F{AD_ORG_CITY}+ '\n') +
+"Tel :"+($F{AD_ORG_PHONE} == null ? "" :$F{AD_ORG_PHONE})+"  "+"Fax :"+($F{AD_ORG_FAX} == null ? "" :$F{AD_ORG_FAX})]]></textFieldExpression>
+			</textField>
+			<image>
+				<reportElement key="image" x="4" y="2" width="84" height="72"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/LogoEC.png"]]></imageExpression>
+			</image>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="75" y="162" width="149" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="75" y="148" width="149" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNAME}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement key="textField" x="75" y="176" width="149" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATEORDERED}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="6" y="148" width="69" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Document :"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="6" y="176" width="69" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Date :"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="6" y="162" width="69" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Numéro :"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement key="line-1" x="0" y="145" width="393" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line" x="0" y="191" width="393" height="1"/>
+			</line>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="14" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText-2" x="0" y="0" width="393" height="14"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[IMPORTANT : Merci de vous munir de ce document lors de demande d'information ou lors de la reprise de votre appareil]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="217" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText-3" x="6" y="6" width="54" height="15"/>
+				<textElement>
+					<font isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Concerne :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-4" x="6" y="125" width="127" height="15"/>
+				<textElement>
+					<font isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Symptôme(s) constaté(s) :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-5" x="6" y="183" width="137" height="15"/>
+				<textElement>
+					<font isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Description du dépannage :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-6" x="34" y="22" width="39" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Article :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-7" x="34" y="33" width="39" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Type :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-8" x="34" y="44" width="60" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Description :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-9" x="34" y="55" width="72" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Num. de série :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-10" x="34" y="66" width="72" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Date d'achat :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-12" x="34" y="88" width="84" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[État de l'appareil :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-13" x="34" y="99" width="84" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Votre contact :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="131" y="32" width="262" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{M_PRODUCT_VALUE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="131" y="43" width="262" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{M_PRODUCT_DESCRIPTION}!=null?$F{M_PRODUCT_DESCRIPTION}:"")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="131" y="54" width="262" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{SERIALNUMBER}!=null?$F{SERIALNUMBER}:"")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="131" y="65" width="262" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{PURCHASEDATE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-15" x="34" y="77" width="72" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Date de dépôt :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="131" y="87" width="262" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRODUCTSTATE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="131" y="98" width="262" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["("+$F{SALESREP_CODE}+") "+$F{SALESREP_NAME}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="34" y="144" width="359" height="36"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{DESCRIPTION}!=null?$F{DESCRIPTION}:"")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="131" y="76" width="262" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DEPOSITDATE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="131" y="22" width="262" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{M_PRODUCT_NAME}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-13" x="34" y="110" width="84" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Accessoires :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="131" y="110" width="100" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ACCESSORIES}]]></textFieldExpression>
+			</textField>
+			<subreport isUsingCache="true">
+				<reportElement key="subreport-2" stretchType="RelativeToBandHeight" isPrintRepeatedValues="false" x="10" y="201" width="373" height="14"/>
+				<subreportParameter name="RECORD_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_ORG_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="URL">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/repa_SRLinesA5.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<lastPageFooter>
+		<band height="100" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="50" y="67" width="81" height="11"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{SALESREP_NAME}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement key="line" x="0" y="81" width="393" height="1"/>
+				<graphicElement>
+					<pen lineWidth="2.0" lineStyle="Double"/>
+				</graphicElement>
+			</line>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-1" x="3" y="67" width="47" height="11"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Vendeur : "]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-1" x="0" y="82" width="393" height="18"/>
+				<textElement>
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[Nos conditions de vente sont disponibles au comptoir sur simple demande. Tous nos prix incluent les taxes et contributions légales en matière d'environnement et de droit d'auteurs.]]></text>
+			</staticText>
+			<subreport isUsingCache="false">
+				<reportElement key="subreport-8" positionType="FixRelativeToBottom" stretchType="RelativeToBandHeight" x="205" y="3" width="169" height="47" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true"/>
+				<subreportParameter name="RECORD_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DOCTYPE_ID">
+					<subreportParameterExpression><![CDATA[$F{DOCTYPE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="URL">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DOCUMENTTYPE">
+					<subreportParameterExpression><![CDATA[]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/bonvente_tax.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</lastPageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

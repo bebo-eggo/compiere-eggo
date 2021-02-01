@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="EGGO_RapportMonteur" pageWidth="555" pageHeight="842" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="2.662000000000011"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[Select ST_REFERENCE, st_commentaire, st_long, st_larg,St_LigneParent, asChild, st_lignedocument,St_LigneParentOrg, st_ep from (
+select ST_REFERENCE, case when length(st_commentaire)>250 then substr(st_commentaire,0,250)||'...' else st_commentaire end as st_commentaire,
+replace(st_long,'.0','') as st_long,
+replace(st_larg,'.0','') as st_larg, replace(st_ep,'.0','') as st_ep,
+LPAD(St_LigneParent,2,'0') as St_LigneParent,St_LigneParent as St_LigneParentOrg,
+LEAD (LPAD(St_LigneParent,2,'0'),1) OVER (ORDER BY LPAD(st_lignedocument,2,'0'), LPAD(St_LigneParent,2,'0')) AS asChild ,LPAD(st_lignedocument,2,'0') as st_lignedocument
+from XX_ORDERLINEDETAILS
+inner join C_orderLine col on col.C_orderLine_ID = XX_ORDERLINEDETAILS.C_orderLine_ID and col.M_Product_Id in (1099125,1170316,1382933)
+where
+ST_Classe in ('Kitchen Unit', 'Accessory', 'Sanitary Ware','Appliance')
+and col.C_Order_ID = $P{RECORD_ID}
+--order by LPAD(st_lignedocument,2,'0'), LPAD(St_LigneParent,2,'0')
+)
+union all
+Select ST_REFERENCE, st_commentaire, st_long, st_larg,St_LigneParent, asChild, st_lignedocument,St_LigneParentOrg, st_ep from (
+select ST_REFERENCE, case when length(st_commentaire)>250 then substr(st_commentaire,0,250)||'...' else st_commentaire end as st_commentaire,
+replace(st_long,'.0','') as st_long,
+replace(st_larg,'.0','') as st_larg, replace(st_ep,'.0','') as st_ep,
+LPAD(St_LigneParent,2,'0') as St_LigneParent,St_LigneParent as St_LigneParentOrg,
+LEAD (LPAD(St_LigneParent,2,'0'),1) OVER (ORDER BY LPAD(st_lignedocument,2,'0'), LPAD(St_LigneParent,2,'0')) AS asChild ,LPAD(st_lignedocument,2,'0') as st_lignedocument
+from XX_ORDERLINEDETAILS
+inner join C_orderLine col on col.C_orderLine_ID = XX_ORDERLINEDETAILS.C_orderLine_ID and col.M_Product_Id in (1183565,1385035,1196845)
+where
+ col.C_Order_ID = $P{RECORD_ID})
+order by st_lignedocument, St_LigneParentOrg]]>
+	</queryString>
+	<field name="ST_REFERENCE" class="java.lang.String"/>
+	<field name="ST_COMMENTAIRE" class="java.lang.String"/>
+	<field name="ST_LONG" class="java.lang.String"/>
+	<field name="ST_LARG" class="java.lang.String"/>
+	<field name="ST_EP" class="java.lang.String"/>
+	<field name="ST_LIGNEPARENT" class="java.lang.String"/>
+	<field name="ASCHILD" class="java.lang.String"/>
+	<columnHeader>
+		<band height="27">
+			<textField>
+				<reportElement x="0" y="0" width="36" height="24" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.ToPO}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="36" y="0" width="75" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Ref}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="111" y="0" width="233" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Desc}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="344" y="0" width="45" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Caisson}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="389" y="0" width="45" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Facade}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="434" y="0" width="45" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Autre}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="479" y="0" width="75" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Comm}+"</b>"]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="26" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{ST_LIGNEPARENT} == null]]></printWhenExpression>
+			<rectangle>
+				<reportElement x="10" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="36" y="2" width="75" height="12"/>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ST_REFERENCE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="111" y="2" width="233" height="12" isPrintWhenDetailOverflows="true"/>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ST_COMMENTAIRE}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="360" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="406" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="451" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="479" y="2" width="75" height="12" isPrintWhenDetailOverflows="true"/>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[".........."]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement positionType="FixRelativeToBottom" x="111" y="14" width="233" height="10" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[($F{ST_LONG}!=null || $F{ST_LARG}!=null ||$F{ST_EP}!=null) && (!$F{ST_LONG}.equals("0") || !$F{ST_LARG}.equals("0") || !$F{ST_EP}.equals("0"))]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["H:"+$F{ST_LARG}+" - L:"+$F{ST_LONG}+" - P:"+$F{ST_EP}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="26" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{ST_LIGNEPARENT} != null]]></printWhenExpression>
+			<rectangle>
+				<reportElement x="30" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="46" y="2" width="65" height="12"/>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ST_REFERENCE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="111" y="2" width="233" height="12" isPrintWhenDetailOverflows="true"/>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ST_COMMENTAIRE}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="360" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="406" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="451" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="479" y="2" width="75" height="12" isPrintWhenDetailOverflows="true"/>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[".........."]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement positionType="FixRelativeToBottom" x="111" y="14" width="233" height="10" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[($F{ST_LONG}!=null || $F{ST_LARG}!=null ||$F{ST_EP}!=null) && (!$F{ST_LONG}.equals("0") || !$F{ST_LARG}.equals("0") || !$F{ST_EP}.equals("0"))]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["H:"+$F{ST_LARG}+" - L:"+$F{ST_LONG}+" - P:"+$F{ST_EP}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

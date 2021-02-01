@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ArcoPrint" columnCount="3" pageWidth="595" pageHeight="842" columnWidth="191" columnSpacing="5" leftMargin="5" rightMargin="5" topMargin="5" bottomMargin="5">
+	<property name="ireport.zoom" value="3.138428376721004"/>
+	<property name="ireport.x" value="96"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<queryString>
+		<![CDATA[Select trim(zia.DOCNOEAN) as DOCNOEAN,zia.REFFOURN,zia.POREFERENCE,zia.documentno,zia.C_INVOICE_ID from ZRV_INVOICEARCO zia
+where exists (Select 1 from  ZT_PrintArco ztpa where  zia.AD_Client_ID = ztpa.AD_Client_ID  and  zia.C_INVOICE_ID = ztpa.C_INVOICE_ID and ztpa.AD_Session_ID =$P{RECORD_ID})
+order by zia.documentno]]>
+	</queryString>
+	<field name="DOCNOEAN" class="java.lang.String"/>
+	<field name="REFFOURN" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="C_INVOICE_ID" class="java.math.BigDecimal"/>
+	<columnHeader>
+		<band/>
+	</columnHeader>
+	<detail>
+		<band height="108" splitType="Stretch">
+			<textField>
+				<reportElement x="6" y="0" width="179" height="30"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true" isItalic="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<componentElement>
+				<reportElement mode="Transparent" x="6" y="30" width="179" height="23"/>
+				<jr:barbecue xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" type="Code128B" drawText="false" checksumRequired="false">
+					<jr:codeExpression><![CDATA[$F{DOCNOEAN}]]></jr:codeExpression>
+				</jr:barbecue>
+			</componentElement>
+			<textField>
+				<reportElement x="6" y="53" width="179" height="20"/>
+				<box leftPadding="2" rightPadding="0"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{REFFOURN}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="6" y="73" width="179" height="18"/>
+				<box leftPadding="2"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Ref : "+($F{POREFERENCE}==null?"":$F{POREFERENCE})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="6" y="91" width="179" height="17"/>
+				<box leftPadding="2"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCNOEAN}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

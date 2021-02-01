@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="payment_line" language="groovy" pageWidth="220" pageHeight="100" columnWidth="220" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="721a0e0e-f316-4190-be1f-e0852ec6b021">
+	<property name="ireport.zoom" value="5.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="I_POSORDER_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1000222]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select z.name,p.payamt,p.description,o.grandtotal,(select sum(p.payamt) from i_posorderpayment op where OP.I_POSORDER_ID=p.i_posorder_id) as totalpay from i_posorderpayment p
+inner join i_posorder o ON o.i_posorder_id = p.i_posorder_id
+inner join zsubpaymentrule z ON z.zsubpaymentrule_id = p.zsubpaymentrule_id
+where p.i_posorder_id=$P{I_POSORDER_ID}]]>
+	</queryString>
+	<field name="NAME" class="java.lang.String"/>
+	<field name="PAYAMT" class="java.math.BigDecimal"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="GRANDTOTAL" class="java.math.BigDecimal"/>
+	<field name="TOTALPAY" class="java.math.BigDecimal"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="2" splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="19" splitType="Stretch">
+			<textField>
+				<reportElement uuid="a8441723-f099-46ea-abf0-2751915435a7" x="0" y="1" width="88" height="15"/>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{NAME}+( $F{DESCRIPTION} != null ? " ("+$F{DESCRIPTION}+")" :"")+" :"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="573216fc-c3c9-42f5-9a89-998eb3f11142" x="92" y="1" width="100" height="15"/>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["- "+$F{PAYAMT}+" €"]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="42" splitType="Stretch">
+			<textField>
+				<reportElement uuid="f51569d7-205b-401f-b8c3-89dca7d95751" x="93" y="15" width="99" height="19"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[($F{TOTALPAY} < $F{GRANDTOTAL}
+    ? ($F{GRANDTOTAL}-$F{TOTALPAY})+" €"
+    : ($F{TOTALPAY} == $F{GRANDTOTAL}
+        ?""
+        :($F{TOTALPAY}-$F{GRANDTOTAL})+" €"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="f51569d7-205b-401f-b8c3-89dca7d95751" x="9" y="15" width="79" height="19"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[($F{TOTALPAY} < $F{GRANDTOTAL}
+    ? "Reste à payer : "
+    : ($F{TOTALPAY} == $F{GRANDTOTAL}
+        ?""
+        :"Rendu : "))]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

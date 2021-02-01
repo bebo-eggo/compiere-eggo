@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD JasperReport//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+
+<jasperReport name="devisSAV_sum" language="groovy" pageWidth="500" pageHeight="58" columnWidth="500" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<parameter name="URL" class="java.lang.String"/>
+	<parameter name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<parameter name="C_ORDERLINE_ID" class="java.math.BigDecimal"/>
+	<parameter name="DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<queryString>
+		<![CDATA[SELECT
+    l.c_order_id                             AS ORDER_ID,
+    l.c_orderline_id                         AS ORDERLINE_ID,
+    p.name                                   AS M_PRODUCT_NAME,
+    p.value                                  AS M_PRODUCT_VALUE,
+    p.description                            AS M_PRODUCT_DESCRIPTION,
+    case when pc.m_product_category_id in (1000756,1000255) then pc.m_product_category_id else 9999999 end               AS M_PRODUCT_CATEGORY_ID,
+    case when pc.m_product_category_id in (1000756,1000255) then ('services') else ('marchandises') end                  AS M_PRODUCT_CATEGORY_NAME,
+    case when pc.m_product_category_id in (1000756,1000255) then ('services') else ('marchandises') end                   AS M_PRODUCT_CATEGORY_VALUE,
+    l.qtyentered                             AS QTYENTERED,
+    l.priceentered                           AS PRICEENTERED,
+    l.qtyDelivered                           AS qtyDelivered,
+    l.qtyentered    - l.qtyDelivered        AS qtyTodelivred,
+    t.rate                                   AS RATE,
+    ROUND((l.priceentered/(1+t.rate/100)),2) AS PRICEENTEREDHT,
+    ROUND((l.qtyentered  *l.priceentered),2) AS TOTALLINE,
+    l.Z_SerNo                                AS SERIALNUMBER,
+    l.accessories                            AS ACCESSORIES,
+    l.purchaseDate                           AS PURCHASEDATE,
+    l.m_productState                         AS PRODUCTSTATE,
+    l.description                            AS DESCRIPTION,
+    l.discount                               AS DISCOUNT,
+    l.created                                AS DEPOSITDATE,
+    p.isStocked                              AS isStocked
+  FROM C_OrderLine l
+  INNER JOIN M_Product p
+  ON p.m_product_id=l.m_product_id
+  LEFT JOIN m_product_category pc
+  on p.m_product_category_id = pc.m_product_category_id
+  INNER JOIN c_tax t
+  ON t.c_tax_id=l.c_tax_id
+where l.c_order_id = $P{RECORD_ID}]]>
+	</queryString>
+	<field name="ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="ORDERLINE_ID" class="java.math.BigDecimal"/>
+	<field name="M_PRODUCT_NAME" class="java.lang.String"/>
+	<field name="M_PRODUCT_VALUE" class="java.lang.String"/>
+	<field name="M_PRODUCT_DESCRIPTION" class="java.lang.String"/>
+	<field name="M_PRODUCT_CATEGORY_ID" class="java.math.BigDecimal"/>
+	<field name="M_PRODUCT_CATEGORY_NAME" class="java.lang.String"/>
+	<field name="M_PRODUCT_CATEGORY_VALUE" class="java.lang.String"/>
+	<field name="QTYENTERED" class="java.math.BigDecimal"/>
+	<field name="PRICEENTERED" class="java.math.BigDecimal"/>
+	<field name="QTYDELIVERED" class="java.math.BigDecimal"/>
+	<field name="QTYTODELIVRED" class="java.math.BigDecimal"/>
+	<field name="RATE" class="java.math.BigDecimal"/>
+	<field name="PRICEENTEREDHT" class="java.math.BigDecimal"/>
+	<field name="TOTALLINE" class="java.math.BigDecimal"/>
+	<field name="SERIALNUMBER" class="java.lang.String"/>
+	<field name="ACCESSORIES" class="java.lang.String"/>
+	<field name="PURCHASEDATE" class="java.sql.Timestamp"/>
+	<field name="PRODUCTSTATE" class="java.lang.String"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="DISCOUNT" class="java.math.BigDecimal"/>
+	<field name="DEPOSITDATE" class="java.sql.Timestamp"/>
+	<field name="ISSTOCKED" class="java.lang.String"/>
+	<variable name="variable1" class="java.lang.Double" resetType="Column" incrementType="Column" calculation="Sum"/>
+	<variable name="QTYENTERED_1" class="java.math.BigDecimal" resetType="Group" resetGroup="M_PRODUCT_CATEGORY_ID" calculation="Sum">
+		<variableExpression><![CDATA[$F{QTYENTERED}]]></variableExpression>
+	</variable>
+	<variable name="QTYDELIVERED_1" class="java.math.BigDecimal" resetType="Group" resetGroup="M_PRODUCT_CATEGORY_ID" calculation="Sum">
+		<variableExpression><![CDATA[$F{QTYDELIVERED}]]></variableExpression>
+	</variable>
+	<variable name="QTYTODELIVRED_1" class="java.math.BigDecimal" resetType="Group" resetGroup="M_PRODUCT_CATEGORY_ID" calculation="Sum">
+		<variableExpression><![CDATA[$F{QTYTODELIVRED}]]></variableExpression>
+	</variable>
+	<variable name="RATE_1" class="java.math.BigDecimal" resetType="Group" resetGroup="M_PRODUCT_CATEGORY_ID" calculation="Sum">
+		<variableExpression><![CDATA[$F{RATE}]]></variableExpression>
+	</variable>
+	<variable name="PRICEENTEREDHT_1" class="java.math.BigDecimal" resetType="Group" resetGroup="M_PRODUCT_CATEGORY_ID" calculation="Sum">
+		<variableExpression><![CDATA[$F{PRICEENTEREDHT}]]></variableExpression>
+	</variable>
+	<variable name="TOTALLINE_1" class="java.math.BigDecimal" resetType="Group" resetGroup="M_PRODUCT_CATEGORY_ID" calculation="Sum">
+		<variableExpression><![CDATA[$F{TOTALLINE}]]></variableExpression>
+	</variable>
+	<variable name="PRICEENTERED_1" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{PRICEENTERED}*$F{QTYENTERED}]]></variableExpression>
+	</variable>
+	<variable name="PRICEENTEREDHT_2" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{PRICEENTEREDHT}*$F{QTYENTERED}]]></variableExpression>
+	</variable>
+	<variable name="RATE_2" class="java.math.BigDecimal" calculation="Highest">
+		<variableExpression><![CDATA[$F{RATE}]]></variableExpression>
+	</variable>
+	<variable name="TOTALLINE_2" class="java.math.BigDecimal" resetType="Group" resetGroup="M_PRODUCT_CATEGORY_ID" calculation="Sum">
+		<variableExpression><![CDATA[$F{QTYENTERED}*$F{PRICEENTEREDHT}]]></variableExpression>
+	</variable>
+	<variable name="TOTAL_HT_PER_LINE" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$F{QTYENTERED}*$F{PRICEENTEREDHT}]]></variableExpression>
+	</variable>
+	<group name="M_PRODUCT_CATEGORY_ID">
+		<groupExpression><![CDATA[$F{M_PRODUCT_CATEGORY_ID}]]></groupExpression>
+		<groupFooter>
+			<band height="15">
+				<textField>
+					<reportElement x="450" y="0" width="50" height="15"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="10" isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[new DecimalFormat($R{pattern.price.without.devise}).format($V{TOTALLINE_2})]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="211" y="0" width="239" height="15"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="10" isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$R{total.ht.bis}+" " +$F{M_PRODUCT_CATEGORY_VALUE} + " : "]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band/>
+	</background>
+	<title>
+		<band/>
+	</title>
+	<pageHeader>
+		<band/>
+	</pageHeader>
+	<detail>
+		<band/>
+	</detail>
+	<pageFooter>
+		<band/>
+	</pageFooter>
+	<summary>
+		<band height="43">
+			<textField pattern="">
+				<reportElement x="450" y="21" width="50" height="20"/>
+				<box rightPadding="5">
+					<pen lineWidth="2.0"/>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new DecimalFormat($R{pattern.price}).format($V{PRICEENTERED_1})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="450" y="0" width="50" height="15"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new DecimalFormat($R{pattern.price}).format($V{PRICEENTERED_1}-$V{PRICEENTEREDHT_2})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="350" y="0" width="100" height="15"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{TAXID} + " ("+$V{RATE_2}+"%) : "]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="350" y="21" width="150" height="1"/>
+				<graphicElement>
+					<pen lineWidth="2.0"/>
+				</graphicElement>
+			</line>
+			<textField pattern="">
+				<reportElement x="350" y="22" width="100" height="20"/>
+				<box rightPadding="5">
+					<pen lineWidth="2.0"/>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{to.pay} + " : "]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

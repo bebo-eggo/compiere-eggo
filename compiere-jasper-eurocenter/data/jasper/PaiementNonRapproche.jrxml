@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="PaiementNonRapproche" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="782" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.2100000000000006"/>
+	<property name="ireport.x" value="294"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="DateFrom" class="java.util.Date">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Client_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_BankAccount_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Org_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_DocType_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="IsCaisses" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_BPartner_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_AcctSchema_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT *
+FROM
+  (SELECT x.documentno ,
+    CASE
+      WHEN (SELECT docbasetype
+        FROM C_DocType
+        WHERE C_DocType_ID = x.C_DocType_ID) = 'APP'
+      THEN currencyConvert(x.Payamt,x.C_Currency_ID,
+        (SELECT a.C_Currency_ID
+        FROM c_acctschema a
+        WHERE a.ad_client_id = x.ad_client_id and a.c_acctschema_id=$P{C_AcctSchema_ID}
+        ), x.DateAcct,x.C_ConversionType_ID,x.AD_Client_ID,x.AD_Org_ID) * -1
+      ELSE currencyConvert(x.Payamt,x.C_Currency_ID,
+        (SELECT a.C_Currency_ID
+        FROM c_acctschema a
+        WHERE a.ad_client_id = x.ad_client_id and a.c_acctschema_id=$P{C_AcctSchema_ID}
+        ), x.DateAcct,x.C_ConversionType_ID,x.AD_Client_ID,x.AD_Org_ID)
+    END AS Payamt,
+    bb.name ,
+    x.dateacct ,
+    x.duedate,
+    (SELECT value
+      || '-'
+      || name
+    FROM ad_org
+    WHERE ad_org.ad_org_id = x.ad_org_id
+    )              AS OrgName,
+    x.C_DocType_ID AS C_DocType_ID,
+    yy.name        AS docname,
+    (SELECT (Name || ' - ' ||COALESCE(ba.accountno,N' ')) FROM C_Bank WHERE C_Bank.C_Bank_ID=ba.C_Bank_ID
+    ) AS BankName, zp.name as SubPaymentRule, zp.ZSubPaymentRule_ID, RPAD(x.description, 10,  ' ') as description
+  FROM c_payment x
+  INNER JOIN C_Bankaccount ba
+  ON (ba.C_BankAccount_ID=x.C_BankAccount_ID)
+  INNER JOIN C_BPartner bb
+  ON (bb.C_BPartner_ID=x.C_BPartner_ID)
+  INNER JOIN ZSubPaymentRule zp
+  ON (zp.ZSubPaymentRule_ID=x.ZSubPaymentRule_ID)
+  INNER JOIN C_Doctype yy
+  ON (yy.C_DocType_ID   = x.C_DocType_ID)
+  WHERE x.c_payment_id IN
+    (SELECT bl.c_payment_id
+    FROM c_bankstatementline bl
+    INNER JOIN c_bankstatement b
+    ON bl.c_bankstatement_id    = b.c_bankstatement_id
+    WHERE TRUNC(b.STATEMENTDATE)> TRUNC($P{DateFrom})
+    )
+  AND (x.C_BankAccount_ID  = $P{C_BankAccount_ID}
+  OR $P{C_BankAccount_ID}  = 0
+  OR $P{C_BankAccount_ID} IS NULL)
+  AND (x.C_DocType_ID      = $P{C_DocType_ID}
+  OR $P{C_DocType_ID}      = 0
+  OR $P{C_DocType_ID}     IS NULL)
+  AND TRUNC(x.dateacct)   <= TRUNC($P{DateFrom})
+  AND x.IsReconciled       ='Y'
+  AND x.PayAmt            <>0
+  AND (x.AD_Org_ID         = $P{AD_Org_ID}
+  OR $P{AD_Org_ID}         = 0
+  OR $P{AD_Org_ID}        IS NULL)
+  AND (x.C_BPartner_ID     = $P{C_BPartner_ID}
+  OR $P{C_BPartner_ID}     = 0
+  OR $P{C_BPartner_ID}    IS NULL)
+  AND (('N'                = $P{IsCaisses}
+  AND ba.BankAccountType  <> 'H')
+  OR ($P{IsCaisses}        = 'Y'))
+  AND x.ad_client_id       =$P{AD_Client_ID}
+  UNION ALL
+  SELECT x.documentno ,
+    CASE
+      WHEN (SELECT docbasetype
+        FROM C_DocType
+        WHERE C_DocType_ID = x.C_DocType_ID) = 'APP'
+      THEN currencyConvert(x.Payamt,x.C_Currency_ID,
+        (SELECT a.C_Currency_ID
+        FROM c_acctschema a
+        WHERE a.ad_client_id = x.ad_client_id
+        ), x.DateAcct,x.C_ConversionType_ID,x.AD_Client_ID,x.AD_Org_ID) * -1
+      ELSE currencyConvert(x.Payamt,x.C_Currency_ID,
+        (SELECT a.C_Currency_ID
+        FROM c_acctschema a
+        WHERE a.ad_client_id = x.ad_client_id and a.c_acctschema_id=$P{C_AcctSchema_ID}
+        ), x.DateAcct,x.C_ConversionType_ID,x.AD_Client_ID,x.AD_Org_ID)
+    END AS Payamt,
+    bb.name,
+    x.dateacct ,
+    x.duedate,
+    (SELECT value
+      || '-'
+      || name
+    FROM ad_org
+    WHERE ad_org.ad_org_id = x.ad_org_id
+    )              AS OrgName,
+    x.C_DocType_ID AS C_DocType_ID,
+    yy.name        AS docname,
+    (SELECT (Name || ' - ' ||COALESCE(ba.accountno,N' ')) FROM C_Bank WHERE C_Bank.C_Bank_ID=ba.C_Bank_ID
+    ) AS BankName, zp.name as SubPaymentRule, zp.ZSubPaymentRule_ID, RPAD(x.description, 10,  ' ') as description
+  FROM c_payment x
+  INNER JOIN C_Bankaccount ba
+  ON (ba.C_BankAccount_ID=x.C_BankAccount_ID)
+  INNER JOIN C_BPartner bb
+  ON (bb.C_BPartner_ID=x.C_BPartner_ID)
+  INNER JOIN C_Doctype yy
+  ON (yy.C_DocType_ID= x.C_DocType_ID)
+  INNER JOIN ZSubPaymentRule zp
+  ON (zp.ZSubPaymentRule_ID =x.ZSubPaymentRule_ID)
+  WHERE (x.C_BankAccount_ID = $P{C_BankAccount_ID}
+  OR $P{C_BankAccount_ID}   = 0
+  OR $P{C_BankAccount_ID}  IS NULL)
+  AND (x.C_DocType_ID       = $P{C_DocType_ID}
+  OR $P{C_DocType_ID}       = 0
+  OR $P{C_DocType_ID}      IS NULL)
+  AND TRUNC(x.dateacct)    <= TRUNC($P{DateFrom})
+  AND x.IsReconciled        ='N'
+  AND x.PayAmt             <>0
+  AND (x.AD_Org_ID          = $P{AD_Org_ID}
+  OR $P{AD_Org_ID}          = 0
+  OR $P{AD_Org_ID}         IS NULL)
+  AND (x.C_BPartner_ID      = $P{C_BPartner_ID}
+  OR $P{C_BPartner_ID}      = 0
+  OR $P{C_BPartner_ID}     IS NULL)
+  AND (('N'                 = $P{IsCaisses}
+  AND ba.BankAccountType   <> 'H')
+  OR ($P{IsCaisses}         = 'Y'))
+  AND x.ad_client_id        =$P{AD_Client_ID}
+  )
+ORDER BY BankName,
+  C_DocType_ID,
+  SubPaymentRule,
+  documentno]]>
+	</queryString>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="PAYAMT" class="java.lang.Double"/>
+	<field name="NAME" class="java.lang.String"/>
+	<field name="DATEACCT" class="java.sql.Timestamp"/>
+	<field name="DUEDATE" class="java.sql.Timestamp"/>
+	<field name="OrgName" class="java.lang.String"/>
+	<field name="C_DocType_ID" class="java.lang.Double"/>
+	<field name="docname" class="java.lang.String"/>
+	<field name="BankName" class="java.lang.String"/>
+	<field name="SubPaymentRule" class="java.lang.String"/>
+	<field name="ZSubPaymentRule_ID" class="java.lang.Double"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<variable name="totalpayamt" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{PAYAMT}]]></variableExpression>
+	</variable>
+	<variable name="TotalAmtByDoc" class="java.lang.Double" resetType="Group" resetGroup="DocTypeGroupe" calculation="Sum">
+		<variableExpression><![CDATA[$F{PAYAMT}]]></variableExpression>
+	</variable>
+	<variable name="TotalBySubPaymentrule" class="java.lang.Double" resetType="Group" resetGroup="ZSubPaymentRule" calculation="Sum">
+		<variableExpression><![CDATA[$F{PAYAMT}]]></variableExpression>
+	</variable>
+	<group name="BankGroup">
+		<groupExpression><![CDATA[$F{BankName}]]></groupExpression>
+		<groupHeader>
+			<band height="15" splitType="Stretch">
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+					<reportElement key="textField-6" x="5" y="0" width="324" height="15"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement>
+						<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{BankName}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band splitType="Stretch"/>
+		</groupFooter>
+	</group>
+	<group name="DocTypeGroupe">
+		<groupExpression><![CDATA[$F{C_DocType_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="16" splitType="Stretch">
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+					<reportElement key="textField-3" x="5" y="1" width="324" height="15"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement>
+						<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{docname}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="18" splitType="Stretch">
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+					<reportElement key="textField-4" x="689" y="2" width="88" height="14"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[(new DecimalFormat("###,###,###,###,##0.00").format($V{TotalAmtByDoc})).replace("\u00a0"," ").replace(",",".").replace(" ",",")]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="ZSubPaymentRule">
+		<groupExpression><![CDATA[$F{ZSubPaymentRule_ID}]]></groupExpression>
+		<groupHeader>
+			<band/>
+		</groupHeader>
+		<groupFooter>
+			<band height="16">
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement x="689" y="1" width="88" height="14"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="8" isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[(new DecimalFormat("###,###,###,###,##0.00").format($V{TotalBySubPaymentrule})).replace("\u00a0"," ").replace(",",".").replace(" ",",")]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+					<reportElement key="textField-2" x="144" y="1" width="185" height="14"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement verticalAlignment="Middle">
+						<font size="8" isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{SubPaymentRule}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="41" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText-1" x="7" y="10" width="346" height="24"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font size="14" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Liste des paiements non rapprochés au]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="false">
+				<reportElement key="textField-5" x="353" y="10" width="145" height="24"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font size="14" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$P{DateFrom}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="22" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText-3" x="5" y="2" width="136" height="17"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Organisation]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-4" x="278" y="2" width="103" height="17"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[N° Doc]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-5" x="448" y="2" width="175" height="17"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Tiers]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-6" x="627" y="2" width="58" height="17"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Date compt.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-8" x="689" y="2" width="88" height="17"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Mnt]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-3" x="144" y="2" width="130" height="17"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Sous-Méthode]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-5" x="382" y="2" width="62" height="17"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Desc.]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="278" y="1" width="103" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+				<reportElement key="textField" x="448" y="1" width="175" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NAME}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="false">
+				<reportElement key="textField" x="627" y="1" width="58" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATEACCT}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" x="689" y="1" width="88" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new DecimalFormat("###,###,###,###,##0.00").format($F{PAYAMT}).replace("\u00a0"," ").replace(",",".").replace(" ",",")]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+				<reportElement key="textField-2" x="5" y="1" width="136" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{OrgName}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+				<reportElement key="textField-2" x="144" y="1" width="130" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{SubPaymentRule}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="382" y="2" width="62" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRIPTION}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band height="50" splitType="Stretch">
+			<textField evaluationTime="Report" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField-1" x="689" y="5" width="88" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[(new DecimalFormat("###,###,###,###,##0.00").format($V{totalpayamt})).replace("\u00a0"," ").replace(",",".").replace(" ",",")]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-2" x="617" y="5" width="71" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+		</band>
+	</summary>
+</jasperReport>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD JasperReport//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+
+<jasperReport name="HistoriqueDossier_OrderLines" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" fontName="Arial" fontSize="26" isBold="true" pdfFontName="Helvetica-Bold"/>
+	<style name="SubTitle" forecolor="#666666" fontName="Arial" fontSize="18"/>
+	<style name="Column header" forecolor="#666666" fontName="Arial" fontSize="12" isBold="true"/>
+	<style name="Detail" fontName="Arial" fontSize="12"/>
+	<parameter name="Record_ID" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select
+     cl.line as LineNum,
+     p.value as ProductRef,
+     p.name as ProductName,
+     cl.priceactual as Price,
+     cl.priceactual * qtyordered as PriceTotal,
+     cl.qtyordered,
+     cl.qtydelivered,
+     sum(cl.priceactual) TotalPrice
+from
+     c_orderline cl
+     join c_order c ON c.c_order_id = cl.c_order_id and c.issotrx = 'Y'
+     join m_product p on cl.m_product_id = p.m_product_id
+     join m_product_po po on p.m_product_id = po.m_product_id
+WHERE
+  (cl.qtyordered - cl.qtydelivered) <> 0
+  and c.c_order_id = $P{Record_ID}
+ GROUP BY
+     cl.line,
+     p.value,
+     p.name,
+     cl.priceactual,
+     cl.priceactual * qtyordered,
+     cl.qtyordered,
+     cl.qtydelivered]]>
+	</queryString>
+	<field name="LINENUM" class="java.math.BigDecimal"/>
+	<field name="PRODUCTREF" class="java.lang.String"/>
+	<field name="PRODUCTNAME" class="java.lang.String"/>
+	<field name="PRICE" class="java.math.BigDecimal"/>
+	<field name="PRICETOTAL" class="java.math.BigDecimal"/>
+	<field name="QTYORDERED" class="java.math.BigDecimal"/>
+	<field name="QTYDELIVERED" class="java.math.BigDecimal"/>
+	<field name="TOTALPRICE" class="java.math.BigDecimal"/>
+	<background>
+		<band/>
+	</background>
+	<pageHeader>
+		<band height="25">
+			<line>
+				<reportElement x="0" y="0" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="21" width="555" height="1"/>
+			</line>
+			<staticText>
+				<reportElement key="staticText" style="Column header" x="20" y="2" width="154" height="20"/>
+				<textElement/>
+				<text><![CDATA[Reste à livrer]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="21">
+			<staticText>
+				<reportElement key="staticText" style="Column header" x="20" y="1" width="58" height="20"/>
+				<textElement/>
+				<text><![CDATA[Article]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" style="Column header" x="78" y="1" width="243" height="20"/>
+				<textElement/>
+				<text><![CDATA[Libelle]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" style="Column header" x="321" y="1" width="42" height="20"/>
+				<textElement/>
+				<text><![CDATA[Prix]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" style="Column header" x="363" y="1" width="43" height="20"/>
+				<textElement/>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" style="Column header" x="406" y="1" width="71" height="20"/>
+				<textElement/>
+				<text><![CDATA[Tot. Cmdé]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" style="Column header" x="477" y="1" width="59" height="20"/>
+				<textElement/>
+				<text><![CDATA[Tot. Livr]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" style="Column header" x="0" y="1" width="20" height="20"/>
+				<textElement/>
+				<text><![CDATA[L.]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="30">
+			<textField>
+				<reportElement x="0" y="6" width="20" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{LINENUM}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="78" y="6" width="243" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRODUCTNAME}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="321" y="6" width="42" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{PRICE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="363" y="6" width="43" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{PRICETOTAL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="6" width="58" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRODUCTREF}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="406" y="6" width="71" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{QTYORDERED}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="477" y="6" width="59" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{QTYDELIVERED}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

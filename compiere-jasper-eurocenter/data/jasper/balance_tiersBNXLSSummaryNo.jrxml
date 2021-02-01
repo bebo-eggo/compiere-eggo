@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Balance_TiersBNXLSSummaryNo" pageWidth="782" pageHeight="554" orientation="Landscape" columnWidth="782" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="3.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="DateFrom" class="java.util.Date">
+		<defaultValueExpression><![CDATA[new java.util.Date(104,12,30)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Client_ID" class="java.lang.Double" isForPrompting="false">
+		<defaultValueExpression><![CDATA[new java.lang.Double(1000000)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Org_ID" class="java.lang.Double" isForPrompting="false">
+		<defaultValueExpression><![CDATA[new java.lang.Double(0)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="IsSOTrx" class="java.lang.String">
+		<defaultValueExpression><![CDATA["Y"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Summary" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="excel" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CURRENT_LANG" class="java.lang.String" isForPrompting="false"/>
+	<parameter name="C_AcctSchema_ID" class="java.lang.Double"/>
+	<queryString>
+		<![CDATA[select  max(L_CLIENT) AS L_CLIENT, max(L_ORG) AS L_ORG,bpvalue,pays,SUM(grandtotalbase) AS grandtotalbase from (
+
+SELECT NVL(
+  ( SELECT name FROM ad_client WHERE ad_client_id = $P{AD_Client_ID}
+  ), ' ' ) AS L_CLIENT,
+  NVL(
+  ( SELECT name FROM ad_org WHERE ad_org_id = $P{AD_Org_ID}
+  ), ' ' ) AS L_ORG,
+  bp.value AS bpvalue,
+  bp.name  AS name,
+  (select countrycode from C_Country where c_country_id= cl.C_Country_ID)      AS pays,
+
+  Z_INVOICE_OPEN_ASOF_BASE_ACTSM(i.C_Invoice_ID,0,TRUNC($P{DateFrom}),$P{C_AcctSchema_ID})         AS grandtotalbase,
+
+  NVL(
+  ( SELECT AD_LANGUAGE FROM ad_client WHERE ad_client_id = $P{AD_Client_ID}
+  ), 'en_US' ) AS AD_LANGUAGE
+
+FROM c_invoice i
+INNER JOIN c_bpartner bp
+ON ( i.c_bpartner_id = bp.c_bpartner_id)
+INNER JOIN c_bp_group bpg
+ON ( bp.C_BP_Group_ID = bpg.C_BP_Group_ID )
+INNER JOIN c_currency cur
+ON ( i.C_Currency_ID                                                                          = cur.C_Currency_ID )
+INNER JOIN C_BPartner_Location cbpl
+ON (i.c_bpartner_location_id = cbpl.c_bpartner_location_id)
+INNER JOIN C_Location cl
+ON ( cbpl.C_Location_ID = cl.C_Location_ID)
+WHERE
+ ( ( i.issotrx                                                                             = 'Y'
+AND $P{IsSOTrx}                                                                               = 'Y' )
+OR ( i.issotrx                                                                                = 'N'
+AND $P{IsSOTrx}                                                                               = 'N' ) )
+AND i.docstatus                                                                              IN ('CO','CL','RE','VO')
+AND ( i.AD_Client_ID                                                                          = $P{AD_Client_ID}
+OR $P{AD_Client_ID}                                                                          IS NULL
+OR $P{AD_Client_ID}                                                                           = 0 )
+AND ( i.AD_Org_ID                                                                             = $P{AD_Org_ID}
+OR $P{AD_Org_ID}                                                                             IS NULL
+OR $P{AD_Org_ID}                                                                              = 0 )
+AND TRUNC(i.dateacct)                                                                        <= TRUNC($P{DateFrom})
+AND Z_INVOICE_OPEN_ASOF_BASE_ACTSM(i.C_Invoice_ID,0,TRUNC($P{DateFrom}),$P{C_AcctSchema_ID}) <> 0
+AND i.Posted                                                                                  ='Y'
+
+UNION ALL
+
+SELECT NVL(
+  ( SELECT name FROM ad_client WHERE ad_client_id = $P{AD_Client_ID}
+  ), ' ' ) AS L_CLIENT,
+  NVL(
+  ( SELECT name FROM ad_org WHERE ad_org_id = $P{AD_Org_ID}
+  ), ' ' ) AS L_ORG,
+
+  bp.value AS bpvalue,
+  bp.name  AS name,
+  (select countrycode from C_Country where c_country_id= GETC_COUNTRY_ID_BPARTNER (bp.C_BPARTNER_ID))      AS pays,
+
+
+  - currencyConvert(ZpaymentAvailable2(p.C_Payment_ID,TRUNC($P{DateFrom}),'N'),p.C_Currency_ID,
+  (SELECT a.C_Currency_ID
+  FROM c_acctschema a
+  WHERE a.c_acctschema_id= $P{C_AcctSchema_ID}
+  ),p.DateAcct,p.C_ConversionType_ID,p.AD_Client_ID,p.AD_Org_ID) AS grandtotalbase,
+
+  NVL(
+  ( SELECT AD_LANGUAGE FROM ad_client WHERE ad_client_id = $P{AD_Client_ID}
+  ), 'en_US' ) AS AD_LANGUAGE
+
+FROM c_Payment p,
+  c_bp_group bpg,
+  c_bpartner bp,
+  C_Currency cur
+
+WHERE
+ ( ( p.IsReceipt                                        = 'Y'
+AND $P{IsSOTrx}                                            = 'Y' )
+OR ( p.IsReceipt                                           = 'N'
+AND $P{IsSOTrx}                                            = 'N' ) )
+AND p.docstatus                                           IN ('CO','CL','RE','VO')
+AND p.c_bpartner_id                                        = bp.c_bpartner_id
+AND (p.C_Charge_ID                                         = 0
+OR p.C_Charge_ID                                          IS NULL)
+AND (p.IsDraft='N') -- 23439
+AND ( p.AD_Client_ID                                       = $P{AD_Client_ID}
+OR $P{AD_Client_ID}                                       IS NULL
+OR $P{AD_Client_ID}                                        = 0 )
+AND ( p.AD_Org_ID                                          = $P{AD_Org_ID}
+OR $P{AD_Org_ID}                                          IS NULL
+OR $P{AD_Org_ID}                                           = 0 )
+AND TRUNC(p.dateacct)                                     <= TRUNC($P{DateFrom})
+AND ZpaymentAvailable2(p.C_Payment_ID,TRUNC($P{DateFrom}),'N') <> 0
+AND p.C_Currency_ID                                        = cur.C_Currency_ID
+  -- 20100222 vha jlb sre dho and p.IsAllocated = 'N'
+AND p.Posted='Y'
+and bpg.C_BP_GROUP_ID = bp.C_BP_GROUP_ID
+and bp.C_BPartner_ID = p.C_BPartner_ID
+and p.C_Currency_ID = cur.C_Currency_ID
+
+)
+group by pays,bpvalue
+ORDER BY pays,bpvalue]]>
+	</queryString>
+	<field name="L_CLIENT" class="java.lang.String"/>
+	<field name="L_ORG" class="java.lang.String"/>
+	<field name="BPVALUE" class="java.lang.String"/>
+	<field name="PAYS" class="java.lang.String"/>
+	<field name="GRANDTOTALBASE" class="java.math.BigDecimal"/>
+	<variable name="TR_GRANDTOTALBASE" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{GRANDTOTALBASE}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="27" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-7" x="0" y="0" width="102" height="23"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left">
+					<font size="8" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{CURRENT_LANG}.equals("fr_FR") ? "Pays":
+$P{CURRENT_LANG}.equals("nl_NL") ? "Country" :"Country"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-6" x="102" y="0" width="150" height="23"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left">
+					<font size="8" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{CURRENT_LANG}.equals("fr_FR") ? "Tiers":
+$P{CURRENT_LANG}.equals("nl_NL") ? "Business Partner" :"Business Partner"]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText" mode="Transparent" x="252" y="0" width="111" height="23" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="true" isUnderline="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="12" splitType="Stretch">
+			<printWhenExpression><![CDATA[(new java.lang.Boolean($P{Summary}.equals("N")))]]></printWhenExpression>
+			<textField>
+				<reportElement x="0" y="0" width="102" height="12"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PAYS}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="252" y="0" width="111" height="12"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{GRANDTOTALBASE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="102" y="0" width="150" height="12" isPrintInFirstWholeBand="true" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{BPVALUE}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch">
+			<printWhenExpression><![CDATA[(new java.lang.Boolean($P{excel}.equals("N")))]]></printWhenExpression>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch">
+			<printWhenExpression><![CDATA[(new java.lang.Boolean($P{excel}.equals("N")))]]></printWhenExpression>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch">
+			<printWhenExpression><![CDATA[(new java.lang.Boolean($P{excel}.equals("N")))]]></printWhenExpression>
+		</band>
+	</summary>
+</jasperReport>

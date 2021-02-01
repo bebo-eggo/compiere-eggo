@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_Org" language="groovy" pageWidth="515" pageHeight="842" columnWidth="515" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="3.4522712143931136"/>
+	<property name="ireport.x" value="492"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="C_Invoice_ID" class="java.lang.Double"/>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA['.']]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT *
+FROM
+  (Select * from (Select t.DOCTYPEPREFIX , t.value , t.ISTAXINCLUDED , t.description , sum(t.QTYINVOICED) as QTYINVOICED , t.rate , t.C_tax_ID , t.priceactual , sum(t.linenetamt) as  linenetamt, t.SORT , t.IsAcompte , t.M_Product_ID , t.AD_Language from (SELECT NVL(
+    (SELECT 'AC'
+    FROM c_doctype
+    WHERE upper(name) LIKE '%ACOMPTE%'
+    AND c_doctype_id=i.c_doctypetarget_id
+    ),
+    (SELECT SUBSTR(name,0,2)
+    FROM c_doctype
+    WHERE c_doctype_id=i.c_doctypetarget_id
+    ))                                        AS DOCTYPEPREFIX,
+    COALESCE (DECODE(mp.isShowTrl,'Y',mpt.Name,mp.value),cc.Name,to_nchar(' ')) AS value,
+    pl.ISTAXINCLUDED,
+    COALESCE(mpt.description,ol.description,il.description,to_nchar(' ')) AS description,
+    cil.qtyinvoiced                                                       AS QTYINVOICED,
+    ctax.rate,
+    ctax.C_tax_ID,
+    CASE
+      WHEN (pl.ISTAXINCLUDED='N' OR ctax.rate = 0 )
+      THEN cil.priceactual
+      ELSE ROUND(cil.priceactual / (1+(ctax.rate/100)),2)
+    END AS priceactual,
+    CASE
+      WHEN (pl.ISTAXINCLUDED='N' OR ctax.rate = 0 )
+      THEN cil.linenetamt
+      ELSE ROUND(cil.linenetamt / (1+(ctax.rate/100)),2)
+    END           AS linenetamt,
+    zsf.isorderby AS "SORT",
+    (SELECT COUNT(*)
+    FROM C_InvoiceLine cilx
+    WHERE cilx.M_Product_ID IN (1033685)
+    AND cilx.C_Invoice_ID    =$P{C_Invoice_ID}
+    ) AS IsAcompte,
+    cil.M_Product_ID,
+    mpt.AD_Language
+  FROM rv_c_invoiceline cil
+  INNER JOIN c_invoice i
+  ON i.c_invoice_id = cil.c_invoice_id
+  INNER JOIN m_pricelist pl
+  ON pl.m_pricelist_id = i.m_pricelist_id
+  LEFT JOIN c_orderline ol
+  ON ol.c_orderline_id = cil.c_orderline_id
+  LEFT JOIN M_Product mp
+  ON (mp.M_Product_ID = cil.M_Product_ID)
+  LEFT JOIN M_Product_Trl mpt
+  ON (mpt.M_Product_ID      = mp.M_Product_ID
+  AND UPPER(mpt.AD_Language)=UPPER($P{AD_Language}))
+  LEFT JOIN Z_S_Famille zsf
+  ON (zsf.z_s_famille_id = mp.z_s_famille_id)
+  INNER JOIN C_Tax ctax
+  ON (ctax.C_Tax_ID = cil.c_tax_id)
+  INNER JOIN c_invoiceline il
+  ON (il.c_invoiceline_ID = cil.c_invoiceline_id)
+  LEFT JOIN C_Charge cc
+  ON (cc.C_Charge_ID = il.C_Charge_ID)
+  LEFT JOIN C_Charge_Trl cct
+  ON (cct.C_Charge_ID       = il.C_Charge_ID
+  AND UPPER(cct.AD_Language)=UPPER($P{AD_Language}))
+  WHERE (zsf.Name NOT      IN ('POSE')
+  OR zsf.Name              IS NULL)
+  AND cil.C_Invoice_ID      = $P{C_Invoice_ID})t
+  group by t.DOCTYPEPREFIX , t.value , t.ISTAXINCLUDED , t.description , t.rate , t.C_tax_ID , t.priceactual , t."SORT" , t.IsAcompte , t.M_Product_ID , t.AD_Language)
+  UNION ALL
+  SELECT t.DOCTYPEPREFIX,
+    t.value,
+    t.ISTAXINCLUDED,
+    COALESCE(t.description,to_nchar(' ')),
+    1,
+    t.rate,
+    t.C_Tax_ID,
+    SUM(t.priceactual) AS priceactual,
+    SUM(t.linenetamt)  AS linenetamt,
+    t.SORTing          AS "SORT",
+    t.IsAcompte,
+    t.M_Product_ID,
+    t.AD_Language
+  FROM
+    (SELECT NVL(
+      (SELECT 'AC'
+      FROM c_doctype
+      WHERE upper(name) LIKE '%ACOMPTE%'
+      AND c_doctype_id=i.c_doctypetarget_id
+      ),
+      (SELECT SUBSTR(name,0,2)
+      FROM c_doctype
+      WHERE c_doctype_id=i.c_doctypetarget_id
+      ))               AS DOCTYPEPREFIX,
+      mpt2.Description AS value,
+      pl.ISTAXINCLUDED,
+      mpt2.Description AS description,
+      cil.qtyinvoiced  AS QTYINVOICED,
+      ctax.rate,
+      ctax.C_tax_ID,
+      CASE
+        WHEN cil.qtyinvoiced = 0
+        THEN 0
+        ELSE
+          CASE
+            WHEN (pl.ISTAXINCLUDED='N' OR ctax.rate = 0 )
+            THEN cil.linenetamt
+            ELSE ROUND(cil.linenetamt / (1+(ctax.rate/100)),2)
+          END
+      END      AS priceactual,
+      CASE
+        WHEN cil.qtyinvoiced = 0
+        THEN 0
+        ELSE
+          CASE
+            WHEN (pl.ISTAXINCLUDED='N' OR ctax.rate = 0 )
+            THEN cil.linenetamt
+            ELSE ROUNd(cil.linenetamt /( 1+(ctax.rate/100)),2)
+          END
+      END           AS linenetamt,
+      zsf.isorderby AS SORTing,
+      0             AS IsAcompte,
+      1 as M_Product_ID,
+       mpt2.AD_Language
+    FROM rv_c_invoiceline cil
+    INNER JOIN c_invoiceline il
+    ON (il.c_invoiceline_ID = cil.c_invoiceline_id)
+    INNER JOIN M_Product mp
+    ON mp.M_Product_ID = il.M_Product_ID
+    INNER JOIN Z_S_Famille zsf
+    ON (zsf.z_s_famille_id = mp.z_s_famille_id
+    AND zsf.Name          IN ('POSE'))
+    INNER JOIN C_Tax ctax
+    ON (ctax.C_Tax_ID = cil.c_tax_id)
+    INNER JOIN c_invoice i
+    ON i.c_invoice_id = cil.c_invoice_id
+    INNER JOIN m_pricelist pl
+    ON pl.m_pricelist_id = i.m_pricelist_id
+    LEFT JOIN M_Product mp2
+    ON (mp2.M_Product_ID =1101448)
+    LEFT JOIN M_Product_Trl mpt2
+    ON (mpt2.M_Product_ID      = 1101448
+    AND UPPER(mpt2.AD_Language)=UPPER($P{AD_Language}))
+    WHERE cil.C_Invoice_ID     = $P{C_Invoice_ID}
+    )t
+  GROUP BY t.DOCTYPEPREFIX,
+    t.value,
+    t.ISTAXINCLUDED,
+    t.description,
+    1,
+    t.rate,
+    t.C_Tax_ID ,
+    t.SORTing,
+    t.IsAcompte,
+    t.M_Product_ID,
+    t.AD_Language
+  )tx
+ORDER BY tx."SORT",
+  tx.value]]>
+	</queryString>
+	<field name="DOCTYPEPREFIX" class="java.lang.String"/>
+	<field name="VALUE" class="java.lang.String"/>
+	<field name="ISTAXINCLUDED" class="java.lang.String"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="QTYINVOICED" class="java.math.BigDecimal"/>
+	<field name="RATE" class="java.math.BigDecimal"/>
+	<field name="C_TAX_ID" class="java.math.BigDecimal"/>
+	<field name="PRICEACTUAL" class="java.math.BigDecimal"/>
+	<field name="LINENETAMT" class="java.math.BigDecimal"/>
+	<field name="SORT" class="java.math.BigDecimal"/>
+	<field name="ISACOMPTE" class="java.math.BigDecimal"/>
+	<field name="M_PRODUCT_ID" class="java.math.BigDecimal"/>
+	<field name="AD_LANGUAGE" class="java.lang.String"/>
+	<columnHeader>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="277" height="20"/>
+				<box leftPadding="2">
+					<topPen lineWidth="1.0" lineColor="#666666"/>
+					<leftPen lineWidth="1.0" lineColor="#666666"/>
+					<bottomPen lineWidth="1.0" lineColor="#666666"/>
+					<rightPen lineWidth="1.0" lineColor="#666666"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Book" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.det}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="277" y="0" width="60" height="20"/>
+				<box leftPadding="2">
+					<topPen lineWidth="1.0" lineColor="#666666"/>
+					<leftPen lineWidth="1.0" lineColor="#666666"/>
+					<bottomPen lineWidth="1.0" lineColor="#666666"/>
+					<rightPen lineWidth="1.0" lineColor="#666666"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Book" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.quantite}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="337" y="0" width="40" height="20"/>
+				<box leftPadding="2">
+					<topPen lineWidth="1.0" lineColor="#666666"/>
+					<leftPen lineWidth="1.0" lineColor="#666666"/>
+					<bottomPen lineWidth="1.0" lineColor="#666666"/>
+					<rightPen lineWidth="1.0" lineColor="#666666"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Book" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{TAXID}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="377" y="0" width="60" height="20"/>
+				<box leftPadding="2">
+					<topPen lineWidth="1.0" lineColor="#666666"/>
+					<leftPen lineWidth="1.0" lineColor="#666666"/>
+					<bottomPen lineWidth="1.0" lineColor="#666666"/>
+					<rightPen lineWidth="1.0" lineColor="#666666"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Book" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.pu}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="437" y="0" width="78" height="20"/>
+				<box leftPadding="2">
+					<topPen lineWidth="1.0" lineColor="#666666"/>
+					<leftPen lineWidth="1.0" lineColor="#666666"/>
+					<bottomPen lineWidth="1.0" lineColor="#666666"/>
+					<rightPen lineWidth="1.0" lineColor="#666666"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Book" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.amounthtva}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="15" splitType="Prevent">
+			<textField>
+				<reportElement x="0" y="0" width="116" height="14"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{VALUE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="277" y="0" width="60" height="14"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{QTYINVOICED}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="337" y="0" width="40" height="14"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{RATE}+"%"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement x="377" y="0" width="60" height="14"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new DecimalFormat($R{pattern.price.without.devise}).format($F{PRICEACTUAL})+"€"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement x="437" y="0" width="78" height="14"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new DecimalFormat($R{pattern.price.without.devise}).format($F{LINENETAMT})+"€"]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="388" y="14" width="127" height="1" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="URL">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="M_PRODUCT_ID">
+					<subreportParameterExpression><![CDATA[$F{M_PRODUCT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/subreport_recupel2.jasper"]]></subreportExpression>
+			</subreport>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="116" y="0" width="161" height="14" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[!$F{DOCTYPEPREFIX}.equals("AC")]]></printWhenExpression>
+				</reportElement>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRIPTION}.toUpperCase()]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

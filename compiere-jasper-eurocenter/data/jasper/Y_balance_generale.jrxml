@@ -1,0 +1,1045 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Y_balance_generale" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="756" leftMargin="43" rightMargin="43" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="562"/>
+	<property name="ireport.y" value="213"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="AD_Org_ID" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[new java.math.BigDecimal(0)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DateFrom" class="java.util.Date">
+		<defaultValueExpression><![CDATA[new java.util.Date(105,2,1)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DateTo" class="java.util.Date">
+		<defaultValueExpression><![CDATA[new java.util.Date(130,3,30)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Client_ID" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[new java.math.BigDecimal(1000000)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Account_From" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[new java.math.BigDecimal(0)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Account_To" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[new java.math.BigDecimal(0)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ISDETAIL" class="java.lang.String">
+		<defaultValueExpression><![CDATA["Y"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="excel" class="java.lang.String">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CURRENT_LANG" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["fr_FR"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="IncludeAdjPeriod" class="java.lang.String">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["media/Compiere/COMPIEREs/Compiere253/compiere-custo-cordon/data/jasper/"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_AcctSchema_ID" class="java.math.BigDecimal"/>
+	<queryString>
+		<![CDATA[SELECT SUM(amount_)       AS amount       ,
+  SUM(amountCR_)           AS amountCR     ,
+  SUM(amountDR_)           AS amountDR     ,
+  0                        AS source_amount,
+  TRUNC($P{DateFrom})      AS dateacct     ,
+  N'-'                     AS description  ,
+  N'-'                     AS gl_cat       ,
+  SUBSTR(acct_value_,1, 1) AS acct_1       ,
+  acct_value_              AS acct_value   ,
+  acct_name_               AS acct_name    ,
+  NVL(Y_Id_Cpt_To_Val_Name($P{Account_From}),
+  (SELECT MIN(Y_Id_Cpt_To_Val_Name(C_ElementValue_ID))
+     FROM C_ElementValue ev
+  INNER JOIN C_Element e
+       ON e.C_Element_ID    = ev.C_Element_ID
+  AND e.ElementType         = 'A'
+    WHERE ($P{AD_Client_ID} =0
+  OR ev.AD_Client_ID        =$P{AD_Client_ID})
+  AND ev.IsSummary          ='N'
+  AND ev.PostActual         ='Y'
+  ) ) AS iFromAcc, -- SRE (ancienneemnt Z_Id_Cpt_To_Val)
+  NVL(Y_Id_Cpt_To_Val_Name($P{Account_To}),
+  (SELECT MAX(Y_Id_Cpt_To_Val_Name(C_ElementValue_ID))
+     FROM C_ElementValue ev
+  INNER JOIN C_Element e
+       ON e.C_Element_ID    = ev.C_Element_ID
+  AND e.ElementType         = 'A'
+    WHERE ($P{AD_Client_ID} =0
+  OR ev.AD_Client_ID        =$P{AD_Client_ID})
+  AND ev.IsSummary          ='N'
+  AND ev.PostActual         ='Y'
+  ) ) AS iToAcc  , -- SRE (ancienneemnt Z_Id_Cpt_To_Val)
+  0   AS iso_code,
+  COALESCE(z_account_starting_balance($P{AD_Client_ID}, $P{AD_Org_ID},
+  $P{C_AcctSchema_ID}, acct_id_, TRUNC($P{DateFrom})),0) AS starting_balance,
+  0                                    AS ending_balance  ,
+  (SELECT NVL(Name,' - ')
+     FROM AD_Client cli
+    WHERE cli.ad_client_id = $P{AD_Client_ID}
+  OR $P{AD_Client_ID}      = 0
+  )    AS client_name  ,
+  N'-' AS org_name     , -- JMS
+  0    AS base_curr    ,
+  0    AS adTableID    ,
+  0    AS RecordID     ,
+  NULL AS BPName       ,
+  N'-' AS ORG_NAME_ACCT, -- JMS
+  NVL(
+  ( SELECT AD_LANGUAGE FROM ad_client WHERE ad_client_id = $P{AD_Client_ID}
+  ), 'en_US' ) AS AD_LANGUAGE,
+  AccountType_ AS AccountType
+   FROM (
+  (
+  -- selection de lensemble des comptes (un jour mouvementé)
+   SELECT 0                AS amount_    ,
+    0                      AS amountCR_  ,
+    0                      AS amountDR_  ,
+    acct.c_elementvalue_id AS acct_id_   ,
+    acct.value             AS acct_value_,
+    acct.name              AS acct_name_ ,
+    acct.AccountType       AS AccountType_
+     FROM c_elementvalue acct
+  INNER JOIN c_element e
+       ON e.c_element_id = acct.c_element_id
+  AND e.elementtype      = 'A'
+    WHERE EXISTS
+    (SELECT *
+       FROM fact_acct f
+      WHERE acct.c_elementvalue_id                 = f.account_id
+    AND f.postingtype                              = 'A'
+    AND ( f.c_acctschema_id                        = $P{C_AcctSchema_ID}
+    OR $P{C_AcctSchema_ID}                         = 0
+    OR $P{C_AcctSchema_ID}                        IS NULL )
+    AND (f.ad_client_id                            = $P{AD_Client_ID}
+    OR $P{AD_Client_ID}                            = 0)
+    AND (f.ad_Org_id                               = $P{AD_Org_ID}
+    OR $P{AD_Org_ID}                               = 0)
+    AND ( Z_Id_Cpt_To_Val(acct.c_elementvalue_id) >= Z_Id_Cpt_To_Val($P{Account_From})
+    OR $P{Account_From}                            = 0
+    OR $P{Account_From}                            = NULL)
+    AND ( Z_Id_Cpt_To_Val(acct.c_elementvalue_id) <= Z_Id_Cpt_To_Val($P{Account_To})
+    OR $P{Account_To}                              = 0
+    OR $P{Account_To}                              = NULL)
+    )
+  )
+
+UNION ALL
+  (
+  -- selection de lensemble des mouvements
+   SELECT COALESCE(COALESCE(f.amtacctdr,0) - COALESCE(f.amtacctcr,0),0) AS amount_    ,
+    COALESCE(f.amtacctcr, 0)                                            AS amountCR_  ,
+    COALESCE(f.amtacctdr, 0)                                            AS amountDR_  ,
+    acct.c_elementvalue_id                                              AS acct_id_   ,
+    acct.value                                                          AS acct_value_,
+    acct.name                                                           AS acct_name_ ,
+    acct.AccountType                                                    AS AccountType_
+     FROM fact_acct f
+  INNER JOIN c_elementvalue acct
+       ON acct.c_elementvalue_id = f.account_id
+  LEFT OUTER JOIN c_period per
+       ON per.c_period_id                        = f.c_period_id
+  AND (per.periodtype                            ='S'
+  OR $P{IncludeAdjPeriod}                        ='Y')
+    WHERE ( f.ad_client_id                       = $P{AD_Client_ID}
+  OR $P{AD_Client_ID}                            = 0 )
+  AND f.postingtype                              = 'A'
+  AND ( f.c_acctschema_id                        = $P{C_AcctSchema_ID}
+    OR $P{C_AcctSchema_ID}                         = 0
+    OR $P{C_AcctSchema_ID}                        IS NULL )
+  AND ( f.ad_org_id                              = $P{AD_Org_ID}
+  OR $P{AD_Org_ID}                               = 0 )
+  AND ( Z_Id_Cpt_To_Val(acct.c_elementvalue_id) >= Z_Id_Cpt_To_Val($P{Account_From})
+  OR $P{Account_From}                            = 0
+  OR $P{Account_From}                            = NULL)
+  AND ( Z_Id_Cpt_To_Val(acct.c_elementvalue_id) <= Z_Id_Cpt_To_Val($P{Account_To})
+  OR $P{Account_To}                              = 0
+  OR $P{Account_To}                              = NULL)
+  AND f.dateacct                                >= TRUNC($P{DateFrom})
+  AND f.dateacct                                <= TRUNC($P{DateTo})
+  ) )
+GROUP BY acct_id_,
+  acct_value_    ,
+  acct_name_     ,
+  AccountType_
+ORDER BY acct_value]]>
+	</queryString>
+	<field name="AMOUNT" class="java.math.BigDecimal"/>
+	<field name="SOURCE_AMOUNT" class="java.math.BigDecimal"/>
+	<field name="DATEACCT" class="java.util.Date"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="ACCT_VALUE" class="java.lang.String"/>
+	<field name="ACCT_NAME" class="java.lang.String"/>
+	<field name="IFROMACC" class="java.lang.String"/>
+	<field name="ITOACC" class="java.lang.String"/>
+	<field name="ISO_CODE" class="java.lang.String"/>
+	<field name="STARTING_BALANCE" class="java.math.BigDecimal"/>
+	<field name="ENDING_BALANCE" class="java.math.BigDecimal"/>
+	<field name="CLIENT_NAME" class="java.lang.String"/>
+	<field name="BASE_CURR" class="java.lang.String"/>
+	<field name="GL_CAT" class="java.lang.String"/>
+	<field name="AMOUNTCR" class="java.math.BigDecimal"/>
+	<field name="AMOUNTDR" class="java.math.BigDecimal"/>
+	<field name="ORG_NAME" class="java.lang.String"/>
+	<field name="BPNAME" class="java.lang.String"/>
+	<field name="ORG_NAME_ACCT" class="java.lang.String"/>
+	<field name="ACCT_1" class="java.lang.String"/>
+	<field name="ACCOUNTTYPE" class="java.lang.String"/>
+	<variable name="AMOUNT_CPT1" class="java.math.BigDecimal" resetType="Group" resetGroup="CPT1" calculation="Sum">
+		<variableExpression><![CDATA[$F{AMOUNT}]]></variableExpression>
+	</variable>
+	<variable name="STARTING_BALANCE_CPT1" class="java.math.BigDecimal" resetType="Group" resetGroup="CPT1" calculation="Sum">
+		<variableExpression><![CDATA[$F{STARTING_BALANCE}]]></variableExpression>
+		<initialValueExpression><![CDATA[new java.math.BigDecimal(0)]]></initialValueExpression>
+	</variable>
+	<variable name="COUNT_CURR" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[new java.math.BigDecimal(1)]]></variableExpression>
+	</variable>
+	<variable name="COUNT_ACCT" class="java.lang.String" resetType="Group" resetGroup="CPT1" calculation="Count"/>
+	<variable name="AMOUNT_START_TOTAL" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{STARTING_BALANCE}]]></variableExpression>
+	</variable>
+	<variable name="AMOUNT_END_TOTAL" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$V{AMOUNT_START_TOTAL}.add($V{AMOUNT_TOTAL})]]></variableExpression>
+		<initialValueExpression><![CDATA[new java.math.BigDecimal(0)]]></initialValueExpression>
+	</variable>
+	<variable name="AMOUNT_TOTAL" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{AMOUNT}]]></variableExpression>
+	</variable>
+	<variable name="AMOUNTDR_CPT1" class="java.math.BigDecimal" resetType="Group" resetGroup="CPT1" calculation="Sum">
+		<variableExpression><![CDATA[$F{AMOUNTDR}]]></variableExpression>
+	</variable>
+	<variable name="AMOUNTCR_CPT1" class="java.math.BigDecimal" resetType="Group" resetGroup="CPT1" calculation="Sum">
+		<variableExpression><![CDATA[$F{AMOUNTCR}]]></variableExpression>
+	</variable>
+	<variable name="TOTAL_AMOUNTCR_ACCT" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{AMOUNTCR}]]></variableExpression>
+	</variable>
+	<variable name="TOTAL_AMOUNTDR_ACCT" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{AMOUNTDR}]]></variableExpression>
+	</variable>
+	<variable name="SIGN_INIT_BALANCE_ACCT" class="java.lang.Boolean" resetType="Group" resetGroup="CPT1">
+		<variableExpression><![CDATA[new Boolean($V{STARTING_BALANCE_CPT1}.compareTo(java.math.BigDecimal.ZERO) >0)]]></variableExpression>
+	</variable>
+	<group name="CPT1" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{ACCT_1}]]></groupExpression>
+		<groupHeader>
+			<band splitType="Stretch"/>
+		</groupHeader>
+		<groupFooter>
+			<band height="43" splitType="Stretch">
+				<rectangle radius="0">
+					<reportElement key="rectangle-2" mode="Transparent" x="4" y="8" width="746" height="24" forecolor="#000000" backcolor="#CCCCFF"/>
+					<graphicElement fill="Solid"/>
+				</rectangle>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+					<reportElement key="textField-7" mode="Opaque" x="9" y="14" width="270" height="10" forecolor="#000000" backcolor="#FFFFFF"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+						<font fontName="SansSerif" size="6" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Total classe " + $F{ACCT_1}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" evaluationTime="Group" evaluationGroup="CPT1" pattern="" isBlankWhenNull="true">
+					<reportElement key="textField-79" mode="Transparent" x="279" y="14" width="77" height="12" forecolor="#000000" backcolor="#FFFFFF">
+						<printWhenExpression><![CDATA[new Boolean ($V{STARTING_BALANCE_CPT1}.compareTo(java.math.BigDecimal.ZERO) >= 0)]]></printWhenExpression>
+					</reportElement>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" rotation="None" lineSpacing="Single">
+						<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{STARTING_BALANCE_CPT1}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" evaluationTime="Auto" pattern="" isBlankWhenNull="true">
+					<reportElement key="textField-80" mode="Transparent" x="356" y="14" width="76" height="12" forecolor="#000000" backcolor="#FFFFFF">
+						<printWhenExpression><![CDATA[new Boolean ($V{STARTING_BALANCE_CPT1}.compareTo(java.math.BigDecimal.ZERO) <= 0)]]></printWhenExpression>
+					</reportElement>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" rotation="None" lineSpacing="Single">
+						<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{STARTING_BALANCE_CPT1}.negate()]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" evaluationTime="Group" evaluationGroup="CPT1" pattern="" isBlankWhenNull="true">
+					<reportElement key="textField-81" mode="Transparent" x="432" y="14" width="81" height="12" forecolor="#000000" backcolor="#FFFFFF"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+						<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{AMOUNTDR_CPT1}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" evaluationTime="Group" evaluationGroup="CPT1" pattern="" isBlankWhenNull="true">
+					<reportElement key="textField-82" mode="Transparent" x="513" y="14" width="79" height="12" forecolor="#000000" backcolor="#FFFFFF"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+						<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{AMOUNTCR_CPT1}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" evaluationTime="Group" evaluationGroup="CPT1" pattern="" isBlankWhenNull="false">
+					<reportElement key="textField-83" mode="Transparent" x="592" y="14" width="76" height="12" forecolor="#000000" backcolor="#FFFFFF">
+						<printWhenExpression><![CDATA[new Boolean ($V{STARTING_BALANCE_CPT1}.add($V{AMOUNT_CPT1}).compareTo(java.math.BigDecimal.ZERO) >= 0)]]></printWhenExpression>
+					</reportElement>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+						<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{STARTING_BALANCE_CPT1}.add($V{AMOUNT_CPT1})]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" evaluationTime="Group" evaluationGroup="CPT1" pattern="" isBlankWhenNull="false">
+					<reportElement key="textField-84" mode="Transparent" x="668" y="14" width="82" height="12" forecolor="#000000" backcolor="#FFFFFF">
+						<printWhenExpression><![CDATA[new Boolean ($V{STARTING_BALANCE_CPT1}.add($V{AMOUNT_CPT1}).compareTo(java.math.BigDecimal.ZERO) <= 0)]]></printWhenExpression>
+					</reportElement>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+						<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{STARTING_BALANCE_CPT1}.add($V{AMOUNT_CPT1}).negate()]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="143" splitType="Stretch">
+			<rectangle radius="0">
+				<reportElement key="rectangle" mode="Opaque" x="1" y="48" width="754" height="77" forecolor="#000000" backcolor="#FFFFFF"/>
+				<graphicElement fill="Solid"/>
+			</rectangle>
+			<textField evaluationTime="Report" pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement key="textField-3" mode="Opaque" x="561" y="72" width="77" height="16" forecolor="#666666" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="12" isBold="false" isItalic="true" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$P{DateFrom}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement key="textField-4" mode="Opaque" x="665" y="72" width="83" height="16" forecolor="#666666" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="12" isBold="false" isItalic="true" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$P{DateTo}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" isBlankWhenNull="false">
+				<reportElement key="textField-50" x="109" y="72" width="367" height="16" forecolor="#666666"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="12" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ORG_NAME}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-52" x="8" y="88" width="60" height="16" forecolor="#666666">
+					<printWhenExpression><![CDATA[new Boolean($F{IFROMACC} != null)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="12" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{CURRENT_LANG}.equals("fr_FR") ? "Comptes :":
+$P{CURRENT_LANG}.equals("nl_NL") ? "Account" :"Comptes :"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-59" x="639" y="72" width="25" height="16" forecolor="#666666" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="12" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{CURRENT_LANG}.equals("fr_FR") ? "au":
+$P{CURRENT_LANG}.equals("nl_NL") ? "To" :"au"]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-8" mode="Opaque" x="0" y="12" width="756" height="21" backcolor="#CCCCCC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Balance générale]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-66" x="9" y="72" width="95" height="16" forecolor="#666666"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="12" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Organisation :"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-67" x="488" y="72" width="73" height="16" forecolor="#666666"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="12" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Dates : du"]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement key="textField-68" mode="Opaque" x="74" y="88" width="676" height="32" forecolor="#666666" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[new Boolean($F{IFROMACC} != null)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="12" isBold="false" isItalic="true" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["de  " + $F{IFROMACC} + "  à  " + $F{ITOACC}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-85" x="9" y="56" width="95" height="16" forecolor="#666666"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="12" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Société :"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" isBlankWhenNull="false">
+				<reportElement key="textField-86" x="109" y="56" width="367" height="16" forecolor="#666666"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="12" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{CLIENT_NAME}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="39" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText-1" x="0" y="2" width="279" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Compte]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-2" x="279" y="18" width="77" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[débit]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-4" x="356" y="18" width="76" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Crédit]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-10" x="279" y="2" width="153" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Solde début de période]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-11" x="592" y="18" width="76" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[débit]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-12" x="668" y="18" width="82" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Crédit]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-13" x="592" y="2" width="158" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Solde fin de période]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-14" x="432" y="18" width="81" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[débit]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-15" x="513" y="18" width="79" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Crédit]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-16" x="432" y="2" width="160" height="13" forecolor="#0033CC"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Cumul mouvements de la période]]></text>
+			</staticText>
+			<line>
+				<reportElement key="line-6" x="592" y="0" width="1" height="39" forecolor="#003399">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-7" x="279" y="0" width="1" height="39" forecolor="#003399">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-8" x="432" y="0" width="1" height="39" forecolor="#003399">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-9" x="750" y="0" width="1" height="39" forecolor="#003399">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-10" x="0" y="31" width="750" height="1" forecolor="#003399">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-30" x="0" y="0" width="750" height="1" forecolor="#003399">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-31" x="513" y="31" width="1" height="8" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-32" x="668" y="31" width="1" height="8" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-33" x="356" y="31" width="1" height="8" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch">
+			<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="18" splitType="Stretch">
+			<printWhenExpression><![CDATA[new Boolean($F{GL_CAT}.equals("-"))]]></printWhenExpression>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField-1" mode="Opaque" x="0" y="4" width="279" height="10" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ACCT_VALUE} + "-" + $F{ACCT_NAME}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+				<reportElement key="textField" x="279" y="4" width="77" height="10">
+					<printWhenExpression><![CDATA[new Boolean (
+(
+	($F{STARTING_BALANCE}.compareTo(java.math.BigDecimal.ZERO) >0)
+)
+||
+(
+	($F{STARTING_BALANCE}.compareTo(java.math.BigDecimal.ZERO) == 0)
+	&&
+	(
+		"A".equalsIgnoreCase(new String($F{ACCOUNTTYPE}))
+		||
+		"E".equalsIgnoreCase(new String($F{ACCOUNTTYPE}))
+	)
+
+)
+)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{STARTING_BALANCE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+				<reportElement key="textField" mode="Transparent" x="356" y="4" width="76" height="10">
+					<printWhenExpression><![CDATA[new Boolean (
+(
+	($F{STARTING_BALANCE}.compareTo(java.math.BigDecimal.ZERO) <0)
+)
+||
+(
+	($F{STARTING_BALANCE}.compareTo(java.math.BigDecimal.ZERO) == 0)
+	&&
+	(
+		"R".equalsIgnoreCase(new String($F{ACCOUNTTYPE}))
+		||
+		"L".equalsIgnoreCase(new String($F{ACCOUNTTYPE}))
+	)
+
+)
+)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{STARTING_BALANCE}.negate()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" x="432" y="4" width="81" height="10"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AMOUNTDR}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" x="513" y="4" width="79" height="10"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AMOUNTCR}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Auto" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField-77" mode="Transparent" x="592" y="4" width="76" height="10" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[new Boolean (
+(
+	($F{STARTING_BALANCE}.add($F{AMOUNT}).compareTo(java.math.BigDecimal.ZERO) > 0)
+)
+||
+(
+	($F{STARTING_BALANCE}.add($F{AMOUNT}).compareTo(java.math.BigDecimal.ZERO) == 0)
+	&&
+	(
+		"A".equalsIgnoreCase(new String($F{ACCOUNTTYPE}))
+		||
+		"E".equalsIgnoreCase(new String($F{ACCOUNTTYPE}))
+	)
+
+)
+)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{STARTING_BALANCE}.add($F{AMOUNT})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Auto" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField-78" mode="Transparent" x="668" y="4" width="82" height="10" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[new Boolean (
+(
+	($F{STARTING_BALANCE}.add($F{AMOUNT}).compareTo(java.math.BigDecimal.ZERO) < 0)
+)
+||
+(
+	($F{STARTING_BALANCE}.add($F{AMOUNT}).compareTo(java.math.BigDecimal.ZERO) == 0)
+	&&
+	(
+		"R".equalsIgnoreCase(new String($F{ACCOUNTTYPE}))
+		||
+		"L".equalsIgnoreCase(new String($F{ACCOUNTTYPE}))
+	)
+
+)
+)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{STARTING_BALANCE}.add($F{AMOUNT}).negate()]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement key="line-11" x="279" y="0" width="1" height="18" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-13" x="432" y="0" width="1" height="18" forecolor="#000000"/>
+			</line>
+			<line>
+				<reportElement key="line-19" x="356" y="0" width="1" height="18" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-21" x="432" y="0" width="1" height="18" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-23" x="592" y="0" width="1" height="18" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-25" x="750" y="0" width="1" height="18" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-27" x="513" y="0" width="1" height="18" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement key="line-29" x="668" y="0" width="1" height="18" forecolor="#000000">
+					<printWhenExpression><![CDATA[new Boolean($P{excel}.equalsIgnoreCase("N"))]]></printWhenExpression>
+				</reportElement>
+			</line>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="19" splitType="Stretch">
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" mode="Transparent" x="533" y="0" width="174" height="19" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{CURRENT_LANG}.equals("fr_FR") ? "Page " + $V{PAGE_NUMBER} + " / ":
+$P{CURRENT_LANG}.equals("nl_NL") ? "Page " + $V{PAGE_NUMBER} + " of " :"Page " + $V{PAGE_NUMBER} + " / "]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" mode="Transparent" x="709" y="0" width="36" height="19" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["" + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy (HH:MM)" isBlankWhenNull="false">
+				<reportElement key="textField-45" mode="Transparent" x="2" y="0" width="108" height="19" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="44" splitType="Stretch">
+			<textField isStretchWithOverflow="true" evaluationTime="Report" pattern="" isBlankWhenNull="true">
+				<reportElement key="textField" mode="Opaque" x="356" y="24" width="74" height="12" forecolor="#660066" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[new Boolean ($V{AMOUNT_START_TOTAL}.compareTo(java.math.BigDecimal.ZERO) <= 0)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{AMOUNT_START_TOTAL}.negate()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Report" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="670" y="24" width="75" height="12" forecolor="#660066" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[new Boolean ($V{AMOUNT_START_TOTAL}.add($V{AMOUNT_TOTAL}).compareTo(java.math.BigDecimal.ZERO) <= 0)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{AMOUNT_START_TOTAL}.add($V{AMOUNT_TOTAL}).negate()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Report" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="516" y="24" width="76" height="12" forecolor="#660066" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{TOTAL_AMOUNTCR_ACCT}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement key="line-5" mode="Opaque" x="2" y="2" width="531" height="1" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[new Boolean(false)]]></printWhenExpression>
+				</reportElement>
+				<graphicElement fill="Solid"/>
+			</line>
+			<textField isStretchWithOverflow="true" evaluationTime="Report" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField-48" mode="Transparent" x="434" y="24" width="76" height="12" forecolor="#660066" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{TOTAL_AMOUNTDR_ACCT}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-57" x="9" y="24" width="100" height="12" forecolor="#660066"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{CURRENT_LANG}.equals("fr_FR") ? "TOTAL GENERAL ":
+$P{CURRENT_LANG}.equals("nl_NL") ? "TOTAL " :"TOTAL "]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Report" pattern="" isBlankWhenNull="true">
+				<reportElement key="textField-64" mode="Opaque" x="281" y="24" width="70" height="12" forecolor="#660066" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[new Boolean ($V{AMOUNT_START_TOTAL}.compareTo(java.math.BigDecimal.ZERO) >= 0)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{AMOUNT_START_TOTAL}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Report" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField-65" mode="Opaque" x="593" y="24" width="70" height="12" forecolor="#660066" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[new Boolean ($V{AMOUNT_START_TOTAL}.add($V{AMOUNT_TOTAL}).compareTo(java.math.BigDecimal.ZERO) >= 0)]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" lineSpacing="Single">
+					<font fontName="SansSerif" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{AMOUNT_START_TOTAL}.add($V{AMOUNT_TOTAL})]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

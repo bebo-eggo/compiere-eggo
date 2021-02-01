@@ -1,0 +1,165 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>audaxis</groupId>
+    <artifactId>compiere-jasper-eurocenter</artifactId>
+    <packaging>jar</packaging>
+    <version>361.54.0</version>
+    <name>compiere-jasper-eurocenter</name>
+    <description />
+    <url>http://www.audaxis.com</url>
+    <inceptionYear>2015</inceptionYear>
+    
+    <properties>
+    	<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+    	<maven.javadoc.skip>true</maven.javadoc.skip>
+    	<maven.site.skip>true</maven.site.skip>
+    </properties>
+    
+    <repositories>
+    	<repository>
+			<snapshots>
+    	    <enabled>true</enabled>
+      		</snapshots>
+   			<id>audaxis.repo.snapshots</id>
+   			<name>Audaxis Internal Repository</name>
+   			<url>http://support.audaxis.com/m2-snapshots/</url>
+        </repository>
+		<repository>
+           <id>audaxis</id>
+           <name>Audaxis Internal Repository</name>
+           <url>http://support.audaxis.com/maven2/</url>
+        </repository>
+		<repository>
+			<id>google-api-services</id>
+			<name>Google API</name>
+			<url>http://mavenrepo.google-api-java-client.googlecode.com/hg</url>
+		</repository>
+    </repositories>
+    <dependencies>
+    	<dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+		<dependency>
+        	<groupId>audaxis</groupId>
+            <artifactId>compiere-custo-eurocenter</artifactId>
+            <version>361.54.0</version>
+        </dependency>
+
+    </dependencies>
+    
+    <scm>
+        <connection>scm:svn:http://svn.audaxis.com/svn/repos/compiere-jasper-eurocenter/branches/361.40.2-EC/compiere-jasper-eurocenter</connection>
+        <developerConnection>scm:svn:http://svn.audaxis.com/svn/repos/compiere-jasper-eurocenter/branches/361.40.2-EC/compiere-jasper-eurocenter</developerConnection>
+        <url>http://svn.audaxis.com/svn/repos/compiere-jasper-eurocenter/branches/361.40.2-EC/compiere-jasper-eurocenter</url>
+    </scm>
+	<distributionManagement>
+        <site>
+            <id>audaxis</id>
+            <url>scp://mail.audaxis.lu/home/forge/compiere-jasper-eurocenter</url>
+        </site>
+		<repository>
+          <id>audaxis.repo</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/maven2</url>
+        </repository>
+        <snapshotRepository>
+          <id>audaxis.repo.snapshots</id>
+          <name>Audaxis Internal Repository</name>
+          <url>scp://mail.audaxis.lu/home/www/m2-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+    <build>
+		<extensions>
+    		<extension>
+       			<groupId>org.apache.maven.wagon</groupId>
+       			<artifactId>wagon-ssh</artifactId>
+       			<version>2.2</version>
+     		</extension>
+   		</extensions>
+<sourceDirectory>src</sourceDirectory>
+        <resources>
+	        <resource>
+	        	<directory>.</directory>
+	        	<filtering>false</filtering>
+	        	<includes>
+	        		<include>data/jasper/**</include>
+	        	</includes>
+	        	<excludes>
+	        		<exclude>src/**</exclude>
+	        	</excludes>
+	        </resource>
+	        <resource>
+                <directory>src/main/resources</directory>
+				<filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>2.3.2</version>
+              <configuration>
+                <source>1.6</source>
+                <target>1.6</target>
+                <debug>true</debug>
+                <encoding>ISO8859_1</encoding>
+              </configuration>
+            </plugin>
+            <plugin>
+            	<groupId>org.apache.maven.plugins</groupId>
+            	<artifactId>maven-site-plugin</artifactId>
+            	<version>3.3</version>
+            	<configuration>
+            		<skip>true</skip>
+            		<skipDeploy>true</skipDeploy>
+            	</configuration>
+            </plugin>
+			<plugin>
+    			<groupId>org.apache.maven.plugins</groupId>
+    			<artifactId>maven-release-plugin</artifactId>
+				<version>2.4.1</version>
+    			<dependencies>
+        			<dependency>
+            			<groupId>com.google.code.maven-scm-provider-svnjava</groupId>
+            			<artifactId>maven-scm-provider-svnjava</artifactId>
+            			<version>2.1.1</version>
+        			</dependency>
+    			</dependencies>
+    			<configuration>
+        			<providerImplementations>
+            			<svn>javasvn</svn>
+        			</providerImplementations>
+    			</configuration>
+			</plugin>
+			<plugin>
+    			<artifactId>maven-resources-plugin</artifactId>
+    			<version>3.0.1</version>
+    			<executions>
+         			<execution>
+            		<id>copy-resources</id>
+            		<!-- here the phase you need -->
+            		<phase>validate</phase>
+            		<goals>
+            		   <goal>copy-resources</goal>
+            		</goals>
+            		<configuration>
+               			<outputDirectory>${basedir}/src/main/resources</outputDirectory>
+               			<resources>          
+                    		<resource>
+                        		<directory>${basedir}/data/jasper</directory>
+                        		<filtering>true</filtering>
+                        		<include>traduction*</include>
+                    		</resource>
+               			</resources>              
+            		</configuration>            
+       			 </execution>
+     			</executions>
+			</plugin>
+        </plugins>
+    </build>
+
+</project>

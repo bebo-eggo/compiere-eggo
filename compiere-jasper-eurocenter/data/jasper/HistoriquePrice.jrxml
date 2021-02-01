@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="HistoriquePrice" pageWidth="595" pageHeight="842" columnWidth="585" leftMargin="5" rightMargin="5" topMargin="5" bottomMargin="5">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<parameter name="datedeb" class="java.util.Date"/>
+	<parameter name="datefin" class="java.util.Date"/>
+	<parameter name="M_PriceList_ID" class="java.lang.Double"/>
+	<parameter name="AD_CLIENT_ID" class="java.lang.String"/>
+	<parameter name="AD_ORG_ID" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[SELECT invl.m_product_id,
+TO_CHAR(inv.dateinvoiced,'MM/yyyy' ) as  mois ,
+sum(invl.qtyinvoiced) as qty,
+sum(invl.pricelist *invl.qtyinvoiced)/sum(invl.qtyinvoiced) as prix
+FROM c_invoiceline invl
+INNER JOIN c_invoice inv
+ON (inv.c_invoice_id    = invl.c_invoice_id)
+WHERE invl.m_product_id = $P{RECORD_ID}
+AND inv.M_PriceList_ID = $P{M_PriceList_ID}
+and inv.dateinvoiced between $P{datedeb} and $P{datefin}
+group by TO_CHAR(inv.dateinvoiced,'MM/yyyy'),invl.m_product_id
+order by TO_CHAR(inv.dateinvoiced,'MM/yyyy')]]>
+	</queryString>
+	<field name="M_PRODUCT_ID" class="java.math.BigDecimal"/>
+	<field name="MOIS" class="java.lang.String"/>
+	<field name="QTY" class="java.math.BigDecimal"/>
+	<field name="PRIX" class="java.math.BigDecimal"/>
+	<summary>
+		<band height="147">
+			<lineChart>
+				<chart>
+					<reportElement x="0" y="0" width="585" height="143"/>
+					<box>
+						<pen lineWidth="1.0"/>
+						<topPen lineWidth="1.0"/>
+						<leftPen lineWidth="1.0"/>
+						<bottomPen lineWidth="1.0"/>
+						<rightPen lineWidth="1.0"/>
+					</box>
+					<chartTitle/>
+					<chartSubtitle/>
+					<chartLegend/>
+				</chart>
+				<categoryDataset>
+					<categorySeries>
+						<seriesExpression><![CDATA["Mois"]]></seriesExpression>
+						<categoryExpression><![CDATA[$F{MOIS}]]></categoryExpression>
+						<valueExpression><![CDATA[$F{PRIX}]]></valueExpression>
+					</categorySeries>
+				</categoryDataset>
+				<linePlot>
+					<plot/>
+					<categoryAxisFormat>
+						<axisFormat>
+							<labelFont/>
+							<tickLabelFont/>
+						</axisFormat>
+					</categoryAxisFormat>
+					<valueAxisFormat>
+						<axisFormat>
+							<labelFont/>
+							<tickLabelFont/>
+						</axisFormat>
+					</valueAxisFormat>
+				</linePlot>
+			</lineChart>
+		</band>
+	</summary>
+</jasperReport>

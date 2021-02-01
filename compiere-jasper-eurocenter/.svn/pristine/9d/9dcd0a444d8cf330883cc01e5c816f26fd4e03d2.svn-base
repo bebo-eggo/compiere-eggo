@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD JasperReport//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+
+<jasperReport name="cuisines_dormantes" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isFloatColumnFooter="true" resourceBundle="traduction">
+	<property name="ireport.zoom" value="0.7697371773460604"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="3"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<style name="entete" isBold="true"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[new Double(1001743)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ReminderLevel" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[SELECT DISTINCT
+(cgt.Name)  as GREETING,
+nvl(cb.value,' ')         as CBVALUE,
+nvl(UPPER(cb.name),' ')          AS clientName,
+nvl(UPPER(cb.name2),' ')          AS clientFirstName,
+nvl(UPPER(locFact.Address1),' ') as INV_ADDRESS1,
+nvl(UPPER(locFact.Address2),' ') as INV_ADDRESS2,
+nvl(UPPER(locFact.Address4),' ') as INV_ADDRESS4,
+nvl(UPPER(locFact.Address3),' ') as INV_ADDRESS3,
+nvl(UPPER(locFact.postal),' ')   as INV_POSTAL,
+nvl(UPPER(locFact.city),' ')     as INV_CITY,
+nvl(cc.countrycode,' ')   as countrycode
+,co.POREFERENCE, cdi.ISPLACARD,aoi.TELGEST, co.DateOrdered, getOADatePromisedFromOrder(co.POREFERENCE) as DATEPROMISED,
+CASE WHEN  co.dateOrdered < TO_DATE('01/08/2015','DD/MM/YYYY') THEN 2 else 1 end as CAS,
+CASE WHEN  co.dateOrdered < TO_DATE('24/10/2017','DD/MM/YYYY') THEN 1 else 2 end as CASL,
+co.AD_ORG_ID, co.bill_location_id, co.AD_CLIENT_ID
+from C_Order co
+inner join AD_OrgInfo aoi on aoi.AD_ORG_ID = co.AD_Org_ID
+inner join C_DocTypeInfo cdi on cdi.C_DocType_ID = co.C_DocType_ID
+inner join C_BPartner cb on cb.C_BPartner_ID = co.C_BPartner_ID
+inner join c_bpartner_location cblFact on (cblFact.c_bpartner_location_ID = co.BILL_LOCATION_ID)
+inner join c_location locFact on (locFact.c_location_id = cblfact.c_location_id)
+inner join c_Country cc on (cc.C_Country_ID = locFact.C_Country_ID)
+left join AD_User au on (au.C_BPartner_ID = cb.C_BPartner_ID)
+left join c_greeting cg on (cg.c_greeting_id = cb.c_greeting_id)
+left join c_greeting_trl cgt on (cgt.c_greeting_id = cg.c_greeting_id
+
+and UPPER(cgt.AD_Language) = UPPER(cb.AD_LANGUAGE))
+where co.C_Order_ID = $P{RECORD_ID} and rownum=1]]>
+	</queryString>
+	<field name="GREETING" class="java.lang.String"/>
+	<field name="CBVALUE" class="java.lang.String"/>
+	<field name="CLIENTNAME" class="java.lang.String"/>
+	<field name="CLIENTFIRSTNAME" class="java.lang.String"/>
+	<field name="INV_ADDRESS1" class="java.lang.String"/>
+	<field name="INV_ADDRESS2" class="java.lang.String"/>
+	<field name="INV_ADDRESS4" class="java.lang.String"/>
+	<field name="INV_ADDRESS3" class="java.lang.String"/>
+	<field name="INV_POSTAL" class="java.lang.String"/>
+	<field name="INV_CITY" class="java.lang.String"/>
+	<field name="COUNTRYCODE" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="ISPLACARD" class="java.lang.String"/>
+	<field name="TELGEST" class="java.lang.String"/>
+	<field name="DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="DATEPROMISED" class="java.sql.Timestamp"/>
+	<field name="CAS" class="java.lang.Number"/>
+	<field name="CASL" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="BILL_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<title>
+		<band height="699">
+			<textField pattern="" isBlankWhenNull="false" hyperlinkType="None">
+				<reportElement x="296" y="10" width="188" height="20"/>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{cuis_dorm_01}, new SimpleDateFormat("dd/MM/yyyy").format(new Date()))]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="296" y="30" width="100" height="20">
+					<printWhenExpression><![CDATA[$P{ReminderLevel}.equals("2")]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font fontName="SansSerif" size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{cuis_dorm_11_2}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="15" y="232" width="524" height="20"/>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg(str("cuis_dorm_02_"+$F{ISPLACARD}),$F{POREFERENCE})]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="15" y="262" width="524" height="20"/>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{cuis_dorm_10},$F{GREETING})]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="15" y="292" width="524" height="53">
+					<printWhenExpression><![CDATA[$F{ISPLACARD}.equals("Y")]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Top" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{ReminderLevel}.equals("1")?$R{cuis_dorm_03_Y_1}:$R{cuis_dorm_03_Y_2}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="15" y="292" width="524" height="53">
+					<printWhenExpression><![CDATA[$F{ISPLACARD}.equals("N")]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Top" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{ReminderLevel}.equals("1")?$R{cuis_dorm_03_N_1}:$R{cuis_dorm_03_N_2}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="15" y="345" width="524" height="185"/>
+				<textElement verticalAlignment="Top" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{cuis_dorm_04}+"<br><br>"+$R{cuis_dorm_05}+"<br><br>"+$R{cuis_dorm_06}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="15" y="530" width="524" height="95">
+					<printWhenExpression><![CDATA[$P{ReminderLevel}.equals("1")]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Top" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{cuis_dorm_07_1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="15" y="530" width="524" height="95">
+					<printWhenExpression><![CDATA[$P{ReminderLevel}.equals("2")]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Top" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{cuis_dorm_07_2},new SimpleDateFormat("dd/MM/yyyy").format($F{DATEORDERED}),new SimpleDateFormat("dd/MM/yyyy").format($F{DATEPROMISED}))]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="15" y="627" width="524" height="20"/>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{cuis_dorm_08}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true" hyperlinkType="None">
+				<reportElement x="15" y="659" width="524" height="40"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" markup="html">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{cuis_dorm_09}+"<br>"+$F{TELGEST}]]></textFieldExpression>
+			</textField>
+			<image hyperlinkType="None">
+				<reportElement x="10" y="10" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{AD_ORG_ID}.doubleValue()!=1000476]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/eggo_ico.jpg"]]></imageExpression>
+			</image>
+			<image hyperlinkType="None">
+				<reportElement x="10" y="10" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{AD_ORG_ID}.doubleValue()==1000476]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/LogoEggoPro.jpg"]]></imageExpression>
+			</image>
+			<subreport>
+				<reportElement x="296" y="93" width="243" height="82"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_BPartner_Location_ID">
+					<subreportParameterExpression><![CDATA[$F{BILL_LOCATION_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_InfoClient.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement x="15" y="104" width="260" height="71"/>
+				<subreportParameter name="AD_ORG_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/subreportOrg_Gest.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</title>
+	<lastPageFooter>
+		<band height="45">
+			<subreport>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="0" width="555" height="45" isPrintWhenDetailOverflows="true"/>
+				<subreportParameter name="Ad_client_id">
+					<subreportParameterExpression><![CDATA[$F{AD_CLIENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CASL">
+					<subreportParameterExpression><![CDATA[$F{CASL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CAS">
+					<subreportParameterExpression><![CDATA[$F{CAS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/subreportfooter.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</lastPageFooter>
+</jasperReport>

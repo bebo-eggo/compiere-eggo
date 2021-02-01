@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD JasperReport//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+
+<jasperReport name="SubReport_Org" language="groovy" pageWidth="555" pageHeight="842" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.9487171000000014"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="C_Order_ID" class="java.lang.Double"/>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<parameter name="COM" class="java.lang.String"/>
+	<parameter name="URL" class="java.lang.String">
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[Select cb.Value as client, nvl(cb.taxid,' ')as taxid,ci.dateOrdered as dateinvoiced, ci.documentno, ci.poreference, nvl(au.name,' ')as name,
+(Select NVL (amt.Msgtext, am.Msgtext)  from AD_Message am
+inner join AD_Message_Trl amt on (amt.AD_Message_ID = am.AD_Message_ID)
+where am.Value = 'FACT_COM_STRUCT' and amt.AD_LANGUAGE = cb.AD_LANGUAGE) as FACT_COM_STRUCT,
+(Select NVL (amt.Msgtext, am.Msgtext)  from AD_Message am
+inner join AD_Message_Trl amt on (amt.AD_Message_ID = am.AD_Message_ID)
+where am.Value = 'FACT_LEGAL_COM' and amt.AD_LANGUAGE = cb.AD_LANGUAGE) as FACT_LEGAL_COM,
+(Select NVL (amt.Msgtext, am.Msgtext)  from AD_Message am
+inner join AD_Message_Trl amt on (amt.AD_Message_ID = am.AD_Message_ID)
+where am.Value = 'FACT_CONDITIONS' and amt.AD_LANGUAGE = cb.AD_LANGUAGE) as FACT_CONDITIONS
+ from C_Order ci
+inner join c_bpartner cb on (cb.c_bpartner_ID = ci.c_bpartner_ID)
+left join AD_user au on (au.AD_User_ID = ci.salesrep_id)
+where C_Order_ID = $P{C_Order_ID}]]>
+	</queryString>
+	<field name="CLIENT" class="java.lang.String"/>
+	<field name="TAXID" class="java.lang.String"/>
+	<field name="DATEINVOICED" class="java.sql.Timestamp"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="NAME" class="java.lang.String"/>
+	<field name="FACT_COM_STRUCT" class="java.lang.String"/>
+	<field name="FACT_LEGAL_COM" class="java.lang.String"/>
+	<field name="FACT_CONDITIONS" class="java.lang.String"/>
+	<lastPageFooter>
+		<band height="178">
+			<line>
+				<reportElement x="0" y="87" width="555" height="1"/>
+			</line>
+			<subreport>
+				<reportElement x="255" y="5" width="300" height="64"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{AD_Language}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_Order_ID">
+					<subreportParameterExpression><![CDATA[$P{C_Order_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "SubReport_Total_Recap.jasper"]]></subreportExpression>
+			</subreport>
+			<textField hyperlinkType="None">
+				<reportElement x="0" y="90" width="555" height="74"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="html">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{FACT_LEGAL_COM}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="1" width="555" height="1"/>
+			</line>
+			<textField hyperlinkType="None">
+				<reportElement x="0" y="166" width="555" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="html">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{FACT_CONDITIONS}]]></textFieldExpression>
+			</textField>
+		</band>
+	</lastPageFooter>
+</jasperReport>

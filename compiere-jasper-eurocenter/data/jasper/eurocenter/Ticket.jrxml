@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report3" language="groovy" pageWidth="295" pageHeight="381" columnWidth="267" leftMargin="14" rightMargin="14" topMargin="11" bottomMargin="11">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<parameter name="URL" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select
+(select name from m_product where m_product.value = D.m_product_value) as article,
+D.*,
+H.*,
+B.*,
+X.*,
+P.*,
+'Y' as isprinted
+from  RV_PRINTTICKETDETAIL D
+inner join RV_PRINTTICKETHDR H on H.order_id = D.Order_ID
+inner join RV_PRINTTICKETPARTNER B on b.order_id = D.Order_ID
+inner join RV_PRINTTICKETTAX X on X.order_id = D.Order_ID
+inner join RV_PRINTTICKETPAYMENT P on P.order_id = D.Order_ID
+where D.Order_ID = $P{RECORD_ID}]]>
+	</queryString>
+	<field name="ARTICLE" class="java.lang.String"/>
+	<field name="ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="ORDERLINE_ID" class="java.math.BigDecimal"/>
+	<field name="M_PRODUCT_VALUE" class="java.lang.String"/>
+	<field name="M_PRODUCT_DESCRIPTION" class="java.lang.String"/>
+	<field name="QTYENTERED" class="java.math.BigDecimal"/>
+	<field name="PRICEENTERED" class="java.math.BigDecimal"/>
+	<field name="RATE" class="java.math.BigDecimal"/>
+	<field name="PRICEENTEREDHT" class="java.math.BigDecimal"/>
+	<field name="TOTALLINE" class="java.math.BigDecimal"/>
+	<field name="SERIALNUMBER" class="java.lang.String"/>
+	<field name="ACCESSORIES" class="java.lang.String"/>
+	<field name="PURCHASEDATE" class="java.sql.Timestamp"/>
+	<field name="PRODUCTSTATE" class="java.lang.String"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="DISCOUNT" class="java.math.BigDecimal"/>
+	<field name="AD_CLIENT_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_ADDRESS1" class="java.lang.String"/>
+	<field name="AD_ORG_POSTAL" class="java.lang.String"/>
+	<field name="AD_ORG_CITY" class="java.lang.String"/>
+	<field name="AD_ORG_PHONE" class="java.lang.String"/>
+	<field name="AD_ORG_FAX" class="java.lang.String"/>
+	<field name="AD_ORG_TAXID" class="java.lang.String"/>
+	<field name="DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="DOCUMENTNAME" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="SALESREP_CODE" class="java.lang.String"/>
+	<field name="SALESREP_NAME" class="java.lang.String"/>
+	<field name="SALESREPPHONE" class="java.lang.String"/>
+	<field name="NAME" class="java.lang.String"/>
+	<field name="VALUE" class="java.lang.String"/>
+	<field name="FIRSTNAME" class="java.lang.String"/>
+	<field name="PHONE" class="java.lang.String"/>
+	<field name="PHONE2" class="java.lang.String"/>
+	<field name="EMAIL" class="java.lang.String"/>
+	<field name="TAXID" class="java.lang.String"/>
+	<field name="GREETING" class="java.lang.String"/>
+	<field name="SHIP_NAME" class="java.lang.String"/>
+	<field name="SHIP_ADDRESS1" class="java.lang.String"/>
+	<field name="SHIP_ADDRESS2" class="java.lang.String"/>
+	<field name="SHIP_NUMBER" class="java.lang.String"/>
+	<field name="SHIP_BOX" class="java.lang.String"/>
+	<field name="SHIP_POSTAL" class="java.lang.String"/>
+	<field name="SHIP_CITY" class="java.lang.String"/>
+	<field name="SHIP_COUNTRY" class="java.lang.String"/>
+	<field name="INV_ADDRESS1" class="java.lang.String"/>
+	<field name="INV_ADDRESS2" class="java.lang.String"/>
+	<field name="INV_NUMBER" class="java.lang.String"/>
+	<field name="INV_BOX" class="java.lang.String"/>
+	<field name="INV_POSTAL" class="java.lang.String"/>
+	<field name="INV_CITY" class="java.lang.String"/>
+	<field name="INV_COUNTRY" class="java.lang.String"/>
+	<field name="TOTALHT" class="java.math.BigDecimal"/>
+	<field name="TOTALTTC" class="java.math.BigDecimal"/>
+	<field name="TOTALTAX" class="java.math.BigDecimal"/>
+	<field name="PAYAMT" class="java.math.BigDecimal"/>
+	<field name="SUBPAYMENT" class="java.lang.String"/>
+	<field name="ISPRINTED" class="java.lang.String"/>
+	<variable name="variable1" class="java.lang.Double" resetType="Column" incrementType="Column" calculation="Sum">
+		<variableExpression><![CDATA[]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="145" splitType="Stretch">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+				<reportElement x="89" y="72" width="293" height="37"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{AD_ORG_ADDRESS1} == null ? "" :$F{AD_ORG_ADDRESS1}+ '\r' )+
+($F{AD_ORG_POSTAL} == null ? "" :$F{AD_ORG_POSTAL}+ '\r' )+
+($F{AD_ORG_CITY} == null ? "" :$F{AD_ORG_CITY}+ '\r') +
+"Tel:"+($F{AD_ORG_PHONE} == null ? "" :$F{AD_ORG_PHONE}+ '\r')+
+"Fax:"+($F{AD_ORG_FAX} == null ? "" :$F{AD_ORG_FAX})+'\r'+
+"TVA:"+$F{TAXID}]]></textFieldExpression>
+			</textField>
+			<image>
+				<reportElement x="89" y="2" width="100" height="57"/>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/eurocenter/LogoEC.jpg"]]></imageExpression>
+			</image>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="114" y="124" width="60" height="10"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="114" y="115" width="60" height="10"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNAME}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement x="114" y="133" width="60" height="10"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATEORDERED}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="115" width="50" height="10"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Document "]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="133" width="50" height="10"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Date"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="124" width="50" height="10"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Numéro"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="173" y="133" width="60" height="10"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["("+$F{SALESREP_CODE}+")"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="89" y="63" width="100" height="10"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{AD_ORG_NAME} == null ? "" :$F{AD_ORG_NAME}+ '\r')]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="11" splitType="Stretch">
+			<textField>
+				<reportElement x="146" y="0" width="60" height="10">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Prix"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="205" y="0" width="60" height="10">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Montant"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="3" y="0" width="56" height="10"/>
+				<textElement>
+					<font size="5" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Qté"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="58" y="0" width="89" height="10"/>
+				<textElement>
+					<font size="5" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Designation"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="9" width="267" height="1">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5" lineStyle="Dashed"/>
+				</graphicElement>
+			</line>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="11" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="3" y="0" width="56" height="10"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{QTYENTERED}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="205" y="0" width="60" height="10">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{TOTALLINE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="146" y="0" width="60" height="10">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{PRICEENTERED}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="59" y="0" width="89" height="10"/>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{M_PRODUCT_VALUE}+ '\r'+
+($F{M_PRODUCT_DESCRIPTION}== null ? "" :$F{M_PRODUCT_DESCRIPTION})]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="86">
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="167" y="5" width="88" height="10" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{TOTALHT}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="167" y="15" width="88" height="10" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{TOTALTAX}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="167" y="29" width="89" height="10" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{TOTALTTC}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="24" y="41" width="71" height="10" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{SUBPAYMENT}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="27" width="267" height="1">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</line>
+			<textField>
+				<reportElement x="118" y="5" width="50" height="10" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Hors TVA :"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="118" y="15" width="50" height="10" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["TVA :"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="118" y="29" width="50" height="10" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="5" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Total :"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="1" width="267" height="1">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5" lineStyle="Dashed"/>
+				</graphicElement>
+			</line>
+			<textField>
+				<reportElement x="4" y="41" width="21" height="10">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'N' )]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Reçu:"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="2" y="55" width="262" height="29"/>
+				<textElement textAlignment="Center">
+					<font size="5"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Merci de votre visite"+'\r'+"Nos conditions de vente sont disponibles au comptoir sur simple demande."+'\r'+"Tous nos prix incluent les taxes et contributions légales en matières d'environnement et de droit d'auteurs."]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="52" width="267" height="1">
+					<printWhenExpression><![CDATA[$F{ISPRINTED}.equals( 'Y' )]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5" lineStyle="Dashed"/>
+				</graphicElement>
+			</line>
+		</band>
+	</summary>
+</jasperReport>

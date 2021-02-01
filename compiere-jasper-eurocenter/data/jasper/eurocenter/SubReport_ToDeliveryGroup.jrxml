@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_Org" language="groovy" printOrder="Horizontal" pageWidth="555" pageHeight="842" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="2.1435888100000025"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<subDataset name="Table Dataset 1"/>
+	<parameter name="C_Invoice_ID" class="java.lang.Double"/>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select * from (select to_Char(mp.value) as "VALUE",
+TO_Char(NVL(mpt.description,mp.description)) as description,
+cil.qtyinvoiced as QTYINVOICED,
+ctax.rate,
+cil.priceactual,
+cil.linenetamt ,zsf.isorderby as "SORT"
+from rv_c_invoiceline cil
+inner join M_Product mp on (mp.M_Product_ID = cil.M_Product_ID)
+left join M_Product_Trl mpt on (mpt.M_Product_ID = mp.M_Product_ID and mpt.AD_Language =$P{AD_Language})
+left join Z_S_Famille zsf on (zsf.z_s_famille_id = mp.z_s_famille_id)
+inner join C_Tax ctax on (ctax.C_Tax_ID = cil.c_tax_id)
+inner join rv_orderdetail rvod on (rvod.C_OrderLine_ID = cil.c_orderline_id)
+where (zsf.Name not in ('POSE') or zsf.Name is null) and cil.C_Invoice_ID = $P{C_Invoice_ID} and rvod.QtyToDeliver>0
+union
+select 'POSE',
+'Pose de la marchandise' as description,
+1as QTYINVOICED,
+ctax.rate,
+sum(cil.qtyinvoiced*cil.priceactual) as PRICEACTUAL,
+sum(cil.linenetamt) as  ,99 as "SORT"
+from rv_c_invoiceline cil
+inner join M_Product mp on (mp.M_Product_ID = cil.M_Product_ID)
+left join M_Product_Trl mpt on (mpt.M_Product_ID = mp.M_Product_ID and mpt.AD_Language =$P{AD_Language})
+left join Z_S_Famille zsf on (zsf.z_s_famille_id = mp.z_s_famille_id)
+inner join C_Tax ctax on (ctax.C_Tax_ID = cil.c_tax_id)
+inner join rv_orderdetail rvod on (rvod.C_OrderLine_ID = cil.c_orderline_id)
+where zsf.Name in ('POSE') and cil.C_Invoice_ID = $P{C_Invoice_ID} and rvod.QtyToDeliver>0
+group by 'Pose', 'Pose de la marchandise', 1, ctax.rate,zsf.name,99)
+order by 7, 1,4]]>
+	</queryString>
+	<field name="VALUE" class="java.lang.String"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="QTYINVOICED" class="java.math.BigDecimal"/>
+	<field name="RATE" class="java.math.BigDecimal"/>
+	<field name="PRICEACTUAL" class="java.math.BigDecimal"/>
+	<field name="LINENETAMT" class="java.math.BigDecimal"/>
+	<field name="SORT" class="java.math.BigDecimal"/>
+	<title>
+		<band height="5">
+			<line>
+				<reportElement x="0" y="2" width="555" height="1"/>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</line>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="20">
+			<textField>
+				<reportElement x="0" y="0" width="288" height="20"/>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Reste à livrer pour mémoire</b>" :($P{AD_Language}.equals("nl_NL")? "<b>Voor geleverde goederen</b> " :"<b>For goods delivered</b>"))]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="12">
+			<textField>
+				<reportElement x="0" y="0" width="158" height="12"/>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Article</b>" :($P{AD_Language}.equals("nl_NL")? "<b>Artikel</b> " :"<b>Product</b>"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="158" y="0" width="217" height="12"/>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Description</b>" :($P{AD_Language}.equals("nl_NL")? "<b>Descriptie</b> " :"<b>Description</b>"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="375" y="0" width="35" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Qté</b>" :($P{AD_Language}.equals("nl_NL")? "<b>Qty</b> " :"<b>Qty</b>"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="410" y="0" width="35" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>TVA</b>" :($P{AD_Language}.equals("nl_NL")? "<b>BTW</b> " :"<b>VAT</b>"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="445" y="0" width="55" height="12"/>
+				<box rightPadding="2"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>PU</b>" :($P{AD_Language}.equals("nl_NL")? "<b>PU</b> " :"<b>PU</b>"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="500" y="0" width="55" height="12"/>
+				<box rightPadding="2"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Montant TVAC</b>" :($P{AD_Language}.equals("nl_NL")? "<b>Bedrage BTWI</b> " :"<b>Amount VAT Inc.</b>"))]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="12">
+			<textField>
+				<reportElement x="0" y="0" width="158" height="12"/>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{VALUE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="158" y="0" width="217" height="12"/>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRIPTION}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="375" y="0" width="35" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{QTYINVOICED}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="410" y="0" width="35" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{RATE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00">
+				<reportElement x="445" y="0" width="55" height="12"/>
+				<box rightPadding="2"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{PRICEACTUAL}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00">
+				<reportElement x="500" y="0" width="55" height="12"/>
+				<box rightPadding="2"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{LINENETAMT}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

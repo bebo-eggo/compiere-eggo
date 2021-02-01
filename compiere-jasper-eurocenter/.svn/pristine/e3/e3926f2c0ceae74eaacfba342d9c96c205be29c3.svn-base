@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_TotalInvoice" printOrder="Horizontal" pageWidth="300" pageHeight="842" columnWidth="300" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<subDataset name="Table Dataset 1"/>
+	<parameter name="C_Invoice_ID" class="java.lang.Double"/>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select tt.* , paymentRound(GrandTotal) as rounded from (
+select Ctax.rate as "RATE", sum(it.taxbaseamt) as BaseAmount, sum(it.taxamt) as TVAAmount,(sum(it.taxbaseamt) + sum(it.taxamt)) as LinetAmount, cc.iso_code, ci.GrandTotal,
+case when trunc(Sysdate)>=TO_DATE('01/12/2019','DD/MM/YYYY') then 'Y' else 'N' end as ISROUNDED
+from c_invoicetax it inner join c_invoice o on o.C_Invoice_ID = it.C_Invoice_ID
+inner join c_invoice ci on ci.C_Invoice_ID = it.C_Invoice_ID
+inner join C_Tax ctax on (ctax.C_Tax_ID = it.c_tax_id)
+inner join c_currency cc on (cc.C_Currency_ID = ci.c_currency_id )
+where it.C_Invoice_ID = $P{C_Invoice_ID} group by Ctax.rate, ci.GrandTotal,cc.iso_code)tt order by 1]]>
+	</queryString>
+	<field name="RATE" class="java.math.BigDecimal"/>
+	<field name="BASEAMOUNT" class="java.math.BigDecimal"/>
+	<field name="TVAAMOUNT" class="java.math.BigDecimal"/>
+	<field name="LINETAMOUNT" class="java.math.BigDecimal"/>
+	<field name="ISO_CODE" class="java.lang.String"/>
+	<field name="ROUNDED" class="java.math.BigDecimal"/>
+	<field name="ISROUNDED" class="java.lang.String"/>
+	<variable name="LINETAMOUNT_1" class="java.math.BigDecimal" resetType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{LINETAMOUNT}]]></variableExpression>
+	</variable>
+	<columnHeader>
+		<band height="13" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="77" height="13"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Base</b>" :($P{AD_Language}.equals("nl_NL")? "<b>Base</b> " :"<b>Base</b>"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="77" y="0" width="78" height="13"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>TVA</b>" :($P{AD_Language}.equals("nl_NL")? "<b>BTW</b> " :"<b>VAT</b>"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="155" y="0" width="35" height="13"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>%</b>" :($P{AD_Language}.equals("nl_NL")? "<b>%</b> " :"<b>%</b>"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="190" y="0" width="110" height="13"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Total</b>" :($P{AD_Language}.equals("nl_NL")? "<b>Totaal</b> " :"<b>Total</b>"))]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="13" splitType="Stretch">
+			<textField pattern="###0.00;-###0.00">
+				<reportElement x="0" y="0" width="77" height="13"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{BASEAMOUNT}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00;-###0.00">
+				<reportElement x="77" y="0" width="78" height="13"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{TVAAMOUNT}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="155" y="0" width="35" height="13"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{RATE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="190" y="0" width="110" height="13"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{LINETAMOUNT}.setScale(2).toString().replace(".",","))+" "+$F{ISO_CODE}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="16" splitType="Stretch">
+			<textField>
+				<reportElement x="190" y="1" width="110" height="15"/>
+				<box>
+					<topPen lineWidth="2.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$V{LINETAMOUNT_1}.setScale(2).toString().replace(".",",")+" "+$F{ISO_CODE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="1" width="190" height="15"/>
+				<box rightPadding="2">
+					<topPen lineWidth="2.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="styled">
+					<font size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>TOTAL</b>" :($P{AD_Language}.equals("nl_NL")? "<b>TOTAAL</b> " :"<b>TOTAL</b>"))]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band height="15">
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="0" y="0" width="190" height="15" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{ISROUNDED}.equals("Y")]]></printWhenExpression>
+				</reportElement>
+				<box leftPadding="2">
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Paiement arrondi en espèces</b>" :($P{AD_Language}.equals("nl_NL")? "<b>Afgeronde betaling in cash</b> " :"<b>Paiement arrondi en espèces</b>"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="190" y="0" width="110" height="15">
+					<printWhenExpression><![CDATA[$F{ISROUNDED}.equals("Y")]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="2.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ROUNDED}.setScale(2).toString().replace(".",",")+" "+$F{ISO_CODE}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

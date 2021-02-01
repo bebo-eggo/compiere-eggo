@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="CACUISINES" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.6105100000000008"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="AD_Org_ID" class="java.math.BigDecimal"/>
+	<parameter name="date1" class="java.util.Date"/>
+	<parameter name="date2" class="java.util.Date"/>
+	<parameter name="SalesRep_ID" class="java.lang.Double"/>
+	<queryString>
+		<![CDATA[SELECT o.AD_Client_ID, o.AD_Org_ID, o.IsActive, o.Created, o.CreatedBy, o.Updated, o.UpdatedBy,
+    dt.PrintName    AS DocumentType,
+    o.DocumentNo,
+    o.POReference,
+    o.TotalLines,
+    o.GrandTotal,
+    (SELECT SUM(qtyentered*StorePoPrice)
+    FROM c_orderline
+    WHERE c_orderline.c_order_id=o.c_order_id
+    AND c_orderline.ISACTIVE = 'Y'
+    ) AS PA_STORE,
+
+    o.SalesRep_ID,
+    COALESCE(ubp.Name, u.Name) AS SalesRep_Name,
+    u.VALUE as Vendor,
+    o.DateOrdered,
+    o.DatePromised,
+    o.datePose,
+
+    o.C_Order_ID,
+    o.C_DocTypeTarget_ID,
+    o.C_DocType_ID,
+    og.Name AS ORG_NAME,
+    bp.Name || ' ' || bp.Name2 || ' ' || bp.value as CLIENT
+
+  FROM C_Order o
+  INNER JOIN C_DocType dt
+  ON (o.C_DocType_ID=dt.C_DocType_ID)
+  LEFT OUTER JOIN AD_User u
+  ON (o.SalesRep_ID=u.AD_User_ID)
+  LEFT OUTER JOIN C_BPartner ubp
+  ON (u.C_BPartner_ID=ubp.C_BPartner_ID)
+  INNER JOIN AD_Org og
+  ON (o.AD_Org_ID=og.AD_Org_ID)
+  INNER JOIN C_BPartner bp
+  ON (o.C_BPartner_ID=bp.C_BPartner_ID)
+  WHERE o.issotrx      ='Y'
+  AND o.IsActive='Y'
+  AND o.iseggo = 'Y'
+  AND o.C_DOCTYPE_ID in (1006385,1006401,1006402)
+  AND o.AD_ORG_ID =$P{AD_Org_ID}
+  AND o.DateOrdered between $P{date1} AND $P{date2}
+  AND ($P{SalesRep_ID} is null or u.AD_USER_ID = $P{SalesRep_ID})
+order by o.C_DOCTYPE_ID,u.VALUE]]>
+	</queryString>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="ISACTIVE" class="java.lang.String"/>
+	<field name="CREATED" class="java.sql.Timestamp"/>
+	<field name="CREATEDBY" class="java.math.BigDecimal"/>
+	<field name="UPDATED" class="java.sql.Timestamp"/>
+	<field name="UPDATEDBY" class="java.math.BigDecimal"/>
+	<field name="DOCUMENTTYPE" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="TOTALLINES" class="java.math.BigDecimal"/>
+	<field name="GRANDTOTAL" class="java.math.BigDecimal"/>
+	<field name="PA_STORE" class="java.math.BigDecimal"/>
+	<field name="SALESREP_ID" class="java.math.BigDecimal"/>
+	<field name="SALESREP_NAME" class="java.lang.String"/>
+	<field name="VENDOR" class="java.lang.String"/>
+	<field name="DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="DATEPROMISED" class="java.sql.Timestamp"/>
+	<field name="DATEPOSE" class="java.sql.Timestamp"/>
+	<field name="C_ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="C_DOCTYPETARGET_ID" class="java.math.BigDecimal"/>
+	<field name="C_DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="ORG_NAME" class="java.lang.String"/>
+	<field name="CLIENT" class="java.lang.String"/>
+	<variable name="PvGroupByVendor" class="java.lang.Double" resetType="Group" resetGroup="groupByVendor" calculation="Sum">
+		<variableExpression><![CDATA[$F{TOTALLINES}]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+	<variable name="PaGroupByVendor" class="java.lang.Double" resetType="Group" resetGroup="groupByVendor" calculation="Sum">
+		<variableExpression><![CDATA[$F{PA_STORE}]]></variableExpression>
+	</variable>
+	<group name="groupBydocument">
+		<groupExpression><![CDATA[$F{DOCUMENTTYPE}]]></groupExpression>
+		<groupHeader>
+			<band height="20">
+				<textField>
+					<reportElement mode="Opaque" x="0" y="0" width="555" height="20" backcolor="#999999"/>
+					<textElement verticalAlignment="Middle">
+						<font isBold="true" isItalic="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Type document: "+$F{DOCUMENTTYPE}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="7"/>
+		</groupFooter>
+	</group>
+	<group name="groupByVendor">
+		<groupExpression><![CDATA[$F{VENDOR}]]></groupExpression>
+		<groupHeader>
+			<band height="3"/>
+		</groupHeader>
+		<groupFooter>
+			<band height="23">
+				<textField>
+					<reportElement mode="Opaque" x="0" y="2" width="318" height="20" backcolor="#CCCCCC"/>
+					<textElement verticalAlignment="Middle">
+						<font isBold="true" isItalic="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Total "+$F{VENDOR}+":"]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement x="204" y="0" width="114" height="1"/>
+				</line>
+				<textField pattern="###0.00" isBlankWhenNull="true">
+					<reportElement mode="Opaque" x="257" y="1" width="61" height="20" backcolor="#CCCCCC"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{PvGroupByVendor}]]></textFieldExpression>
+				</textField>
+				<textField pattern="###0.00" isBlankWhenNull="true">
+					<reportElement mode="Opaque" x="204" y="1" width="53" height="20" backcolor="#CCCCCC"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{PaGroupByVendor}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<title>
+		<band height="135" splitType="Stretch">
+			<staticText>
+				<reportElement mode="Opaque" x="140" y="0" width="254" height="25" backcolor="#CCCCCC"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true" isItalic="false" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[CA cuisines]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="439" y="0" width="116" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[new SimpleDateFormat("dd/MM/yyyy").format(new Date())]]></textFieldExpression>
+			</textField>
+			<image vAlign="Middle">
+				<reportElement x="11" y="10" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{AD_CLIENT_ID}.doubleValue()==1000022]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA["./LOGOKM.png"]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="11" y="91" width="57" height="20">
+					<printWhenExpression><![CDATA[$P{date1} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Période du]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="218" y="91" width="280" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new SimpleDateFormat("dd/MM/yyyy").format($P{date2})]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="68" y="91" width="11" height="20">
+					<printWhenExpression><![CDATA[$P{date1} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[:]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement x="79" y="91" width="112" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new SimpleDateFormat("dd/MM/yyyy").format($P{date1})]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="207" y="91" width="11" height="20">
+					<printWhenExpression><![CDATA[$P{date2} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="198" y="91" width="9" height="20">
+					<printWhenExpression><![CDATA[$P{date2} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[à]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="112" width="57" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Magasin:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="81" y="112" width="137" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ORG_NAME}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="70" y="112" width="11" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[:]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="17" splitType="Stretch">
+			<textField>
+				<reportElement x="458" y="0" width="80" height="15"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Page "+$V{PAGE_NUMBER}+" /"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="538" y="0" width="21" height="15"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="15" width="552" height="1"/>
+			</line>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement mode="Opaque" x="204" y="0" width="53" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[PA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="103" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[N°ODV]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="103" y="0" width="101" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Contrat Store]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="257" y="0" width="61" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[PV(hors taxe)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="318" y="0" width="103" height="20" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Vendeur]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="421" y="0" width="134" height="20" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Client]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="21" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="257" y="0" width="61" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{TOTALLINES}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="204" y="0" width="53" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.Double"><![CDATA[$F{PA_STORE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="103" height="20"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="103" y="0" width="101" height="20"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{POREFERENCE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="318" y="0" width="103" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{VENDOR}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="421" y="0" width="134" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{CLIENT}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

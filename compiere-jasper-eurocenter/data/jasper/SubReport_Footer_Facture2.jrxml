@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_Org" pageWidth="515" pageHeight="200" columnWidth="515" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.5000000000000007"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="C_Invoice_ID" class="java.math.BigDecimal"/>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<parameter name="COM" class="java.lang.String"/>
+	<parameter name="URL" class="java.lang.String">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<parameter name="DOCUMENTNOTE" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Client_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CAS" class="java.math.BigDecimal"/>
+	<parameter name="CASL" class="java.math.BigDecimal"/>
+	<parameter name="CASDE" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DUEDATE" class="java.lang.String"/>
+	<parameter name="CODE_EXTERNE" class="java.lang.String"/>
+	<parameter name="REF_CHANTIER" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select GETFACT_COM_LEG($P{AD_Client_ID},$P{AD_Language},$P{CAS},$P{CASL},$P{CASDE}) as footer from dual]]>
+	</queryString>
+	<field name="FOOTER" class="java.lang.String"/>
+	<lastPageFooter>
+		<band height="196" splitType="Stretch">
+			<subreport>
+				<reportElement x="342" y="0" width="170" height="50"/>
+				<subreportParameter name="C_Invoice_ID">
+					<subreportParameterExpression><![CDATA[$P{C_Invoice_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DOCUMENTNOTE">
+					<subreportParameterExpression><![CDATA[$P{DOCUMENTNOTE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{AD_Language}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="URL">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/SubReport_TotalInvoice2.jasper"]]></subreportExpression>
+			</subreport>
+			<textField evaluationTime="Auto">
+				<reportElement x="0" y="95" width="515" height="14"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Book" size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{invoice.com_struct},"<b>"+$P{COM}+"</b>")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="109" width="515" height="14">
+					<printWhenExpression><![CDATA[$P{AD_Client_ID}==1000000]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle" lineSpacing="Single" markup="html">
+					<font fontName="Avenir Book" size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.com_legal2}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Auto">
+				<reportElement x="17" y="123" width="240" height="14">
+					<printWhenExpression><![CDATA[$P{AD_Client_ID}==1000000]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle" lineSpacing="Single" markup="html">
+					<font fontName="Avenir Book" size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.com_legal2_BK1}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Auto">
+				<reportElement x="0" y="109" width="515" height="14">
+					<printWhenExpression><![CDATA[$P{AD_Client_ID}==1000024]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle" lineSpacing="Single" markup="html">
+					<font fontName="Avenir Book" size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.com_legal_LU2}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Auto">
+				<reportElement x="257" y="123" width="240" height="14">
+					<printWhenExpression><![CDATA[$P{AD_Client_ID}==1000000]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle" lineSpacing="Single" markup="html">
+					<font fontName="Avenir Book" size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.com_legal2_BK2}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Auto">
+				<reportElement x="0" y="137" width="515" height="14">
+					<printWhenExpression><![CDATA[$P{AD_Client_ID}==1000000]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle" lineSpacing="Single" markup="html">
+					<font fontName="Avenir Book" size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.com_legal2_BK3}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="342" y="54" width="173" height="14"/>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{DOCUMENTNOTE}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Auto">
+				<reportElement x="342" y="68" width="173" height="14"/>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.duedate}+" "+"<b>"+$P{DUEDATE}+"</b>"]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="151" width="515" height="45"/>
+				<subreportParameter name="Ad_client_id">
+					<subreportParameterExpression><![CDATA[$P{AD_Client_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{AD_Language}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CAS">
+					<subreportParameterExpression><![CDATA[$P{CAS}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CASL">
+					<subreportParameterExpression><![CDATA[$P{CASL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CASDE">
+					<subreportParameterExpression><![CDATA[$P{CASDE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="URL">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/subreportfooter2.jasper"]]></subreportExpression>
+			</subreport>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="135" y="22" width="118" height="14">
+					<printWhenExpression><![CDATA[$P{CODE_EXTERNE}!=null]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{CODE_EXTERNE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="22" width="135" height="14">
+					<printWhenExpression><![CDATA[$P{CODE_EXTERNE}!=null]]></printWhenExpression>
+				</reportElement>
+				<box leftPadding="2">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Heavy" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.extcode2}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="36" width="135" height="14">
+					<printWhenExpression><![CDATA[$P{REF_CHANTIER}!=null]]></printWhenExpression>
+				</reportElement>
+				<box leftPadding="2">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Heavy" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{INV_REFCHANTIER}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="135" y="36" width="118" height="14">
+					<printWhenExpression><![CDATA[$P{REF_CHANTIER}!=null]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="Single" markup="styled">
+					<font fontName="Avenir Light" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{REF_CHANTIER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</lastPageFooter>
+</jasperReport>

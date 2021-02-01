@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="etat_de_caisse" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="NoDataSection" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isTitleNewPage="true" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="line" fontSize="8"/>
+	<parameter name="datePaiement" class="java.sql.Timestamp"/>
+	<parameter name="c_bankaccount_id" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[WITH
+cashamt
+AS
+(SELECT
+        SUM(CASE
+         WHEN zsp.isclosingcash='N' and doc.issotrx='Y' then p.payamt
+         WHEN zsp.isclosingcash='N' and doc.issotrx='N' then p.payamt*-1
+         ELSE 0
+        END) AS pay
+    FROM c_payment p
+     INNER JOIN zsubpaymentrule zsp ON zsp.zsubpaymentrule_id = p.zsubpaymentrule_id
+     INNER JOIN c_doctype doc on doc.c_doctype_id = p.c_doctype_id
+    WHERE p.isreconciled ='N'
+        AND p.datetrx <= $P{datePaiement}
+        AND p.docstatus in ('CO','CL','VO','RE')
+        AND p.c_bankaccount_id = $P{c_bankaccount_id}
+        GROUP BY p.c_bankaccount_id)
+
+SELECT
+distinct
+   org.name as organisation,
+   cl.name as ad_client_name,
+   bs.ad_org_id,
+   b.name||' - '||ba.accountno as bankaccount,
+   p.documentno,
+   o.documentno as commande,
+   p.datetrx,
+   zsp.value as ss_methode,
+   p.payamt as trxamt,
+   bp.name as bpname,
+   bp.name || ' ' ||bp.name2 as cb_partner,
+   nvl(i.documentNo,' ') as numFacture,
+   ba.currentbalance as beginningbalance,
+   nvl((select pay from cashamt),0) as cashamount,
+   ba.currentbalance + nvl((select nvl(pay,0) from cashamt),0) as soldefinal
+  FROM  c_bankstatement bs
+  LEFT JOIN c_payment p on p.c_bankaccount_id = bs.c_bankaccount_id
+  LEFT JOIN c_bankaccount ba on ba.c_bankaccount_id = bs.c_bankaccount_id
+  LEFT JOIN c_doctype doc on doc.c_doctype_id = p.c_doctype_id
+  LEFT JOIN c_order o on o.c_order_id = p.c_order_id
+  LEFT JOIN c_bankstatementline bsl on bsl.c_payment_id = p.c_payment_id
+  LEFT JOIN c_bank b on b.c_bank_id = ba.c_bank_id
+  LEFT JOIN ad_org org on org.AD_ORG_id = bs.AD_ORG_id
+  LEFT JOIN ad_client cl on cl.AD_client_id = bs.AD_client_id
+  LEFT JOIN c_bpartner bp  ON bp.c_bpartner_id = p.c_bpartner_id
+  LEFT JOIN c_invoice i on i.c_invoice_id = p.c_invoice_id
+  LEFT JOIN zsubpaymentrule zsp  ON zsp.zsubpaymentrule_id = p.zsubpaymentrule_id
+  WHERE bs.c_bankaccount_id = $P{c_bankaccount_id}
+  AND p.datetrx <= $P{datePaiement}
+  AND p.isreconciled ='N'
+  AND p.docstatus in ('CO','CL','VO','RE')
+  ORDER BY  zsp.value,p.datetrx]]>
+	</queryString>
+	<field name="ORGANISATION" class="java.lang.String"/>
+	<field name="AD_CLIENT_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="BANKACCOUNT" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="COMMANDE" class="java.lang.String"/>
+	<field name="DATETRX" class="java.sql.Timestamp"/>
+	<field name="SS_METHODE" class="java.lang.String"/>
+	<field name="TRXAMT" class="java.math.BigDecimal"/>
+	<field name="BPNAME" class="java.lang.String"/>
+	<field name="CB_PARTNER" class="java.lang.String"/>
+	<field name="NUMFACTURE" class="java.lang.String"/>
+	<field name="BEGINNINGBALANCE" class="java.math.BigDecimal"/>
+	<field name="CASHAMOUNT" class="java.math.BigDecimal"/>
+	<field name="SOLDEFINAL" class="java.math.BigDecimal"/>
+	<variable name="totalgen_trxamt" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{TRXAMT}]]></variableExpression>
+	</variable>
+	<variable name="totalsousmpaiement" class="java.lang.Double" resetType="Group" resetGroup="groupBySousMethodePayement" calculation="Sum">
+		<variableExpression><![CDATA[$F{TRXAMT}]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+	<group name="groupBySousMethodePayement" isStartNewPage="true" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{SS_METHODE}]]></groupExpression>
+		<groupHeader>
+			<band height="20" splitType="Stretch">
+				<textField>
+					<reportElement mode="Transparent" x="0" y="0" width="555" height="20" backcolor="#CCCCCC"/>
+					<textElement>
+						<font size="10" isBold="true" isItalic="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{SS_METHODE}==null?"N/A":$F{SS_METHODE}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="22" splitType="Stretch">
+				<textField pattern="###0.00">
+					<reportElement x="515" y="0" width="40" height="20"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{totalsousmpaiement}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="469" y="0" width="46" height="20"/>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression class="java.lang.String"><![CDATA["Total "]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement x="469" y="0" width="86" height="1"/>
+				</line>
+				<line>
+					<reportElement x="0" y="21" width="555" height="1"/>
+				</line>
+			</band>
+		</groupFooter>
+	</group>
+	<title>
+		<band height="283" splitType="Stretch">
+			<rectangle>
+				<reportElement x="0" y="154" width="555" height="128"/>
+			</rectangle>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="439" y="-1" width="116" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[new SimpleDateFormat("dd/MM/yyyy").format(new Date())]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="23" y="80" width="181" height="46"/>
+				<subreportParameter name="AD_Org_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/SubReport_org.jasper"]]></subreportExpression>
+			</subreport>
+			<image>
+				<reportElement key="image" mode="Opaque" x="23" y="13" width="84" height="55">
+					<printWhenExpression><![CDATA[$F{AD_CLIENT_NAME}.equals("Eurocenter")]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL} + "/LogoEC.png"]]></imageExpression>
+			</image>
+			<image>
+				<reportElement mode="Opaque" x="23" y="13" width="92" height="54">
+					<printWhenExpression><![CDATA[$F{AD_CLIENT_NAME}.equals("EGGO")]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL} + "/LogoEggo.jpg"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement mode="Opaque" x="159" y="43" width="254" height="25" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{cashstate}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="0" y="134" width="555" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{cash.desk}, $F{BANKACCOUNT})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="131" y="172" width="128" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{balance.init}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="131" y="211" width="128" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{cash.amount}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="131" y="263" width="128" height="20"/>
+				<textElement>
+					<font isBold="true" isItalic="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{balance.final}]]></textFieldExpression>
+			</textField>
+			<break>
+				<reportElement x="0" y="282" width="555" height="1"/>
+			</break>
+			<textField pattern="#,##0.00€">
+				<reportElement x="298" y="172" width="132" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{BEGINNINGBALANCE}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="251" width="555" height="1"/>
+			</line>
+			<textField pattern="#,##0.00€">
+				<reportElement x="298" y="211" width="132" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{CASHAMOUNT}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00€">
+				<reportElement x="298" y="263" width="132" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{SOLDEFINAL}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="21" splitType="Stretch">
+			<line>
+				<reportElement x="0" y="20" width="555" height="1"/>
+			</line>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="21" splitType="Stretch">
+			<line>
+				<reportElement x="0" y="20" width="555" height="1"/>
+			</line>
+			<textField>
+				<reportElement mode="Opaque" x="0" y="0" width="131" height="20" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[""]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="298" y="0" width="77" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="495" y="0" width="60" height="20" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{amount}+" "]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="375" y="0" width="120" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{business.partner}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="204" y="0" width="94" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{order}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="131" y="0" width="73" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{payment}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="12" splitType="Stretch">
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement style="line" x="23" y="0" width="108" height="12"/>
+				<textElement/>
+				<textFieldExpression class="java.util.Date"><![CDATA[$F{DATETRX}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="line" x="375" y="0" width="120" height="12"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{CB_PARTNER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement style="line" x="495" y="0" width="60" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Top"/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{TRXAMT}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="line" x="298" y="0" width="77" height="12"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NUMFACTURE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="line" x="131" y="0" width="73" height="12"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="line" x="204" y="0" width="94" height="12"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{COMMANDE}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="439" y="0" width="76" height="20"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="515" y="0" width="40" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="433" y="0" width="82" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Total général"]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00">
+				<reportElement x="515" y="0" width="40" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{totalgen_trxamt}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+	<noData>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="555" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{nodata}]]></textFieldExpression>
+			</textField>
+		</band>
+	</noData>
+</jasperReport>

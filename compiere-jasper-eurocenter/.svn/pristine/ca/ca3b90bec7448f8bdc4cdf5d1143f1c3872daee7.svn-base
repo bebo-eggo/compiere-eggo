@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="rapport_compte_non_lettre" language="groovy" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20">
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="AD_Client_ID" class="java.math.BigDecimal"/>
+	<parameter name="AD_Org_ID" class="java.math.BigDecimal"/>
+	<parameter name="C_AcctSchema_ID" class="java.math.BigDecimal"/>
+	<parameter name="Account_ID" class="java.math.BigDecimal"/>
+	<parameter name="PostingType" class="java.lang.String"/>
+	<parameter name="DateAcct" class="java.util.Date" isForPrompting="false"/>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT  org.name as org,
+fa.dateacct,
+fa.amtsourcedr ,
+fa.amtsourcecr,
+fa.AMTACCTCR ,
+fa.AMTACCTDR,
+fa.description,
+t.name as nomTable,
+fa.record_id
+
+FROM fact_acct fa
+inner join ad_org org on (org.ad_org_id=fa.ad_org_id)
+inner join ad_table t on ( t.ad_table_id = fa.ad_table_id )
+WHERE fa.ad_client_id = $P{AD_Client_ID}
+AND ( fa.ad_org_id = $P{AD_Org_ID}  or $P{AD_Org_ID} is null )
+AND fa.C_AcctSchema_ID = $P{C_AcctSchema_ID}
+AND fa.account_id = $P{Account_ID}
+AND fa.PostingType = $P{PostingType}
+AND ( trunc(fa.dateacct) <= trunc(to_date($P{DateAcct})) or $P{DateAcct} is null )
+MINUS
+SELECT org.name as org,
+fa1.dateacct,
+fa1.amtsourcedr ,
+fa1.amtsourcecr,
+fa1.AMTACCTCR ,
+fa1.AMTACCTDR,
+fa1.description,
+t.name as nomTable,
+fa1.record_id
+  FROM FACT_ACCT fa1
+  inner join ad_org org on (org.ad_org_id=fa1.ad_org_id)
+inner join ad_table t on ( t.ad_table_id = fa1.ad_table_id )
+  WHERE fa1.ad_client_id = $P{AD_Client_ID}
+  AND (fa1.ad_org_id = $P{AD_Org_ID} or $P{AD_Org_ID} is null)
+  AND fa1.C_AcctSchema_ID = $P{C_AcctSchema_ID}
+ AND fa1.account_id= $P{Account_ID}
+  AND fa1.PostingType = $P{PostingType}
+  AND ( trunc(fa1.dateacct) <= trunc(to_date($P{DateAcct})) or $P{DateAcct} is null )
+  AND ( (SELECT COUNT(*)
+    FROM FACT_ACCT fa2
+    WHERE (fa1.AmtAcctDr-fa1.AmtAcctCr)=(fa2.AmtAcctDr-fa2.AmtAcctCr)
+    AND fa1.Account_ID                 =fa2.Account_ID
+     AND ( trunc(fa2.dateacct) <= trunc(to_date($P{DateAcct})) or $P{DateAcct} is null )
+    AND ((fa1.DateAcct                 >fa2.DateAcct)
+    OR (fa1.DateAcct                   =fa2.DateAcct
+    AND fa2.Fact_Acct_ID              >= fa2.Fact_Acct_ID)))
+    <=
+    (SELECT COUNT(*)
+    FROM FACT_ACCT fa2
+    WHERE (fa1.AmtAcctDr-fa1.AmtAcctCr)=-(fa2.AmtAcctDr-fa2.AmtAcctCr)
+    AND fa1.Account_ID                 =fa2.Account_ID
+    AND ( trunc(fa2.dateacct) <= trunc(to_date($P{DateAcct})) or $P{DateAcct} is null )
+    ) )
+order by dateacct ASC]]>
+	</queryString>
+	<field name="ORG" class="java.lang.String"/>
+	<field name="DATEACCT" class="java.sql.Timestamp"/>
+	<field name="AMTSOURCEDR" class="java.math.BigDecimal"/>
+	<field name="AMTSOURCECR" class="java.math.BigDecimal"/>
+	<field name="AMTACCTCR" class="java.math.BigDecimal"/>
+	<field name="AMTACCTDR" class="java.math.BigDecimal"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="NOMTABLE" class="java.lang.String"/>
+	<field name="RECORD_ID" class="java.math.BigDecimal"/>
+	<variable name="somme_debit" class="java.math.BigDecimal" incrementType="Column">
+		<variableExpression><![CDATA[$V{somme_debit}+$F{AMTACCTDR}]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+	<variable name="somme_credit" class="java.math.BigDecimal" incrementType="Column">
+		<variableExpression><![CDATA[$V{somme_credit}+$F{AMTACCTCR}]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band height="112" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText-7" x="184" y="2" width="237" height="20"/>
+				<textElement>
+					<font size="14" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Rapport Compte Non lettré]]></text>
+			</staticText>
+			<subreport isUsingCache="true">
+				<reportElement key="subreport-1" x="6" y="27" width="163" height="77"/>
+				<subreportParameter name="AD_Org_ID">
+					<subreportParameterExpression><![CDATA[$P{AD_Org_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Client_ID">
+					<subreportParameterExpression><![CDATA[$P{AD_Client_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_AcctSchema_ID">
+					<subreportParameterExpression><![CDATA[$P{C_AcctSchema_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="Account_ID">
+					<subreportParameterExpression><![CDATA[$P{Account_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PostingType">
+					<subreportParameterExpression><![CDATA[$P{PostingType}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DateAcct">
+					<subreportParameterExpression><![CDATA[$P{DateAcct}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/rapport_compte_non_lettre_subr0.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="17" splitType="Stretch">
+			<rectangle>
+				<reportElement key="rectangle-1" mode="Opaque" x="0" y="0" width="534" height="17" backcolor="#39F8E4"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement key="staticText-8" x="4" y="4" width="106" height="12"/>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Organisation]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-9" x="115" y="4" width="52" height="12"/>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Date Comptable]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-12" x="173" y="4" width="57" height="12"/>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Débit]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-13" x="240" y="4" width="57" height="12"/>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Crédit]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-14" x="306" y="4" width="137" height="12"/>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Description]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-15" x="446" y="4" width="42" height="12"/>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Table]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-16" x="494" y="4" width="40" height="12"/>
+				<textElement>
+					<font size="8" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[ID]]></text>
+			</staticText>
+			<line>
+				<reportElement key="line-7" x="111" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-8" x="169" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-9" x="235" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-10" x="301" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-11" x="443" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-12" x="491" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="17" splitType="Stretch">
+			<rectangle>
+				<reportElement key="rectangle-2" mode="Transparent" x="0" y="0" width="534" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</rectangle>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="5" y="3" width="106" height="14"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ORG}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="false">
+				<reportElement key="textField" x="115" y="3" width="52" height="14"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATEACCT}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00" isBlankWhenNull="false">
+				<reportElement key="textField" x="168" y="3" width="66" height="14"/>
+				<textElement textAlignment="Right">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AMTACCTDR}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00" isBlankWhenNull="false">
+				<reportElement key="textField" x="238" y="3" width="62" height="14"/>
+				<textElement textAlignment="Right">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AMTACCTCR}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="306" y="3" width="137" height="14"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRIPTION}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="446" y="3" width="45" height="14"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NOMTABLE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0" isBlankWhenNull="false">
+				<reportElement key="textField" x="493" y="3" width="41" height="14"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{RECORD_ID}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement key="line-1" x="111" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-2" x="169" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-3" x="235" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-4" x="301" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-5" x="443" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement key="line-6" x="491" y="0" width="1" height="17"/>
+				<graphicElement>
+					<pen lineWidth="0.4"/>
+				</graphicElement>
+			</line>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band height="47" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText-17" x="4" y="6" width="28" height="12"/>
+				<textElement>
+					<font size="6" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+			<textField pattern="#,##0.00" isBlankWhenNull="false">
+				<reportElement key="textField" x="165" y="6" width="71" height="12"/>
+				<textElement textAlignment="Right">
+					<font size="6" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{somme_debit}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00" isBlankWhenNull="false">
+				<reportElement key="textField" x="235" y="6" width="67" height="12"/>
+				<textElement textAlignment="Right">
+					<font size="6" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{somme_credit}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

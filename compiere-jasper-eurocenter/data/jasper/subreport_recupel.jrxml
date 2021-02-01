@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD JasperReport//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+
+<jasperReport name="subraport recupel" language="groovy" pageWidth="120" pageHeight="832" columnWidth="120" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction" isIgnorePagination="true">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="M_PRODUCT_ID" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA['.']]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select p.M_PRODUCT_ID,
+        pt.value,
+        pt.PRICESTD
+from M_PRODUCT p
+left join Z_PRODUCTTAX  pt on (pt.M_PRODUCT_ID = p.M_PRODUCT_ID and upper(pt.value) in ( 'RECUPEL','BEBAT'))
+where p.M_PRODUCT_ID =$P{M_PRODUCT_ID}]]>
+	</queryString>
+	<field name="M_PRODUCT_ID" class="java.math.BigDecimal"/>
+	<field name="VALUE" class="java.lang.String"/>
+	<field name="PRICESTD" class="java.math.BigDecimal"/>
+	<variable name="variable1" class="java.lang.Double" resetType="Column" incrementType="Column" calculation="Sum"/>
+	<background>
+		<band/>
+	</background>
+	<pageHeader>
+		<band/>
+	</pageHeader>
+	<columnHeader>
+		<band/>
+	</columnHeader>
+	<detail>
+		<band height="10">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="94" y="0" width="26" height="10" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{PRICESTD} != null && $F{PRICESTD} != 0]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new DecimalFormat($R{pattern.price.without.devise}).format($F{PRICESTD})+"€"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="0" width="94" height="10">
+					<printWhenExpression><![CDATA[$F{PRICESTD} != null && $F{PRICESTD} != 0]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{VALUE}.equals("Recupel")?$R{recupel}:$R{bebat}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band/>
+	</columnFooter>
+	<pageFooter>
+		<band/>
+	</pageFooter>
+	<summary>
+		<band/>
+	</summary>
+</jasperReport>

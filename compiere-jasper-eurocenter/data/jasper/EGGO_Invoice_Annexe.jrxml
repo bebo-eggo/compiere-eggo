@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report_invoice_accompte" language="groovy" pageWidth="544" pageHeight="842" columnWidth="544" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.6528925619834718"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" fontName="Arial" fontSize="26" isBold="true" pdfFontName="Helvetica-Bold"/>
+	<style name="SubTitle" forecolor="#666666" fontName="Arial" fontSize="18"/>
+	<style name="Column header" forecolor="#666666" fontName="Arial" fontSize="12" isBold="true"/>
+	<style name="Detail" fontName="Arial" fontSize="12"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["C:\\workspaces\\work361\\compiere-jasper-eurocenter\\data\\jasper\\"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_L" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select distinct
+AD_CLIENT_ID,AD_ORG_ID,C_INVOICE_ID,DOCSTATUS,TYPEDOC,DATEINVOICED,C_BPARTNER_LOCATION_ID,DOCUMENTNOTE,
+AD_LANGUAGE,C_DOCTYPE_ID,CAS,Z_COM,FOOTER,LDOCUMENTNO,DOCUMENTNO,LPOREFERENCE,POREFERENCE,LODATEORDERED,
+ODATEORDERED,OGRANDTOTAL,LDFDATEORDERED,LAFDATEORDERED,AFGRANDTOTAL,LSOLDE,(OGRANDTOTAL-TOTALPAYSCHED) as SOLDE,LTOTPAYEFF,TOTPAYEFF,LARRONDI,ARRONDI
+from RPT_INV_ANNEXE_3
+where c_invoice_id = $P{RECORD_ID} and docstatus = 'CO' and ad_client_id in (1000000 ,1000024) and LANGUAGE_X = $P{AD_L}]]>
+	</queryString>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="C_INVOICE_ID" class="java.math.BigDecimal"/>
+	<field name="DOCSTATUS" class="java.lang.String"/>
+	<field name="TYPEDOC" class="java.lang.String"/>
+	<field name="DATEINVOICED" class="java.sql.Timestamp"/>
+	<field name="C_BPARTNER_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="DOCUMENTNOTE" class="java.lang.String"/>
+	<field name="AD_LANGUAGE" class="java.lang.String"/>
+	<field name="C_DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="CAS" class="java.math.BigDecimal"/>
+	<field name="Z_COM" class="java.lang.String"/>
+	<field name="FOOTER" class="java.lang.String"/>
+	<field name="LDOCUMENTNO" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="LPOREFERENCE" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="LODATEORDERED" class="java.lang.String"/>
+	<field name="ODATEORDERED" class="java.lang.String"/>
+	<field name="OGRANDTOTAL" class="java.math.BigDecimal"/>
+	<field name="LDFDATEORDERED" class="java.lang.String"/>
+	<field name="LAFDATEORDERED" class="java.lang.String"/>
+	<field name="AFGRANDTOTAL" class="java.math.BigDecimal"/>
+	<field name="LSOLDE" class="java.lang.String"/>
+	<field name="SOLDE" class="java.math.BigDecimal"/>
+	<field name="LTOTPAYEFF" class="java.lang.String"/>
+	<field name="TOTPAYEFF" class="java.math.BigDecimal"/>
+	<field name="LARRONDI" class="java.lang.String"/>
+	<field name="ARRONDI" class="java.math.BigDecimal"/>
+	<detail>
+		<band height="83" splitType="Stretch">
+			<textField>
+				<reportElement x="20" y="24" width="334" height="18"/>
+				<textElement verticalAlignment="Middle">
+					<font isUnderline="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{LPOREFERENCE}+" "+$F{POREFERENCE}+":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="2" width="334" height="18"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{LDOCUMENTNO}+" "+$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="47" width="279" height="18"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{LODATEORDERED}+" "+$F{ODATEORDERED}+":"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement x="299" y="47" width="106" height="18"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new java.text.DecimalFormat("#,##0.00").format(new BigDecimal($F{OGRANDTOTAL}))]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="20" y="69" width="513" height="14"/>
+				<subreportParameter name="RECORD_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_L">
+					<subreportParameterExpression><![CDATA[$P{AD_L}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="URL">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/EGGO_Invoice_Inv_Annexe.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="51">
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToBandHeight" x="20" y="2" width="279" height="18"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{LAFDATEORDERED}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" stretchType="RelativeToBandHeight" x="299" y="2" width="106" height="18"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[new java.text.DecimalFormat("#,##0.00").format(new BigDecimal($F{AFGRANDTOTAL}))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="20" y="31" width="279" height="18"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{LTOTPAYEFF}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="299" y="31" width="106" height="18"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new java.text.DecimalFormat("#,##0.00").format(new BigDecimal(($F{OGRANDTOTAL}.doubleValue())-($F{SOLDE}.doubleValue())))]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="20" y="25" width="512" height="1"/>
+				<graphicElement>
+					<pen lineWidth="1.0" lineStyle="Dotted"/>
+				</graphicElement>
+			</line>
+		</band>
+		<band height="22">
+			<subreport>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="20" y="3" width="513" height="14"/>
+				<subreportParameter name="RECORD_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_L">
+					<subreportParameterExpression><![CDATA[$P{AD_L}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="URL">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/EGGO_Invoice_Pay_Annexe.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="46">
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="20" y="23" width="279" height="18"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{LSOLDE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="299" y="23" width="106" height="18"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new java.text.DecimalFormat("#,##0.00").format(new BigDecimal(($F{SOLDE}==null ? BigDecimal.ZERO : $F{SOLDE})))]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="20" y="1" width="279" height="18"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{LARRONDI}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="299" y="1" width="106" height="18">
+					<printWhenExpression><![CDATA[new Boolean($F{ARRONDI}.compareTo( BigDecimal.ZERO )!= 0)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new java.text.DecimalFormat("#,##0.00").format(new BigDecimal(($F{ARRONDI}==null ? BigDecimal.ZERO : $F{ARRONDI})))]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

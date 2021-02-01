@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="etat_de_caisse_no_data" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="BlankPage" columnWidth="575" leftMargin="0" rightMargin="20" topMargin="20" bottomMargin="20" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="datePaiement" class="java.sql.Timestamp"/>
+	<parameter name="c_bankaccount_id" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+   b.name||' - '||ba.accountno as bankaccount,
+   cl.name as ad_client_name,
+   ba.ad_org_id,
+   ba.currentbalance as beginningbalance,
+   0 as cashamount,
+   ba.currentbalance as soldefinal, ba.AD_Client_ID
+  FROM  c_bankaccount ba
+  LEFT JOIN c_bank b on b.c_bank_id = ba.c_bank_id
+  LEFT JOIN ad_client cl on cl.AD_client_id = ba.AD_client_id
+  WHERE ba.c_bankaccount_id = $P{c_bankaccount_id}]]>
+	</queryString>
+	<field name="BANKACCOUNT" class="java.lang.String"/>
+	<field name="AD_CLIENT_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="BEGINNINGBALANCE" class="java.math.BigDecimal"/>
+	<field name="CASHAMOUNT" class="java.math.BigDecimal"/>
+	<field name="SOLDEFINAL" class="java.math.BigDecimal"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<title>
+		<band height="283" splitType="Stretch">
+			<rectangle>
+				<reportElement x="0" y="154" width="555" height="128"/>
+			</rectangle>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="439" y="-1" width="116" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[new SimpleDateFormat("dd/MM/yyyy").format(new Date())]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="23" y="80" width="181" height="46"/>
+				<subreportParameter name="AD_ORG_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/SubReport_Org.jasper"]]></subreportExpression>
+			</subreport>
+			<image>
+				<reportElement key="image" mode="Opaque" x="23" y="13" width="84" height="55">
+					<printWhenExpression><![CDATA[$F{AD_CLIENT_NAME}.equals("Eurocenter")]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL} + "/LogoEC.png"]]></imageExpression>
+			</image>
+			<image>
+				<reportElement mode="Opaque" x="23" y="13" width="92" height="54">
+					<printWhenExpression><![CDATA[($F{AD_CLIENT_ID}.doubleValue()==1000000 ||  $F{AD_CLIENT_ID}.doubleValue()==1000024) && $F{AD_ORG_ID}.doubleValue()!=1000476]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL} + "/LogoEggo.jpg"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement mode="Opaque" x="159" y="43" width="254" height="25" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{cashstate}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="0" y="134" width="555" height="20" backcolor="#CCCCCC"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{cash.desk}, $F{BANKACCOUNT})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="131" y="172" width="128" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{balance.init}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="131" y="211" width="128" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{cash.amount}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="131" y="263" width="128" height="20"/>
+				<textElement>
+					<font isBold="true" isItalic="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{balance.final}]]></textFieldExpression>
+			</textField>
+			<break>
+				<reportElement x="0" y="282" width="555" height="1"/>
+			</break>
+			<textField pattern="#,##0.00€">
+				<reportElement x="298" y="172" width="132" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{BEGINNINGBALANCE}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="251" width="555" height="1"/>
+			</line>
+			<textField pattern="#,##0.00€">
+				<reportElement x="298" y="211" width="132" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{CASHAMOUNT}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00€">
+				<reportElement x="298" y="263" width="132" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{SOLDEFINAL}]]></textFieldExpression>
+			</textField>
+			<image>
+				<reportElement x="23" y="12" width="56" height="55">
+					<printWhenExpression><![CDATA[$F{AD_ORG_ID}.doubleValue()==1000476]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL} + "/LogoEggoPro.jpg"]]></imageExpression>
+			</image>
+		</band>
+	</title>
+</jasperReport>

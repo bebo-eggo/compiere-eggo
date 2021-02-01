@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="invoice_extra" printOrder="Horizontal" pageWidth="555" pageHeight="48" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="4.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="concotractant" class="java.lang.String"/>
+	<parameter name="intracom" class="java.lang.String"/>
+	<parameter name="InterCo" class="java.lang.Integer"/>
+	<parameter name="pct" class="java.lang.Integer"/>
+	<queryString>
+		<![CDATA[select 1 from dual]]>
+	</queryString>
+	<field name="1" class="java.math.BigDecimal"/>
+	<title>
+		<band height="11">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="555" height="11"/>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{concotractant}.equals("Y")?(($R{invoice.cocontractant})+"\n"):"")+($P{InterCo}>0?(($R{invoice.interco})+"\n"):"")+($P{intracom}.equals("Y")?(($R{invoice.intracom})+"\n"):"")+($P{pct}>0?($R{invoice.12pct}):"")]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+</jasperReport>

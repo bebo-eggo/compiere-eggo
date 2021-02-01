@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ACCT_PartnerGLJournal" pageWidth="842" pageHeight="595" orientation="Landscape" whenNoDataType="NoDataSection" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="URL" class="java.lang.String"/>
+	<field name="YEAREXERCICE" class="java.lang.String"/>
+	<field name="TODAY" class="java.lang.String"/>
+	<field name="C_BP_GROUP_FROM" class="java.lang.String"/>
+	<field name="C_BP_GROUP_TO" class="java.lang.String"/>
+	<field name="RANGEDATE" class="java.lang.String"/>
+	<field name="SHOWBEGINNINGBALANCE" class="java.lang.String"/>
+	<field name="BPVALUE" class="java.lang.String"/>
+	<field name="BPNAME" class="java.lang.String"/>
+	<field name="DATEACCT" class="java.sql.Timestamp"/>
+	<field name="CURRENCY" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="RATE" class="java.math.BigDecimal"/>
+	<field name="ACCOUNTNO" class="java.lang.String"/>
+	<field name="JOURNAL" class="java.lang.String"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="AMTSOURCEDR" class="java.math.BigDecimal"/>
+	<field name="AMTSOURCECR" class="java.math.BigDecimal"/>
+	<field name="AMTACCTDR" class="java.math.BigDecimal"/>
+	<field name="AMTACCTCR" class="java.math.BigDecimal"/>
+	<field name="CUMULACCT" class="java.math.BigDecimal"/>
+	<field name="TOTAL" class="java.math.BigDecimal"/>
+	<field name="URL" class="java.lang.String"/>
+	<field name="PARTNER" class="java.lang.String"/>
+	<field name="TOTALGENERAL" class="java.math.BigDecimal"/>
+	<group name="Partner">
+		<groupExpression><![CDATA[$F{BPVALUE}]]></groupExpression>
+		<groupHeader>
+			<band/>
+		</groupHeader>
+		<groupFooter>
+			<band height="16">
+				<staticText>
+					<reportElement x="205" y="0" width="69" height="12">
+						<printWhenExpression><![CDATA[new Boolean($F{TOTAL} != null)]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="DejaVu Sans" size="7" isBold="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Total]]></text>
+				</staticText>
+				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+					<reportElement x="608" y="0" width="96" height="12">
+						<printWhenExpression><![CDATA[Boolean.valueOf(($F{TOTAL} != null) && ($F{TOTAL}.compareTo(BigDecimal.ZERO)>=0))]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="DejaVu Sans" size="7" isBold="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{TOTAL}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+					<reportElement x="656" y="0" width="96" height="12">
+						<printWhenExpression><![CDATA[Boolean.valueOf(($F{TOTAL} != null) && ($F{TOTAL}.compareTo(BigDecimal.ZERO)<0))]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="DejaVu Sans" size="7" isBold="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{TOTAL}.multiply(new BigDecimal(-1))]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="63" splitType="Stretch">
+			<staticText>
+				<reportElement x="217" y="0" width="355" height="20"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="12" isBold="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[GRAND LIVRE TIERS]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="1" y="24" width="318" height="12"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="7" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Exercice du 01/01/"+$F{YEAREXERCICE} + " au 31/12/"+$F{YEAREXERCICE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="598" y="0" width="104" height="12"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="7" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Date d'édition =]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="702" y="0" width="100" height="12"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="7" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{TODAY}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="598" y="12" width="204" height="12"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="7" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PARTNER}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="598" y="24" width="204" height="12"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="7" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{RANGEDATE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="598" y="36" width="204" height="12"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="7" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Affichage cumuls antérieurs = " + $F{SHOWBEGINNINGBALANCE}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="16" splitType="Stretch">
+			<staticText>
+				<reportElement x="80" y="0" width="80" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Tiers]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="160" y="0" width="45" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Date]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="205" y="0" width="65" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Journal]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="270" y="0" width="65" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Document]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="0" width="80" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Clé Tiers]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="335" y="0" width="125" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Libellé]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="500" y="0" width="30" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Devise]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="530" y="0" width="30" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Taux]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="560" y="0" width="48" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Débit devise]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="608" y="0" width="48" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Crédit Devise]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="656" y="0" width="48" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Débit €]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="704" y="0" width="48" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Crédit €]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="752" y="0" width="50" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Cumul €]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="460" y="0" width="40" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isUnderline="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Compte]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="10" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement isPrintRepeatedValues="false" x="0" y="0" width="80" height="10"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{BPVALUE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement isPrintRepeatedValues="false" x="80" y="0" width="80" height="10"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{BPNAME}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement x="160" y="0" width="45" height="10"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATEACCT}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="270" y="0" width="65" height="10"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="205" y="0" width="65" height="10"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{JOURNAL}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="335" y="0" width="125" height="10"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRIPTION}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="500" y="0" width="30" height="10"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{CURRENCY}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.0000;-#,##0.0000" isBlankWhenNull="true">
+				<reportElement x="530" y="0" width="30" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{RATE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement x="560" y="0" width="48" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AMTSOURCEDR}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement x="608" y="0" width="48" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AMTSOURCECR}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement x="656" y="0" width="48" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AMTACCTDR}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement x="704" y="0" width="48" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AMTACCTCR}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement x="752" y="0" width="50" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{CUMULACCT}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="460" y="0" width="40" height="10"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="6" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ACCOUNTNO}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="12" splitType="Prevent">
+			<textField>
+				<reportElement x="412" y="0" width="369" height="12"/>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="7" isBold="false" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Page " + $V{PAGE_NUMBER} + " de "]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="783" y="0" width="19" height="12"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="7" isBold="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="16" splitType="Stretch">
+			<staticText>
+				<reportElement x="205" y="0" width="69" height="12">
+					<printWhenExpression><![CDATA[new Boolean($F{TOTAL} != null)]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="DejaVu Sans" size="7" isBold="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[Total Général]]></text>
+			</staticText>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement x="608" y="0" width="96" height="12">
+					<printWhenExpression><![CDATA[Boolean.valueOf(($F{TOTALGENERAL} != null) && ($F{TOTALGENERAL}.compareTo(BigDecimal.ZERO)>=0))]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{TOTALGENERAL}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement x="656" y="0" width="96" height="12">
+					<printWhenExpression><![CDATA[Boolean.valueOf(($F{TOTALGENERAL} != null) && ($F{TOTALGENERAL}.compareTo(BigDecimal.ZERO)<0))]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans" size="7" isBold="true" isStrikeThrough="false" pdfFontName="DejaVu Sans" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{TOTALGENERAL}.multiply(new BigDecimal(-1))]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

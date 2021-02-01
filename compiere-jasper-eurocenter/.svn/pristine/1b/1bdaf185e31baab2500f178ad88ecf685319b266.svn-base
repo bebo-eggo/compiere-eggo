@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bonvente" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="121"/>
+	<scriptlet name="scriptlet1" class="net.sf.jasperreports.engine.JRDefaultScriptlet"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<parameter name="ISTICKET" class="java.lang.Boolean"/>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="OPENAMT" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[BigDecimal.ZERO]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["C:\\Users\\fib\\Desktop\\Rapports\\"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<queryString language="SQL">
+		<![CDATA[select
+    nvl((select 'AC' from c_doctype where upper(name) like '%ACOMPTE%' and c_doctype_id=o.c_doctypetarget_id),(select upper(substr(name,0,2)) from c_doctype where c_doctype_id=o.c_doctypetarget_id)) as DOCTYPEPREFIX,
+    o.description       AS COMMENTAIRE,
+    o.sav_status        AS SAV_STATUS,
+    cl.name             AS AD_CLIENT_NAME,
+    org.name            AS AD_ORG_NAME,
+    org.ad_org_id       AS AD_ORG_ID,
+    orgLoc.address1     AS AD_ORG_ADDRESS1,
+    orgLoc.postal       AS AD_ORG_POSTAL,
+    orgLoc.city         AS AD_ORG_CITY,
+    orginfo.phone       AS AD_ORG_PHONE,
+    orginfo.fax         AS AD_ORG_FAX,
+    orginfo.taxid       AS AD_ORG_TAXID,
+    o.dateOrdered       AS DATEORDERED,
+    doc.printname       AS DOCUMENTNAME,
+    doctrl.printname    AS DOCUMENTNAME_fr,
+    doctrlnl.printname    AS DOCUMENTNAME_nl,
+    o.documentno        AS DOCUMENTNO,
+    l.address1,l.address2,l.City,l.Postal,
+    bp.taxid as TAXID,
+    bl.c_bpartner_location_id,
+    o.bill_location_id,
+    OL.DESCRIPTION as REPRISE_COMMENT,
+    ol.C_ORDERLINE_ID,
+    salesRep.value      AS SALESREP_CODE,
+    (substr(bp2.name2,0,1) || '.' || bp2.name ) AS SALESREP_NAME,
+
+    salesRep.phone    AS SALESREPPHONE,
+    o.grandtotal      AS GRANDTOTAL,
+    (SELECT SUM(tax.totalht)
+    FROM RV_PRINTTICKETTAX tax
+     WHERE tax.order_id=o.c_order_id
+    )                    AS GRANDTOTALHT,
+    o.c_doctypetarget_id AS DOCTYPE_ID,
+    o.c_bpartner_id      AS BPID,
+    o.z_warranty         AS WARRANTY,
+    usr.name             AS IDENTIFIANT,
+    O.Z_TOTPAYMENT       AS PAIDAMT,
+    co.name AS Country,
+    g.name Civilite,
+    bp.name2 || ' '|| bp.name AS clientName,
+    bp.value as refClient,
+   (SELECT NVL(SUM(p.payamt),0) FROM C_Payment p WHERE p.C_Order_ID=o.C_Order_ID
+            )
+            AS TOTPAYAMT
+
+from c_order o
+join c_bpartner bp on  (bp.c_bpartner_id = o.c_bpartner_id)
+left join c_greeting g on (g.c_greeting_id = bp.c_greeting_id)
+JOIN c_bpartner_location bl ON (bl.c_bpartner_location_id = o.C_BPartner_Location_ID)
+JOIN c_location l ON (l.c_location_id = bl.c_location_id)
+JOIN c_country co ON (co.c_country_id = l.c_country_id)
+INNER JOIN Ad_Client cl ON cl.ad_client_id = o.ad_client_id
+INNER JOIN Ad_Org org ON org.ad_org_id = o.ad_org_id
+INNER JOIN ad_orginfo orgInfo ON orginfo.ad_org_id=org.ad_org_id
+INNER JOIN c_location orgLoc ON orgLoc.c_location_id = orgInfo.c_location_id
+INNER JOIN c_doctype doc ON doc.c_doctype_id=o.c_doctypetarget_id
+inner join c_doctype_trl doctrl ON (doctrl.c_doctype_id=doc.c_doctype_id and doctrl.ad_language='fr_FR')
+inner join c_doctype_trl doctrlnl ON (doctrlnl.c_doctype_id=doc.c_doctype_id and doctrlnl.ad_language='nl_NL')
+INNER JOIN ad_user salesRep ON salesrep.ad_user_id = o.salesrep_id
+
+INNER JOIN c_bpartner bp2 on bp2.c_bpartner_id = salesRep.c_bpartner_id
+
+INNER JOIN ad_user usr ON usr.ad_user_id = o.createdby
+left join C_ORDERLINE OL on (OL.AD_CLIENT_ID = o.AD_CLIENT_ID and OL.C_ORDER_ID=o.C_ORDER_ID and OL.LINE=10 )
+where o.c_Order_ID = $P{RECORD_ID}]]>
+	</queryString>
+	<field name="DOCTYPEPREFIX" class="java.lang.String"/>
+	<field name="COMMENTAIRE" class="java.lang.String"/>
+	<field name="SAV_STATUS" class="java.lang.String"/>
+	<field name="AD_CLIENT_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ADDRESS1" class="java.lang.String"/>
+	<field name="AD_ORG_POSTAL" class="java.lang.String"/>
+	<field name="AD_ORG_CITY" class="java.lang.String"/>
+	<field name="AD_ORG_PHONE" class="java.lang.String"/>
+	<field name="AD_ORG_FAX" class="java.lang.String"/>
+	<field name="AD_ORG_TAXID" class="java.lang.String"/>
+	<field name="DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="DOCUMENTNAME" class="java.lang.String"/>
+	<field name="DOCUMENTNAME_FR" class="java.lang.String"/>
+	<field name="DOCUMENTNAME_NL" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="ADDRESS1" class="java.lang.String"/>
+	<field name="ADDRESS2" class="java.lang.String"/>
+	<field name="CITY" class="java.lang.String"/>
+	<field name="POSTAL" class="java.lang.String"/>
+	<field name="TAXID" class="java.lang.String"/>
+	<field name="C_BPARTNER_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="BILL_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="REPRISE_COMMENT" class="java.lang.String"/>
+	<field name="C_ORDERLINE_ID" class="java.math.BigDecimal"/>
+	<field name="SALESREP_CODE" class="java.lang.String"/>
+	<field name="SALESREP_NAME" class="java.lang.String"/>
+	<field name="SALESREPPHONE" class="java.lang.String"/>
+	<field name="GRANDTOTAL" class="java.math.BigDecimal"/>
+	<field name="GRANDTOTALHT" class="java.math.BigDecimal"/>
+	<field name="DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="BPID" class="java.math.BigDecimal"/>
+	<field name="WARRANTY" class="java.lang.String"/>
+	<field name="IDENTIFIANT" class="java.lang.String"/>
+	<field name="PAIDAMT" class="java.math.BigDecimal"/>
+	<field name="COUNTRY" class="java.lang.String"/>
+	<field name="CIVILITE" class="java.lang.String"/>
+	<field name="CLIENTNAME" class="java.lang.String"/>
+	<field name="REFCLIENT" class="java.lang.String"/>
+	<field name="TOTPAYAMT" class="java.math.BigDecimal"/>
+	<title>
+		<band height="269">
+			<image>
+				<reportElement mode="Opaque" x="15" y="22" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{AD_CLIENT_NAME}.equals("EGGO")]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/LogoEggo.jpg"]]></imageExpression>
+			</image>
+			<image>
+				<reportElement key="image" mode="Opaque" x="15" y="22" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{AD_CLIENT_NAME}.equals("Eurocenter")]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/LogoEC.png"]]></imageExpression>
+			</image>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="87" y="209" width="100" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement key="textField" x="87" y="229" width="100" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATEORDERED}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="87" y="249" width="100" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{ISTICKET}.booleanValue()==false?$F{REFCLIENT}:"")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="38" y="249" width="39" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{ISTICKET}.booleanValue()==false?$R{customer} :"")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="38" y="229" width="39" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{date}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="38" y="209" width="39" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{corder.number}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="316" y="249" width="100" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="1_1_2">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{ISTICKET}.booleanValue()==false?($F{TAXID}==null?"BE PR":$F{TAXID}):"")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="252" y="249" width="54" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" lineSpacing="1_1_2">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{ISTICKET}.booleanValue()==false?$R{rate}:"")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="77" y="229" width="10" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="77" y="209" width="10" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="77" y="249" width="10" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="15" y="104" width="250" height="70"/>
+				<subreportParameter name="AD_ORG_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA["./subreportOrg_Gest.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement x="300" y="92" width="243" height="82"/>
+				<subreportParameter name="C_BPartner_Location_ID">
+					<subreportParameterExpression><![CDATA[$F{BILL_LOCATION_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA["./SubReport_InfoClient.jasper"]]></subreportExpression>
+			</subreport>
+			<rectangle>
+				<reportElement mode="Transparent" x="122" y="182" width="349" height="20"/>
+			</rectangle>
+			<textField>
+				<reportElement x="122" y="182" width="349" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCTYPEPREFIX}.equals("DE")?$R{quotation}.toUpperCase():$R{order.number}.toUpperCase()]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="306" y="249" width="10" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{ISTICKET}.booleanValue()==false?":":"")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="306" y="229" width="10" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="252" y="229" width="54" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{vendor}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="316" y="229" width="100" height="20"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{SALESREP_NAME}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="17" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="0" y="0" width="122" height="16" forecolor="#000000" backcolor="#999999"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{product}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="502" y="0" width="52" height="16" forecolor="#000000" backcolor="#999999"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.amounttc}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="452" y="0" width="50" height="16" forecolor="#000000" backcolor="#999999"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{price}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="332" y="0" width="40" height="16" forecolor="#000000" backcolor="#999999"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{DOCTYPE_ID}!=1002593? $R{c_order.delivred}:""]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="372" y="0" width="45" height="16" forecolor="#000000" backcolor="#999999"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{DOCTYPE_ID}!=1002593?$R{c_order.to.delivred}:""]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="122" y="0" width="177" height="16" forecolor="#000000" backcolor="#999999"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{description}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="417" y="0" width="35" height="16" forecolor="#000000" backcolor="#999999"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{rate}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" mode="Opaque" x="299" y="0" width="33" height="16" forecolor="#000000" backcolor="#999999"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCTYPEPREFIX}.equals("DE")?$R{qantity}:""]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="53" splitType="Stretch">
+			<subreport isUsingCache="true">
+				<reportElement key="subreport-2" stretchType="RelativeToBandHeight" isPrintRepeatedValues="false" x="0" y="1" width="555" height="52"/>
+				<subreportParameter name="C_ORDERLINE_ID">
+					<subreportParameterExpression><![CDATA[$F{C_ORDERLINE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="RECORD_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DOCTYPE_ID">
+					<subreportParameterExpression><![CDATA[$P{DOCTYPE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_ORG_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="URL">
+					<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/bonvente_SRLines.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

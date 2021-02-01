@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD JasperReport//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+
+<jasperReport name="report_invoice_accompte" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.2100000000000013"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" fontName="Arial" fontSize="26" isBold="true" pdfFontName="Helvetica-Bold"/>
+	<style name="SubTitle" forecolor="#666666" fontName="Arial" fontSize="18"/>
+	<style name="Column header" forecolor="#666666" fontName="Arial" fontSize="12" isBold="true"/>
+	<style name="Detail" fontName="Arial" fontSize="12"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[Select rvci.ad_org_id, rvci.c_bpartner_id,rvci.c_bpartner_location_id,rvci.c_currency_id,rvci.dateinvoiced,rvci.poreference, cb.AD_Language,
+(Select Sum(QtyInvoiced) from C_InvoiceLine where C_InvoiceLine.c_invoice_id = rvci.c_invoice_id ) as SUmQtyInvoiced,
+(Select Sum(rvod.qtytodeliver) from rv_orderdetail rvod where rvod.c_Order_id = rvci.c_Order_id and rvod.M_Product_ID in (Select M_Product_ID from M_Product where IsActive='Y' and m_product.isstocked = 'Y') ) as SUmQtytodeliver,
+(Select Sum(payamt) from C_Payment cpa where rvci.c_invoice_id = cpa.c_invoice_id and cpa.docstatus in ('CO','CL') ) as PAYAMT,
+(Select Z_COM from C_Invoice where C_Invoice.C_Invoice_ID = rvci.C_Invoice_ID) as COM
+from rv_c_invoice rvci
+inner join C_BPartner cb on (cb.C_BPartner_ID = rvci.c_bpartner_id)
+where rvci.c_invoice_id = $P{RECORD_ID}]]>
+	</queryString>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_ID" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="C_CURRENCY_ID" class="java.math.BigDecimal"/>
+	<field name="DATEINVOICED" class="java.sql.Timestamp"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="AD_LANGUAGE" class="java.lang.String"/>
+	<field name="SUMQTYINVOICED" class="java.math.BigDecimal"/>
+	<field name="SUMQTYTODELIVER" class="java.math.BigDecimal"/>
+	<field name="PAYAMT" class="java.math.BigDecimal"/>
+	<field name="COM" class="java.lang.String"/>
+	<group name="InvoiceGroup">
+		<groupExpression><![CDATA[$P{RECORD_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="10">
+				<printWhenExpression><![CDATA[$F{SUMQTYINVOICED}.doubleValue()>0]]></printWhenExpression>
+				<subreport>
+					<reportElement x="0" y="0" width="555" height="10"/>
+					<subreportParameter name="C_Invoice_ID">
+						<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="AD_Language">
+						<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="URL">
+						<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_InvoiceGroup.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+	</group>
+	<group name="ToDeliveryGroup">
+		<groupExpression><![CDATA[$P{RECORD_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="10">
+				<printWhenExpression><![CDATA[$F{SUMQTYTODELIVER}.doubleValue()>0]]></printWhenExpression>
+				<subreport>
+					<reportElement x="0" y="0" width="555" height="10"/>
+					<subreportParameter name="C_Invoice_ID">
+						<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="AD_Language">
+						<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="URL">
+						<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_ToDeliveryGroup.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+	</group>
+	<group name="PaymentGroup">
+		<groupExpression><![CDATA[$P{RECORD_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="10">
+				<printWhenExpression><![CDATA[$F{PAYAMT}.doubleValue()>0]]></printWhenExpression>
+				<subreport>
+					<reportElement x="0" y="0" width="555" height="10"/>
+					<subreportParameter name="C_Invoice_ID">
+						<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="AD_Language">
+						<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="URL">
+						<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="payamt">
+						<subreportParameterExpression><![CDATA[$F{PAYAMT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_PaymentGroup.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+	</group>
+	<background>
+		<band/>
+	</background>
+	<pageHeader>
+		<band height="203">
+			<line>
+				<reportElement x="0" y="200" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="153" width="555" height="1"/>
+			</line>
+			<image>
+				<reportElement x="14" y="2" width="101" height="101"/>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/eggo_ico.jpg"]]></imageExpression>
+			</image>
+			<subreport>
+				<reportElement x="293" y="74" width="228" height="60"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_BPartner_Location_ID">
+					<subreportParameterExpression><![CDATA[$F{C_BPARTNER_LOCATION_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_InfoClient.jasper"]]></subreportExpression>
+			</subreport>
+			<textField evaluationTime="Report">
+				<reportElement x="540" y="17" width="14" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["" + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="454" y="2" width="100" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="473" y="17" width="67" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{AD_LANGUAGE}.equals("fr_FR")?"Page ":($F{AD_LANGUAGE}.equals("nl_NL")?"Pag ":"Page "))+$V{PAGE_NUMBER}+"/"]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="12" y="105" width="107" height="40"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Org_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_OrgFactEGGO.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement x="0" y="157" width="555" height="40"/>
+				<subreportParameter name="C_Invoice_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_Info_Facture.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<lastPageFooter>
+		<band height="181">
+			<textField>
+				<reportElement x="0" y="167" width="555" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="html">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Nos conditions de vente sont disponibles sur notre site et au comptoir sur simple demande."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="93" width="555" height="74"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="html">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Tous nos prix incluent les taxes et contributions légales en matière d'environnement et de droits d'auteurs<br>Siège social : EGGO S.A. Rue Léon François 6 - 8 5170 Bois-de-Villers <br /> TVA : BE 0421.312.867 RPM Namur N° d'enregistrement : 122.801     FR08.429.438.237     LU 17.468.668 <br /> CBC : 193-1216801-54 (CREGBEBB BE42 1931 2168 0514) ING : 350-0188870-33 (BBRUBEBB BE79 3500 1888 7033) BNP : 250-0355000-65 (GEBABEBB BE18 2500 3550 0065) <br /><a href=\"www.eggo.be\"><font color=\"blue\">www.eggo.be</font></a>"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="90" width="555" height="1"/>
+			</line>
+			<textField>
+				<reportElement x="0" y="73" width="555" height="16"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<style size=\"9\">Référence structurée à rappeler en cas de paiement  par virement: </style><style isBold=\"true\" size=\"11\">"+($F{COM}==null?"":$F{COM})+"</style>"]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="255" y="6" width="300" height="64"/>
+				<subreportParameter name="C_Invoice_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+"/SubReport_TotalInvoice.jasper"]]></subreportExpression>
+			</subreport>
+			<line>
+				<reportElement x="0" y="2" width="555" height="1"/>
+			</line>
+		</band>
+	</lastPageFooter>
+</jasperReport>

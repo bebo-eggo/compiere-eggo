@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_Org" language="groovy" columnCount="4" printOrder="Horizontal" pageWidth="353" pageHeight="842" columnWidth="86" columnSpacing="2" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="2.8531167061100033"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<subDataset name="Table Dataset 1"/>
+	<parameter name="C_Order_ID" class="java.math.BigDecimal"/>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select NVL(zspr.Name,'Autre') as Name ,cpv.payamt from C_Payment_V cpv
+inner join C_Payment cp on (cp.c_payment_id = cpv.c_payment_id)
+left join zsubpaymentrule zspr on (zspr.zsubpaymentrule_id = cp.zsubpaymentrule_id)
+where cp.c_order_id=$P{C_Order_ID}]]>
+	</queryString>
+	<field name="NAME" class="java.lang.String"/>
+	<field name="PAYAMT" class="java.math.BigDecimal"/>
+	<detail>
+		<band height="12">
+			<textField>
+				<reportElement x="0" y="0" width="46" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NAME}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="46" y="0" width="39" height="12"/>
+				<box topPadding="0" leftPadding="2" rightPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{PAYAMT}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

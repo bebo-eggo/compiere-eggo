@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="EGGO_RapportMonteur" pageWidth="555" pageHeight="842" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="3.897434200000007"/>
+	<property name="ireport.x" value="1161"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select ST_REFERENCE, st_commentaire from XX_ORDERLINEDETAILS where C_Order_ID = $P{RECORD_ID}
+order by st_lignedocument]]>
+	</queryString>
+	<field name="ST_REFERENCE" class="java.lang.String"/>
+	<field name="ST_COMMENTAIRE" class="java.lang.String"/>
+	<columnHeader>
+		<band height="27">
+			<textField>
+				<reportElement x="0" y="0" width="65" height="24" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.ToPO}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="0" width="75" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Ref}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="140" y="0" width="209" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Desc}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="349" y="0" width="45" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Caisson}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="394" y="0" width="45" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Facade}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="439" y="0" width="45" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Autre}+"</b>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="484" y="0" width="70" height="24"/>
+				<box>
+					<pen lineColor="#6E671D"/>
+					<topPen lineColor="#6E671D"/>
+					<leftPen lineColor="#6E671D"/>
+					<bottomPen lineWidth="1.0" lineColor="#6E671D"/>
+					<rightPen lineColor="#6E671D"/>
+				</box>
+				<textElement verticalAlignment="Bottom" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["<b>"+$R{RPT_Mont.Comm}+"</b>"]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="15">
+			<rectangle>
+				<reportElement x="24" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<textField>
+				<reportElement x="65" y="2" width="75" height="12"/>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ST_REFERENCE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="140" y="2" width="209" height="12" isPrintWhenDetailOverflows="true"/>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ST_COMMENTAIRE}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="367" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="412" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="456" y="2" width="12" height="12"/>
+				<graphicElement>
+					<pen lineColor="#6E671D"/>
+				</graphicElement>
+			</rectangle>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="484" y="2" width="70" height="12" isPrintWhenDetailOverflows="true"/>
+				<textElement verticalAlignment="Top" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[".........."]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report_invoice_accompte" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" fontName="Arial" fontSize="26" isBold="true" pdfFontName="Helvetica-Bold"/>
+	<style name="SubTitle" forecolor="#666666" fontName="Arial" fontSize="18"/>
+	<style name="Column header" forecolor="#666666" fontName="Arial" fontSize="12" isBold="true"/>
+	<style name="Detail" fontName="Arial" fontSize="12"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[1107478]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select  p.name, p.description, i.documentno, i.poreference, i.dateinvoiced DateInvoiced, i.z_com as communication_struc, ol.priceactual priceTVAC, tax.rate TVA, ol.priceactual / ((tax.rate + 100) / 100) priceHTVA, pay.* from (
+
+select o.c_order_id, l.address1, l.address2, l.City, l.Postal, co.name as Country, sum(NVL(pay.payamt, 0)) PayementAmoutTotal, p.name || ' ' || p.name2 Client, c.name Vendeur, sysdate CurrentDate, sum(o.totallines) OrderTotal
+from c_invoice i
+join c_order o on (i.c_order_id = o.c_order_id)
+left join c_payment pay on (i.c_invoice_id = pay.c_invoice_id)
+left join c_bpartner_location bl on (bl.c_bpartner_location_id = o.C_BPartner_Location_ID)
+left join c_location l on (l.c_location_id = bl.c_location_id)
+left join c_country co on (co.c_country_id = l.c_country_id)
+left join c_bpartner p on (p.c_bpartner_id = o.Bill_BPartner_ID)
+left join ad_user c on (c.ad_user_id = i.salesrep_id)
+where o.poreference = (select poreference from c_order where c_order_id = $P{RECORD_ID})
+group by o.c_order_id, l.address1, l.address2, l.City, l.Postal, co.name,  p.name || ' ' || p.name2, c.name, sysdate
+) pay
+join c_invoice i on (i.c_order_id = pay.c_order_id)
+join c_orderline ol on (ol.c_order_id = pay.c_order_id)
+join m_product p on (p.m_product_id = ol.m_product_id)
+join c_tax tax on (tax.c_tax_id = ol.c_tax_id)]]>
+	</queryString>
+	<field name="NAME" class="java.lang.String"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="DATEINVOICED" class="java.sql.Timestamp"/>
+	<field name="COMMUNICATION_STRUC" class="java.lang.String"/>
+	<field name="PRICETVAC" class="java.math.BigDecimal"/>
+	<field name="TVA" class="java.math.BigDecimal"/>
+	<field name="PRICEHTVA" class="java.math.BigDecimal"/>
+	<field name="C_ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="ADDRESS1" class="java.lang.String"/>
+	<field name="ADDRESS2" class="java.lang.String"/>
+	<field name="CITY" class="java.lang.String"/>
+	<field name="POSTAL" class="java.lang.String"/>
+	<field name="COUNTRY" class="java.lang.String"/>
+	<field name="PAYEMENTAMOUTTOTAL" class="java.math.BigDecimal"/>
+	<field name="CLIENT" class="java.lang.String"/>
+	<field name="VENDEUR" class="java.lang.String"/>
+	<field name="CURRENTDATE" class="java.sql.Timestamp"/>
+	<field name="ORDERTOTAL" class="java.math.BigDecimal"/>
+	<variable name="PRICEACTUAL_1" class="java.math.BigDecimal" resetType="Page" calculation="Sum">
+		<variableExpression><![CDATA[$F{PRICETVAC}]]></variableExpression>
+	</variable>
+	<variable name="PRICEHTVA_1" class="java.math.BigDecimal" resetType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{PRICEHTVA}]]></variableExpression>
+	</variable>
+	<variable name="PRICETVAC_1" class="java.math.BigDecimal" resetType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{PRICETVAC}]]></variableExpression>
+	</variable>
+	<variable name="PRICETVAC_2" class="java.math.BigDecimal" resetType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{PRICETVAC}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="226" splitType="Stretch">
+			<image>
+				<reportElement x="15" y="2" width="101" height="101"/>
+				<imageExpression class="java.lang.String"><![CDATA[".\\eggo_ico.jpg"]]></imageExpression>
+			</image>
+			<textField isBlankWhenNull="true">
+				<reportElement x="342" y="24" width="209" height="20"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ADDRESS1}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="342" y="44" width="209" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ADDRESS2}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="442" y="64" width="109" height="20"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{CITY}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="342" y="64" width="100" height="20"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{POSTAL}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="342" y="84" width="209" height="20"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{COUNTRY}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="131" y="111" width="183" height="20"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="131" y="131" width="183" height="20"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{POREFERENCE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="17" y="111" width="115" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Facture N° :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="131" width="114" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[V/Ref.]]></text>
+			</staticText>
+			<line>
+				<reportElement x="0" y="106" width="551" height="1"/>
+			</line>
+			<textField isBlankWhenNull="true">
+				<reportElement x="132" y="24" width="210" height="20"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{CLIENT}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="17" y="151" width="115" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Vendeur :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="132" y="151" width="182" height="20"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{VENDEUR}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="132" y="2" width="210" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Client]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="342" y="4" width="209" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" isUnderline="false" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Adresse]]></text>
+			</staticText>
+			<line>
+				<reportElement x="1" y="196" width="551" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="17" y="171" width="115" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Date :]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="132" y="171" width="182" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{CURRENTDATE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="17" y="203" width="206" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Liste des produits commandés : ]]></text>
+			</staticText>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="23" splitType="Stretch">
+			<staticText>
+				<reportElement style="Column header" x="15" y="2" width="174" height="20"/>
+				<textElement/>
+				<text><![CDATA[Name]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="189" y="2" width="229" height="20"/>
+				<textElement/>
+				<text><![CDATA[Description]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="480" y="2" width="75" height="20"/>
+				<textElement/>
+				<text><![CDATA[Montant]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="418" y="2" width="62" height="20"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[TVA (%)]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="15" y="0" width="174" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{NAME}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="189" y="0" width="229" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRIPTION}]]></textFieldExpression>
+			</textField>
+			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
+				<reportElement x="480" y="0" width="75" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{PRICETVAC}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="418" y="0" width="62" height="20"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{TVA}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="179">
+			<staticText>
+				<reportElement x="17" y="40" width="427" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Montant déjà versé :]]></text>
+			</staticText>
+			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
+				<reportElement x="444" y="40" width="113" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{PAYEMENTAMOUTTOTAL}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="17" y="60" width="427" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Montant Total de la commande (HTVA) : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="120" width="427" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Montant Restant à payer : ]]></text>
+			</staticText>
+			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
+				<reportElement x="444" y="120" width="113" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{PRICETVAC_1} - $F{PAYEMENTAMOUTTOTAL}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="17" y="11" width="325" height="20"/>
+				<textElement/>
+				<text><![CDATA[TVA A ACQUITTER PAR LE COCONTRACTANT. ART.20]]></text>
+			</staticText>
+			<line>
+				<reportElement x="2" y="6" width="551" height="1"/>
+			</line>
+			<line>
+				<reportElement x="2" y="33" width="551" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="17" y="100" width="427" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Montant Total de la commande (TVAC) : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="17" y="80" width="427" height="20"/>
+				<textElement>
+					<font size="11" isBold="true" isItalic="true" pdfFontName="Helvetica-Oblique"/>
+				</textElement>
+				<text><![CDATA[Montant TVA : ]]></text>
+			</staticText>
+			<textField pattern="¤ #,##0.00">
+				<reportElement x="444" y="60" width="109" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{PRICEHTVA_1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="¤ #,##0.00">
+				<reportElement x="444" y="100" width="111" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{PRICETVAC_1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="¤ #,##0.00">
+				<reportElement x="444" y="80" width="107" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{PRICETVAC_1} - $V{PRICEHTVA_1}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="17" y="153" width="307" height="20">
+					<printWhenExpression><![CDATA[$F{COMMUNICATION_STRUC}.isEmpty($F{COMMUNICATION_STRUC}) == false]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[Référence structurée à rappeler en cas de paiement :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="328" y="152" width="227" height="20"/>
+				<textElement>
+					<font size="14"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{COMMUNICATION_STRUC}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="2" y="148" width="551" height="1"/>
+			</line>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band height="120" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText" x="1" y="77" width="555" height="43"/>
+				<textElement textAlignment="Center">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[En vertu de la loi du 8 décembre 1992 relative à la protection de la vie privée à l'égard du traitement des données à caractère personel. Nous vous informons que les données qui vous concernent seront enregistrées dans les fichiers que nous avons constituées en vue de la gestion interne de notre clientele. la SA MENATAM, rue Léon François 6-8, 5170 Bois-de-Villers, est responsable du traitement. La loi vous donne le droit de consulter ces données et, le cas échéant, d'en obtenir la rectification]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" x="0" y="12" width="555" height="59"/>
+				<textElement textAlignment="Center">
+					<font size="9"/>
+				</textElement>
+				<text><![CDATA[Tout nos prix incluent les taxes et contributions légales en matière d'environnement et de droits d'auteurs
+Siège social : EGGO S.A. Rue Léon François 6 - 8 5170 Bois-de-Villers
+CBC : 193-1216801-54 (CREGBEBB BE42 1931 2168 0514) ING : 350-0188870-33 (BBRUBEBB BE79 3500 1888 7033)
+RPM Namur N° d'enregistrement : 122.801
+www.eggo.be]]></text>
+			</staticText>
+		</band>
+	</pageFooter>
+</jasperReport>

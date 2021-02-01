@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="HistoriqueDossier_OrderLines" language="groovy" pageWidth="555" pageHeight="842" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.948717100000002"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" fontName="Arial" fontSize="26" isBold="true" pdfFontName="Helvetica-Bold"/>
+	<style name="SubTitle" forecolor="#666666" fontName="Arial" fontSize="18"/>
+	<style name="Column header" forecolor="#666666" fontName="Arial" fontSize="12" isBold="true"/>
+	<style name="Detail" fontName="Arial" fontSize="12"/>
+	<parameter name="Record_ID" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select
+     distinct mi.documentNo,
+     mi.movementDate as DateOrdered,
+     cl.line as LineNum,
+     p.value as ProductRef,
+     p.name as ProductName,
+     ci.ISO_CODE,
+     cl.priceactual as Price,
+     cl.priceactual * qtyordered as PriceTotal,
+     cl.qtyordered,
+     cl.qtydelivered,
+     TotalPrice,
+     TotalOrdered,
+     TotalDelivered,
+     TotalInvoiced,
+     case when civ.C_INVOICE_ID is not null and CIV.DOCSTATUS in ('CO','CL') then 'Y' else 'N' end as IsInvoiced,
+     case when cpv.c_Payment_ID  is not null and Cpv.DOCSTATUS in ('CO','CL') then 'Y' else 'N' end as IsPaid,
+       (Select sum (cp.PayAmt)  from c_Payment cp where cp.C_INvoice_ID = civ.C_INvoice_ID group by  cp.C_INvoice_ID) as TOTALPAIE
+from
+     c_orderline cl
+     inner join c_order c ON c.c_order_id = cl.c_order_id and c.issotrx = 'Y'
+     left join c_invoice_v civ on (civ.c_order_id = c.c_order_id)
+      left join c_Payment_v cpv on (civ.C_INVOICE_ID = cpv.C_INVOICE_ID)
+      inner join M_InOut mi on (mi.C_Order_ID =  c.c_order_id)
+      inner join M_InOutLine mil on (mil.M_InOut_ID = mi.m_inout_id and cl.c_orderline_id =mil.c_orderline_id)
+     inner join C_Currency ci on (ci.C_Currency_ID = c.C_Currency_ID)
+     left join m_product p on cl.m_product_id = p.m_product_id
+     left join m_product_po po on p.m_product_id = po.m_product_id
+     join (
+      select
+        c_inner.c_order_id,
+        sum(cl_inner.priceactual) TotalPrice,
+        sum(cl_inner.qtyordered * cl_inner.priceactual) as TotalOrdered,
+        sum(cl_inner.qtydelivered * cl_inner.priceactual) as TotalDelivered,
+        sum(cl_inner.qtyinvoiced * cl_inner.priceactual) as TotalInvoiced
+      from c_orderline cl_inner
+      join c_order c_inner ON c_inner.c_order_id = cl_inner.c_order_id and c_inner.issotrx = 'Y'
+      group by c_inner.c_order_id
+     ) somme_order on (somme_order.c_order_id = c.c_order_id)
+WHERE
+     c.c_order_id = $P{Record_ID}
+ORDER BY
+     cl.line]]>
+	</queryString>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="LINENUM" class="java.math.BigDecimal"/>
+	<field name="PRODUCTREF" class="java.lang.String"/>
+	<field name="PRODUCTNAME" class="java.lang.String"/>
+	<field name="ISO_CODE" class="java.lang.String"/>
+	<field name="PRICE" class="java.math.BigDecimal"/>
+	<field name="PRICETOTAL" class="java.math.BigDecimal"/>
+	<field name="QTYORDERED" class="java.math.BigDecimal"/>
+	<field name="QTYDELIVERED" class="java.math.BigDecimal"/>
+	<field name="TOTALPRICE" class="java.math.BigDecimal"/>
+	<field name="TOTALORDERED" class="java.math.BigDecimal"/>
+	<field name="TOTALDELIVERED" class="java.math.BigDecimal"/>
+	<field name="TOTALINVOICED" class="java.math.BigDecimal"/>
+	<field name="ISINVOICED" class="java.lang.String"/>
+	<field name="ISPAID" class="java.lang.String"/>
+	<field name="TOTALPAIE" class="java.math.BigDecimal"/>
+	<variable name="TOTALPRICE_1" class="java.math.BigDecimal" resetType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{TOTALPRICE}]]></variableExpression>
+	</variable>
+	<variable name="TOTALPRICE_2" class="java.math.BigDecimal" resetType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{TOTALPRICE}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="13" splitType="Stretch">
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="0" y="1" width="100" height="11"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATEORDERED}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="149" y="0" width="344" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Livraison":($P{AD_Language}.equals("nl_NL")?"Delivery":"Delivery"))+
+($F{ISINVOICED}.equals("Y")?($P{AD_Language}.equals("fr_FR")?" avec facturation":($P{AD_Language}.equals("nl_NL")?" with invoice":" with invoice")):"")]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="106" y="0" width="36" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ISO_CODE}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="15" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="1" width="20" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["L."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="1" width="80" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Article":($P{AD_Language}.equals("nl_NL")?"Artikel":"Product"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="100" y="1" width="58" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Libélé":($P{AD_Language}.equals("nl_NL")?"Name":"Name"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="310" y="1" width="56" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Prix":($P{AD_Language}.equals("nl_NL")?"Price":"Price"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="366" y="1" width="56" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Total":($P{AD_Language}.equals("nl_NL")?"Totaal":"Total"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="422" y="1" width="71" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Total Cmd":($P{AD_Language}.equals("nl_NL")?"Totaal Cmd":"Total Cmd"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="493" y="1" width="62" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Total Liv.":($P{AD_Language}.equals("nl_NL")?"Totaal Liv.":"Total Exp."))]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="12" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="20" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{LINENUM}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="100" y="0" width="210" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRODUCTNAME}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="310" y="0" width="56" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{PRICE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="366" y="0" width="56" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{PRICETOTAL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="0" width="80" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRODUCTREF}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="422" y="0" width="71" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{QTYORDERED}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="493" y="0" width="62" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{QTYDELIVERED}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<lastPageFooter>
+		<band height="102">
+			<line>
+				<reportElement x="313" y="2" width="109" height="1"/>
+			</line>
+			<textField>
+				<reportElement x="118" y="41" width="57" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{TOTALORDERED}+" "+$F{ISO_CODE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="118" y="53" width="57" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{TOTALDELIVERED}+" "+$F{ISO_CODE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="118" y="65" width="57" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{TOTALINVOICED}+" "+$F{ISO_CODE}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="101" width="555" height="1"/>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</line>
+			<textField>
+				<reportElement x="20" y="41" width="86" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Total en commande":($P{AD_Language}.equals("nl_NL")?"Totaal in Cmd":"Total in Cmd"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="53" width="86" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Total déjà livré":($P{AD_Language}.equals("nl_NL")?"Totaal aantal":"Total Delivered"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="65" width="86" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Total déjà facturé":($P{AD_Language}.equals("nl_NL")?"Totaal opgeladen":"Total invoiced"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="77" width="86" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Total déjà payé":($P{AD_Language}.equals("nl_NL")?"Totaal betaalde":"Total paid"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="20" width="86" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Paiement":($P{AD_Language}.equals("nl_NL")?"Payment":"Payment"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="118" y="20" width="57" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{TOTALPAIE}+" "+$F{ISO_CODE}]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="185" y="20" width="379" height="12"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{AD_Language}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_Order_ID">
+					<subreportParameterExpression><![CDATA[$P{Record_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "SubReport_PaimentLists.jasper"]]></subreportExpression>
+			</subreport>
+			<textField>
+				<reportElement x="118" y="77" width="57" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{TOTALPAIE}+" "+$F{ISO_CODE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="106" y="20" width="12" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="106" y="41" width="12" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="106" y="53" width="12" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="106" y="65" width="12" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="106" y="77" width="12" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="269" y="4" width="87" height="12"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")?"Total TVAC : ":($P{AD_Language}.equals("nl_NL")?"Totaal MBTW :":"Total TVAT : "))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="356" y="3" width="66" height="13"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{TOTALORDERED}]]></textFieldExpression>
+			</textField>
+		</band>
+	</lastPageFooter>
+</jasperReport>

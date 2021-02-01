@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_Org" language="groovy" pageWidth="293" pageHeight="842" columnWidth="293" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="2.5937424601000023"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="M_WAREHOUSE_ID" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT m.name AS AD_War_NAME,
+  cl.address1   AS AD_War_ADDRESS1,
+  cl.postal     AS AD_War_POSTAL,
+  cl.city       AS AD_War_CITY,
+  orgi.phone    AS AD_ORG_PHONE,
+  orgi.fax      AS AD_ORG_FAX
+
+
+FROM M_WAREHOUSE m
+inner join AD_Org org on m.AD_Org_id = org.AD_ORG_ID
+INNER JOIN ad_orginfo orgi
+ON (orgi.ad_org_id = org.AD_Org_ID)
+LEFT JOIN C_Location cl
+ON (cl.c_location_id = m.c_location_id)
+WHERE m.M_WAREHOUSE_ID  = $P{M_WAREHOUSE_ID}]]>
+	</queryString>
+	<field name="AD_WAR_NAME" class="java.lang.String"/>
+	<field name="AD_WAR_ADDRESS1" class="java.lang.String"/>
+	<field name="AD_WAR_POSTAL" class="java.lang.String"/>
+	<field name="AD_WAR_CITY" class="java.lang.String"/>
+	<field name="AD_ORG_PHONE" class="java.lang.String"/>
+	<field name="AD_ORG_FAX" class="java.lang.String"/>
+	<title>
+		<band height="64" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="0" width="293" height="64"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{AD_WAR_NAME} == null ? "" :$F{AD_WAR_NAME}+ '\n') +
+($F{AD_WAR_ADDRESS1} == null ? "" :$F{AD_WAR_ADDRESS1}+ '\n' )+
+($F{AD_WAR_POSTAL} == null ? "" :$F{AD_WAR_POSTAL}+ ' ' )+
+($F{AD_WAR_CITY} == null ? "" :$F{AD_WAR_CITY}+ '\n') +
+"Tel:"+($F{AD_ORG_PHONE} == null ? "" :$F{AD_ORG_PHONE})+"  "+"Fax:"+($F{AD_ORG_FAX} == null ? "" :$F{AD_ORG_FAX})]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+</jasperReport>

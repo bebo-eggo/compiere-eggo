@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bonvente_tax" language="groovy" pageWidth="185" pageHeight="100" columnWidth="185" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isFloatColumnFooter="true" resourceBundle="traduction">
+	<property name="ireport.zoom" value="3.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<parameter name="DOCUMENTTYPE" class="java.lang.String"/>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[with table_solde
+as
+(
+select
+--pour solde vente store/vente expo
+case when o.c_doctypetarget_id = 1000028 or o.c_doctypetarget_id = 1001673 or o.c_doctypetarget_id = 1004922 or o.c_doctypetarget_id = 1005282 or o.c_doctypetarget_id = 1005382  then (select co.GrandTotal-NVL(co.TotalPaySched,0)-NVL(CO.Z_SOLDEGI,0) from C_Order co where co.C_Order_ID=o.C_Order_ID)
+--pour solde autre type document
+     when o.c_doctypetarget_id != 1000028 and o.c_doctypetarget_id != 1001673  and o.c_doctypetarget_id != 1004922  and o.c_doctypetarget_id != 1005282  and o.c_doctypetarget_id != 1005382  then (select (o.grandtotal - NVL((SELECT SUM(i.payamt) FROM c_payment i WHERE i.c_order_id = oo.c_order_id ),0)-NVL(oo.Z_SOLDEGI,0) ) FROM c_order oo WHERE o.c_order_id=oo.c_order_id)
+end as SOLDE,
+
+--pour payé vente store/vente expo
+case when o.c_doctypetarget_id = 1000028 or o.c_doctypetarget_id = 1001673 or o.c_doctypetarget_id = 1004922 or o.c_doctypetarget_id = 1005282 or o.c_doctypetarget_id = 1005382 then o.TOTALPAYSCHED
+--pour payé autre type document
+     when o.c_doctypetarget_id != 1000028 and o.c_doctypetarget_id != 1001673  and o.c_doctypetarget_id != 1004922  and o.c_doctypetarget_id != 1005282  and o.c_doctypetarget_id != 1005382  then (select sum(z.payamt) from Z_OrderVDPayment z WHERE z.C_Payment_ID > 0 and  z.C_Order_ID = o.c_order_id )
+     when  o.ad_client_id =1000022 then ( select sum(p.payamt) from c_payment p WHERE  p.c_order_id = o.c_order_id)
+
+end as PAYE,
+(select
+sum(nvl(ol.qtyentered  *ol.priceentered,0))
+from c_oRDERline ol
+where ol.c_ORDER_id =  o.c_ORDER_id and ol.qtyentered > 0 ) as SOLDE1,
+
+(select
+sum(nvl(ol.qtyentered  * ol.priceentered * (1+(t.rate/100)),0))
+from c_oRDERline ol
+inner join c_tax t on t.c_tax_id = ol.c_tax_id
+where ol.c_ORDER_id =  o.c_ORDER_id and ol.qtyentered > 0 ) as TOTALTTC_EGGO,
+
+
+
+o.grandtotal as TOTALTTC,
+o.totallines as TOTALHT,
+(o.Z_soldegi - nvl(
+(select ol.priceentered  from c_orderline ol
+inner join m_product mp on mp.m_product_id=ol.m_product_id
+where ol.c_order_id= $P{RECORD_ID} and upper(mp.value) like '%PAYEGI%'),0)
+) as Z_soldegi,
+o.c_doctypetarget_id,
+o.ad_client_id,
+o.issotrx
+from c_order o
+where o.c_order_id = $P{RECORD_ID}
+)
+
+select
+t.rate                                      as RATE,
+sum(nvl(DECODE(SIGN(ot.qtyentered),-1,0,ot.qtyentered)  *ot.priceentered *(1 -100/(100+t.rate)),0))  as TOTALTAX_EC,
+ sum(nvl(DECODE(SIGN(ot.qtyentered),-1,0,ot.qtyentered)  *ot.priceentered *((t.rate/100)),0))  as TOTALTAX_EGGO,
+(select nvl(TOTALTTC,0) from table_solde)    as TOTALTTC,
+(select nvl(TOTALTTC_EGGO,0) from table_solde)    as TOTALTTC_EGGO,
+(select nvl(TOTALHT,0) from table_solde)     as TOTALHT,
+(select nvl(SOLDE,0) from table_solde)       as SOLDE,
+(select nvl(SOLDE1,0) from table_solde)       as SOLDE1,
+(select nvl(PAYE,0) from table_solde)        as PAYE,
+(select nvl(Z_SOLDEGI,0) from table_solde)   as Z_SOLDEGI,
+(select issotrx from table_solde)     as issotrx,
+(select ad_client_id from table_solde)     as ad_client_id
+
+from c_orderline ot
+inner join c_tax t on t.c_tax_id = ot.c_tax_id
+where ot.c_ORDER_id =$P{RECORD_ID}
+group by t.rate]]>
+	</queryString>
+	<field name="RATE" class="java.math.BigDecimal"/>
+	<field name="TOTALTAX_EC" class="java.math.BigDecimal"/>
+	<field name="TOTALTAX_EGGO" class="java.math.BigDecimal"/>
+	<field name="TOTALTTC" class="java.math.BigDecimal"/>
+	<field name="TOTALTTC_EGGO" class="java.math.BigDecimal"/>
+	<field name="TOTALHT" class="java.math.BigDecimal"/>
+	<field name="SOLDE" class="java.math.BigDecimal"/>
+	<field name="SOLDE1" class="java.math.BigDecimal"/>
+	<field name="PAYE" class="java.math.BigDecimal"/>
+	<field name="Z_SOLDEGI" class="java.math.BigDecimal"/>
+	<field name="ISSOTRX" class="java.lang.String"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<variable name="total_tva_count" class="java.math.BigDecimal" incrementType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{AD_CLIENT_ID} == 1000000 ?$F{TOTALTAX_EGGO}:$F{TOTALTAX_EC}]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+	<group name="total_tva">
+		<groupExpression><![CDATA[$F{RATE}]]></groupExpression>
+		<groupFooter>
+			<band splitType="Stretch"/>
+		</groupFooter>
+	</group>
+	<columnHeader>
+		<band height="14" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-4" x="0" y="0" width="120" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{total.ht}]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="120" y="0" width="65" height="14"/>
+				<subreportParameter name="RECORD_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_CLIENT_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_CLIENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL}+ "/bonvente_tax_ammount_HT.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="14" splitType="Stretch">
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement key="textField-2" x="120" y="0" width="65" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{AD_CLIENT_ID} == 1000000 ?
+new DecimalFormat($R{pattern.price}).format($F{TOTALTAX_EGGO})  :
+new DecimalFormat($R{pattern.price}).format($F{TOTALTAX_EC})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-5" x="0" y="0" width="120" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{c_order.tva},$F{RATE})]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="42" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-6" x="0" y="0" width="120" height="14"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="9" isBold="true" pdfFontName="Helvetica"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{total}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="0" width="185" height="1"/>
+			</line>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement key="textField-1" x="120" y="1" width="65" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{AD_CLIENT_ID} == 1000000 ?
+new DecimalFormat($R{pattern.price}).format($F{TOTALTTC_EGGO})
+ :
+ new DecimalFormat($R{pattern.price}).format($F{SOLDE1})]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnFooter>
+</jasperReport>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="subreportlandfooter" language="groovy" pageWidth="800" pageHeight="50" orientation="Landscape" columnWidth="760" leftMargin="20" rightMargin="20" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="Ad_client_id" class="java.math.BigDecimal"/>
+	<queryString>
+		<![CDATA[select name as companyName,
+concat(concat(l.address1,'  '),concat(l.postal,concat(', ',l.city))) as adresse,
+concat(num_enreg,' ') as num_enreg,concat(taxid,' ') as TVA,concat(registration,' ') as registration,
+concat(url,' ') as site
+from ad_client c
+Left join
+c_location l
+
+ON (l.c_location_id = c.c_location_id)
+where c.ad_client_id =$P{Ad_client_id}]]>
+	</queryString>
+	<field name="COMPANYNAME" class="java.lang.String"/>
+	<field name="ADRESSE" class="java.lang.String"/>
+	<field name="NUM_ENREG" class="java.lang.String"/>
+	<field name="TVA" class="java.lang.String"/>
+	<field name="REGISTRATION" class="java.lang.String"/>
+	<field name="SITE" class="java.lang.String"/>
+	<pageFooter>
+		<band height="50">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="-17" y="0" width="777" height="50"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" lineSpacing="Single">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{COMPANYNAME}+" : "+$F{ADRESSE}+" " +$F{REGISTRATION}+"- "+$R{tva}+" : "+ $F{TVA} +"- "+$R{reg.number}+" :"+ $F{NUM_ENREG}+" \n"+$R{web.site}+" : "+$F{SITE}+"."+"\n"+
+$R{footer1}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="0" width="760" height="1"/>
+			</line>
+		</band>
+	</pageFooter>
+</jasperReport>

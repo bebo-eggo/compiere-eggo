@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_CiviliteClient" language="groovy" pageWidth="511" pageHeight="448" columnWidth="511" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="2.143588810000002"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<parameter name="C_Order_ID" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select
+o.C_DOCTYPE_ID,
+o.c_order_id,
+o.documentno,
+o.poreference,
+GETZ_COM_ACP(o.c_order_id)   as ref_struc,
+o.dateordered,
+o.z_datelivrconf,
+gt.name as civilite,
+pc.name2 || ' ' || pc.name ClientName,
+pc.name as ClientNom,
+ac.email MAIL, ac.phone TEL,
+ac.phone2 GSM,
+lc.address1,
+lc.address2,
+lc.postal,
+lc.city,
+coc.name as country,
+substr(pv.name2,0,1) || '.' || pv.name Vendor,
+nvl(pay.totalamt,0) - nvl(pay.payamt,0) - nvl(
+o.Z_SoldeGI,0) - nvl( payx.totalamt,0) - nvl(o.Z_PayGI,0) as PayementAmoutTotal,
+o.totallines,
+null as hasFinancial,
+o.datepose,
+o.ad_client_id,
+o.ad_org_id,
+monteur.name2 || ' ' || monteur.name as monteur,
+o.c_bpartner_location_id,
+o.c_bpartner_id,trunc(o.Z_DATELIVRCLI) as Z_DATELIVRCLI, o.Z_AMPM
+
+from c_order o
+-- monteur
+left join c_bpartner monteur on monteur.c_bpartner_id = o.monteur_id and (monteur.IsMonteur='Y' OR monteur.IsEmployee='Y')
+--vendor information
+left join ad_user av on (av.ad_user_id = o.SalesRep_ID)
+left join c_project proj on (proj.c_project_ID = o.c_project_ID)
+left join c_bpartner pv on (pv.c_bpartner_id = av.c_bpartner_id)
+-- Customer information.
+left join c_bpartner pc on (pc.c_bpartner_id = o.c_bpartner_id)
+left join ad_user ac on (ac.c_bpartner_id = pc.c_bpartner_id)
+left join
+    (SELECT sch.c_order_id,  SUM(sch.totalamt) as totalamt,(Select sum(cp.Payamt) from (Select distinct Z_ORDERPAYMENT.C_PAYMENT_ID  from Z_ORDERPAYMENT
+				where exists(SELECT 1 from Z_ORDERPAYMSCHEDULE where Z_ORDERPAYMSCHEDULE.C_ORDER_ID = $P{C_Order_ID} and Z_ORDERPAYMENT.Z_ORDERPAYMSCHEDULE_ID = Z_ORDERPAYMSCHEDULE.Z_ORDERPAYMSCHEDULE_ID))t
+				inner join C_PAYMENT cp on cp.C_PAYMENT_ID = t.C_PAYMENT_ID) as PayAmt
+     FROM z_orderpaymschedule sch
+     LEFT join z_typeecheance tysch on (tysch.z_typeecheance_id = sch.z_typeecheance_id)
+     GROUP BY sch.c_order_id
+     ) pay on pay.c_order_id = o.c_order_id
+ left join
+    (SELECT sch.c_order_id,  SUM(sch.totalamt) as totalamt
+     FROM z_orderpaymschedule sch
+     inner join z_typeecheance tysch on (tysch.z_typeecheance_id = sch.z_typeecheance_id)
+    WHERE (tysch.ISFINANCEMENT = 'Y' OR tysch.ISPROM = 'Y')
+     GROUP BY sch.c_order_id
+     ) payx on payx.c_order_id = o.c_order_id
+left join c_greeting_trl gt on (gt.c_greeting_id = pc.c_greeting_id
+and UPPER(gt.AD_Language) = UPPER($P{AD_Language}))
+-- Delivery Adresse.
+left join c_bpartner_location blc on (blc.c_bpartner_location_id = o.bill_location_id and blc.isbillto = 'Y')
+left join c_location lc on (lc.c_location_id = blc.c_location_id)
+left join c_country coc on (coc.c_country_id = lc.c_country_id)
+where o.c_order_id  = $P{C_Order_ID}]]>
+	</queryString>
+	<field name="C_DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="C_ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="REF_STRUC" class="java.lang.String"/>
+	<field name="DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="Z_DATELIVRCONF" class="java.sql.Timestamp"/>
+	<field name="CIVILITE" class="java.lang.String"/>
+	<field name="CLIENTNAME" class="java.lang.String"/>
+	<field name="CLIENTNOM" class="java.lang.String"/>
+	<field name="MAIL" class="java.lang.String"/>
+	<field name="TEL" class="java.lang.String"/>
+	<field name="GSM" class="java.lang.String"/>
+	<field name="ADDRESS1" class="java.lang.String"/>
+	<field name="ADDRESS2" class="java.lang.String"/>
+	<field name="POSTAL" class="java.lang.String"/>
+	<field name="CITY" class="java.lang.String"/>
+	<field name="COUNTRY" class="java.lang.String"/>
+	<field name="VENDOR" class="java.lang.String"/>
+	<field name="PAYEMENTAMOUTTOTAL" class="java.math.BigDecimal"/>
+	<field name="TOTALLINES" class="java.math.BigDecimal"/>
+	<field name="HASFINANCIAL" class="java.lang.String"/>
+	<field name="DATEPOSE" class="java.sql.Timestamp"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="MONTEUR" class="java.lang.String"/>
+	<field name="C_BPARTNER_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_ID" class="java.math.BigDecimal"/>
+	<field name="Z_DATELIVRCLI" class="java.sql.Timestamp"/>
+	<field name="Z_AMPM" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="411" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="449" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font size="11" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{CIVILITE} == null ? $F{CLIENTNOM} : $F{CIVILITE} + " " + $F{CLIENTNOM}+","]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement mode="Transparent" x="-1" y="137" width="495" height="173"/>
+			</rectangle>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="187" y="112" width="324" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{by}+" "+$F{MONTEUR}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="10" y="112" width="117" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevery.mail.installation.date}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="310" width="494" height="57"/>
+				<textElement verticalAlignment="Top" lineSpacing="1_1_2"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[(($F{C_DOCTYPE_ID} == 1005282) || ($F{C_DOCTYPE_ID} == 1004141) || ($F{C_DOCTYPE_ID} == 1005180) || ($F{C_DOCTYPE_ID} == 1005382))?$R{delevery.mail.plac3}:$R{delevery.mail.text5}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="343" y="397" width="151" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{votre.gestionnaire}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="36" y="217" width="11" height="19"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[-]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="47" y="217" width="434" height="19"/>
+				<textElement verticalAlignment="Middle" markup="html"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevery.mail.modep2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="30" width="494" height="41"/>
+				<textElement verticalAlignment="Middle" lineSpacing="1_1_2"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[(($F{C_DOCTYPE_ID} == 1005282) || ($F{C_DOCTYPE_ID} == 1004141) || ($F{C_DOCTYPE_ID} == 1005180)|| ($F{C_DOCTYPE_ID} == 1005382) )?$R{delevery.mail.plac2}:$R{delevery.mail.text1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="47" y="236" width="434" height="65"/>
+				<textElement verticalAlignment="Top" lineSpacing="1_1_2" markup="html"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{AD_CLIENT_ID}.doubleValue()==1000000?msg($R{delevery.mail.modep3}," IBAN: BE42 1931 2168 0154 BIC: CREGBEBB",$F{REF_STRUC}==null?$F{POREFERENCE}:$F{REF_STRUC}):msg($R{delevery.mail.modep3}," IBAN: LU68 0030 0260 8021 0000 BIC: BGLLLULL",$F{REF_STRUC}==null?$F{POREFERENCE}:$F{REF_STRUC})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="71" width="494" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[(($F{C_DOCTYPE_ID} == 1005282) || ($F{C_DOCTYPE_ID} == 1004141) || ($F{C_DOCTYPE_ID} == 1005180)|| ($F{C_DOCTYPE_ID} == 1005382))?$R{delevery.mail.plac1}:$R{delevery.mail.text2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="-1" y="367" width="495" height="30"/>
+				<textElement verticalAlignment="Top" lineSpacing="Single"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{delevery.mail.text6},($F{CIVILITE} == null ? $F{CLIENTNOM} : $F{CIVILITE} + " " + $F{CLIENTNOM}))]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="36" y="236" width="11" height="19"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[-]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="10" y="137" width="471" height="52"/>
+				<textElement verticalAlignment="Middle" lineSpacing="1_1_2"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg((($F{C_DOCTYPE_ID} == 1005282) || ($F{C_DOCTYPE_ID} == 1004141) || ($F{C_DOCTYPE_ID} == 1005180) || ($F{C_DOCTYPE_ID} == 1005382))?$R{delevery.mail.plac4}:$R{delevery.mail.text3},new DecimalFormat($R{pattern.price}).format($F{PAYEMENTAMOUTTOTAL}))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="21" y="189" width="460" height="20"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevery.mail.text4}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement x="127" y="112" width="60" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATEPOSE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="10" y="98" width="501" height="14">
+					<printWhenExpression><![CDATA[$F{Z_AMPM}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{Z_AMPM}!=null?($R{delevery.mail.date}+" "+($F{Z_AMPM}.equals("AM")?(msg($R{delevery.mail.service.logistique},(new java.text.SimpleDateFormat("dd/MM/yyyy",new Locale("fr", "FR")).format($F{Z_DATELIVRCLI})),$R{delivery.am})):($F{Z_AMPM}.equals("PM")?msg($R{delevery.mail.service.logistique},(new java.text.SimpleDateFormat("dd/MM/yyyy",new Locale("fr", "FR")).format($F{Z_DATELIVRCLI})),$R{delivery.pm}):""))):$R{delevery.mail.date})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="10" y="98" width="501" height="14">
+					<printWhenExpression><![CDATA[$F{Z_AMPM}==null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{delevery.mail.date}+" "+(msg($R{delevery.mail.service.logistique},(new java.text.SimpleDateFormat("dd/MM/yyyy",new Locale("fr", "FR")).format($F{Z_DATELIVRCLI})),""))]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band splitType="Stretch"/>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

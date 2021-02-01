@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_Org" language="groovy" pageWidth="293" pageHeight="842" columnWidth="293" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="2.5937424601000023"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="AD_Org_ID" class="java.math.BigDecimal"/>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[Select org.name as AD_ORG_NAME,cl.address1 as AD_ORG_ADDRESS1, cl.postal as AD_ORG_POSTAL, cl.city as AD_ORG_CITY, orgi.phone as AD_ORG_PHONE, orgi.fax as AD_ORG_FAX,orgi.TelFree, orgi.TAXID  from AD_Org org
+inner join ad_orginfo orgi on (orgi.ad_org_id = org.AD_Org_ID)
+left join C_Location cl on (cl.c_location_id = orgi.c_location_id)
+where org.ad_org_id = $P{AD_Org_ID}]]>
+	</queryString>
+	<field name="AD_ORG_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_ADDRESS1" class="java.lang.String"/>
+	<field name="AD_ORG_POSTAL" class="java.lang.String"/>
+	<field name="AD_ORG_CITY" class="java.lang.String"/>
+	<field name="AD_ORG_PHONE" class="java.lang.String"/>
+	<field name="AD_ORG_FAX" class="java.lang.String"/>
+	<field name="TELFREE" class="java.lang.String"/>
+	<field name="TAXID" class="java.lang.String"/>
+	<title>
+		<band height="39" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="0" width="293" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{AD_ORG_NAME} == null ? "" :$F{AD_ORG_NAME})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="13" width="293" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{TELFREE} == null ? "" :"Tel "+$F{TELFREE})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="26" width="293" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{TELFREE} == null ? "" :($P{AD_Language}.equals("fr_FR")? "TVA : "+$F{TAXID}+" RPM Namur":($P{AD_Language}.equals("nl_NL")? "BTW: "+$F{TAXID}+" RPM Namur":"VAT: "+$F{TAXID}+" RPM Namur")))]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+</jasperReport>

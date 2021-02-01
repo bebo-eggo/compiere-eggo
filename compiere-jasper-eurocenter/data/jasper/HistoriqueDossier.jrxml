@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="HistoriqueDossier" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" fontName="Arial" fontSize="26" isBold="true" pdfFontName="Helvetica-Bold"/>
+	<style name="SubTitle" forecolor="#666666" fontName="Arial" fontSize="18"/>
+	<style name="Column header" forecolor="#666666" fontName="Arial" fontSize="12" isBold="true"/>
+	<style name="Detail" fontName="Arial" fontSize="12"/>
+	<parameter name="Record_ID" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[new Integer(1011830)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+     o.C_ORDER_ID AS C_ORDER_C_ORDER_ID,
+o.ad_client_id,
+     o.AD_ORG_ID AS C_ORDER_AD_ORG_ID,
+     o.C_BPARTNER_ID AS C_ORDER_C_BPARTNER_ID,
+     bpl.c_bpartner_location_id as c_bpartner_location_id,
+cdoc.name as Action,
+     o.dateordered OrderDate,
+     io.dateordered IODate,
+     cl.value ClientCode,
+     trim(cl.name) ClientName, --concat(concat(trim(cl.name), ' '), trim(cl.name2)) ClientName
+     max(l.address1) Rue,
+     max(l.postal) CodePostal,
+     max(l.city) Ville,
+
+cl.AD_Language
+  FROM c_bpartner cl
+  inner join C_ORDER o on (cl.c_bpartner_id = o.bill_bpartner_id)
+  inner join c_doctype cdoc on cdoc.c_doctype_id = o.c_doctypetarget_id
+  inner join c_bpartner_location bpl on (o.c_bpartner_id = bpl.c_bpartner_id)
+  inner join c_location l on (bpl.c_location_id = l.c_location_id)
+  left join m_inout io on (io.c_order_id = o.c_order_id)
+  WHERE o.c_order_id = $P{Record_ID}
+  group by
+    o.C_ORDER_ID,
+o.ad_client_id,
+    o.AD_ORG_ID,
+    o.C_BPARTNER_ID,
+    o.dateordered,
+    io.dateordered,
+    cl.value,
+    trim(cl.name),cl.AD_Language,cdoc.name,bpl.c_bpartner_location_id]]>
+	</queryString>
+	<field name="C_ORDER_C_ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="C_ORDER_AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="C_ORDER_C_BPARTNER_ID" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="ACTION" class="java.lang.String"/>
+	<field name="ORDERDATE" class="java.sql.Timestamp"/>
+	<field name="IODATE" class="java.sql.Timestamp"/>
+	<field name="CLIENTCODE" class="java.lang.String"/>
+	<field name="CLIENTNAME" class="java.lang.String"/>
+	<field name="RUE" class="java.lang.String"/>
+	<field name="CODEPOSTAL" class="java.lang.String"/>
+	<field name="VILLE" class="java.lang.String"/>
+	<field name="AD_LANGUAGE" class="java.lang.String"/>
+	<group name="ToDelivered">
+		<groupExpression><![CDATA[$F{C_ORDER_C_ORDER_ID}]]></groupExpression>
+		<groupFooter>
+			<band height="18"/>
+		</groupFooter>
+	</group>
+	<group name="InOutLinesGroup">
+		<groupExpression><![CDATA[$F{C_ORDER_C_ORDER_ID}]]></groupExpression>
+		<groupFooter>
+			<band height="12">
+				<subreport isUsingCache="true">
+					<reportElement key="subreport" x="0" y="0" width="555" height="12"/>
+					<subreportParameter name="Record_ID">
+						<subreportParameterExpression><![CDATA[$F{C_ORDER_C_ORDER_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="AD_Language">
+						<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "HistoriqueDossier_InOutLines.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="groupbyaction">
+		<groupExpression><![CDATA[$F{ACTION}]]></groupExpression>
+		<groupHeader>
+			<band height="11"/>
+		</groupHeader>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="199">
+			<subreport>
+				<reportElement x="327" y="82" width="228" height="67"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_BPartner_Location_ID">
+					<subreportParameterExpression><![CDATA[$F{C_BPARTNER_LOCATION_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_CLIENT_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_CLIENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "SubReport_InfoClient.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement x="141" y="42" width="414" height="25" isPrintWhenDetailOverflows="true" backcolor="#666666"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_Order_ID">
+					<subreportParameterExpression><![CDATA[$F{C_ORDER_C_ORDER_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "SubReport_HD_DocumentNo.jasper"]]></subreportExpression>
+			</subreport>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="455" y="0" width="100" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="10" y="103" width="181" height="46"/>
+				<subreportParameter name="AD_Org_ID">
+					<subreportParameterExpression><![CDATA[$F{C_ORDER_AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "SubReport_org.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement x="327" y="149" width="228" height="20" isRemoveLineWhenBlank="true"/>
+				<subreportParameter name="is_adresse">
+					<subreportParameterExpression><![CDATA[Boolean.FALSE]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_BPartner_Location_ID">
+					<subreportParameterExpression><![CDATA[$F{C_BPARTNER_LOCATION_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA["./SubReport_adresse_livraison_bon_vente.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="15" splitType="Stretch">
+			<textField>
+				<reportElement x="459" y="0" width="80" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Page "+$V{PAGE_NUMBER}+" de"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="522" y="0" width="33" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<subreport isUsingCache="true">
+				<reportElement key="subreport" x="0" y="0" width="555" height="12"/>
+				<subreportParameter name="Record_ID">
+					<subreportParameterExpression><![CDATA[$F{C_ORDER_C_ORDER_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "HistoriqueDossier_OrderLines.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="reception_marchandise" language="groovy" pageWidth="595" pageHeight="842" columnWidth="567" leftMargin="14" rightMargin="14" topMargin="11" bottomMargin="11" isFloatColumnFooter="true" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<style name="entete" isBold="true"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[new Double(1043319)]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+    io.c_bpartner_location_id,
+    io.ad_org_id,
+    io.ad_client_id,
+    org.name                              AS MAGASIN,
+    io.m_inout_id,
+    io.DocumentNo                         AS DOCUMENTNO,
+    iol.line                              AS LINE,
+    p.value                               AS PRODUCTVALUE,
+    p.description,
+    pc.name                               AS PRODUCTCAT,
+    bp.Value                              AS FOURVALUE,
+    bp.Name ||' '|| bp.Name2              AS FOURNAME,
+    l.address1                            AS FOURADRESS,
+    l.Postal|| COALESCE(l.Postal_Add,N'') AS FOURPOSTAL,
+    l.city                                AS FOURCITY,
+    bpc.Phone                             AS FOURPHONE,
+    bpc.fax                               AS FOURFAX,
+    NULLIF (bpc.Name,bp.Name)             AS CONTACTNAME,
+    io.POReference                        AS POREFERENCE,
+    iol.qtyentered                        AS QTYENTERED,
+    ol.priceentered,
+    orgloc.address1                            AS ADDRESS1,
+    orgloc.Postal|| COALESCE(l.Postal_Add,N'') AS POSTAL,
+    orgloc.city                                AS CITY,
+    dtfr.name  as DOCNAME_FR,
+    dtnl.name  as DOCNAME_NL
+
+  FROM M_InOut io
+  LEFT JOIN m_inoutline iol         ON iol.m_inout_id = io.m_inout_id
+  LEFT JOIN C_orderline ol          ON ol.c_orderline_id = iol.c_orderline_id
+  LEFT JOIN m_product p             ON p.m_product_id = iol.m_product_id
+  LEFT JOIN m_product_category pc   ON pc.m_product_category_id = p.m_product_category_id
+  LEFT JOIN C_DocType dt            ON (io.C_DocType_ID=dt.C_DocType_ID)
+  LEFT JOIN C_DocType_trl dtfr        ON (dtfr.C_DocType_ID=dt.C_DocType_ID and dtfr.ad_language='fr_FR')
+  LEFT JOIN C_DocType_trl dtnl        ON (dtnl.C_DocType_ID=dt.C_DocType_ID and dtnl.ad_language='nl_NL')
+  LEFT JOIN C_BPartner bp           ON (io.C_BPartner_ID=bp.C_BPartner_ID and bp.isvendor='Y')
+  LEFT  JOIN C_Greeting bpg     ON (bp.C_Greeting_ID=bpg.C_Greeting_ID)
+  LEFT JOIN C_BPartner_Location bpl ON (io.C_BPartner_Location_ID=bpl.C_BPartner_Location_ID)
+  LEFT JOIN C_Location l            ON (bpl.C_Location_ID=l.C_Location_ID)
+  LEFT  JOIN AD_User bpc        ON (io.AD_User_ID=bpc.AD_User_ID)
+  LEFT  JOIN C_Greeting bpcg    ON (bpc.C_Greeting_ID=bpcg.C_Greeting_ID)
+  LEFT JOIN AD_Org org              ON (io.AD_Org_ID=org.AD_Org_ID)
+  LEFT JOIN AD_OrgInfo oi           ON (io.AD_Org_ID=oi.AD_Org_ID)
+  LEFT JOIN C_Location orgloc       ON (orgloc.C_Location_ID=oi.C_Location_ID)
+  LEFT JOIN M_Warehouse wh   ON (io.M_Warehouse_ID=wh.M_Warehouse_ID)
+
+  where  io.m_inout_id=$P{RECORD_ID}
+  order by io.m_inout_id, iol.line]]>
+	</queryString>
+	<field name="C_BPARTNER_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="MAGASIN" class="java.lang.String"/>
+	<field name="M_INOUT_ID" class="java.math.BigDecimal"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="LINE" class="java.math.BigDecimal"/>
+	<field name="PRODUCTVALUE" class="java.lang.String"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="PRODUCTCAT" class="java.lang.String"/>
+	<field name="FOURVALUE" class="java.lang.String"/>
+	<field name="FOURNAME" class="java.lang.String"/>
+	<field name="FOURADRESS" class="java.lang.String"/>
+	<field name="FOURPOSTAL" class="java.lang.String"/>
+	<field name="FOURCITY" class="java.lang.String"/>
+	<field name="FOURPHONE" class="java.lang.String"/>
+	<field name="FOURFAX" class="java.lang.String"/>
+	<field name="CONTACTNAME" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="QTYENTERED" class="java.math.BigDecimal"/>
+	<field name="PRICEENTERED" class="java.math.BigDecimal"/>
+	<field name="ADDRESS1" class="java.lang.String"/>
+	<field name="POSTAL" class="java.lang.String"/>
+	<field name="CITY" class="java.lang.String"/>
+	<field name="DOCNAME_FR" class="java.lang.String"/>
+	<field name="DOCNAME_NL" class="java.lang.String"/>
+	<variable name="total" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{PRICEENTERED}]]></variableExpression>
+	</variable>
+	<title>
+		<band height="217" splitType="Stretch">
+			<image>
+				<reportElement key="image" x="15" y="0" width="84" height="72"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL}+"/LogoEggo.jpg"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement x="109" y="185" width="349" height="20"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{REPORT_LOCALE}.toString().equalsIgnoreCase( "fr_fr" )?$F{DOCNAME_FR}:$F{DOCNAME_NL}).toUpperCase()]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="15" y="103" width="250" height="70"/>
+				<subreportParameter name="AD_ORG_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/subreportOrg_Gest.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement x="300" y="92" width="243" height="82"/>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$P{REPORT_LOCALE}.toString()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="C_BPartner_Location_ID">
+					<subreportParameterExpression><![CDATA[$F{C_BPARTNER_LOCATION_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/SubReport_InfoClient.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="15" splitType="Stretch">
+			<textField>
+				<reportElement mode="Opaque" x="0" y="0" width="26" height="15" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Center">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{invoice.qty}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="26" y="0" width="111" height="15" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Center">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{product}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="137" y="0" width="100" height="15" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Center">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{type}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="237" y="0" width="330" height="15" backcolor="#CCCCCC"/>
+				<textElement textAlignment="Center">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{description}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="26" height="15"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{QTYENTERED}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="26" y="0" width="111" height="15"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRODUCTVALUE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="137" y="0" width="100" height="15"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRODUCTCAT}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="237" y="0" width="330" height="15"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRIPTION}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="50" splitType="Stretch">
+			<subreport runToBottom="true">
+				<reportElement positionType="FixRelativeToBottom" x="0" y="0" width="567" height="50" isPrintWhenDetailOverflows="true"/>
+				<subreportParameter name="Ad_client_id">
+					<subreportParameterExpression><![CDATA[$F{AD_CLIENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA["fr_FR"]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CAS">
+					<subreportParameterExpression><![CDATA[new BigDecimal(1)]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/subreportfooter.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageFooter>
+</jasperReport>

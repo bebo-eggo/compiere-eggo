@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bonventeproductdesc" language="groovy" pageWidth="391" pageHeight="595" columnWidth="391" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<parameter name="URL" class="java.lang.String"/>
+	<parameter name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<parameter name="C_ORDERLINE_ID" class="java.math.BigDecimal"/>
+	<parameter name="DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<queryString>
+		<![CDATA[SELECT
+    nvl((select 'AC' from c_doctype where upper(name) like '%ACOMPTE%' and c_doctype_id=o.c_doctypetarget_id),(select upper(substr(name,0,2)) from c_doctype where c_doctype_id=o.c_doctypetarget_id)) as DOCTYPEPREFIX,
+    l.c_order_id                             AS ORDER_ID,
+l.ad_client_id                                as AD_CLIENT_ID,
+    l.c_orderline_id                         AS ORDERLINE_ID,
+    p.name                                   AS M_PRODUCT_NAME,
+    p.value                                  AS M_PRODUCT_VALUE,
+    p.description                            AS M_PRODUCT_DESCRIPTION,
+    l.qtyentered                             AS QTYENTERED,
+    l.priceentered                           AS PRICEENTERED,
+    l.qtyDelivered                           AS qtyDelivered,
+    l.qtyentered    - l.qtyDelivered         AS qtyTodelivred,
+    t.rate                                   AS RATE,
+    l.qtyentered*l.priceentered              AS TOTALLINE,
+    l.Z_SerNo                                AS SERIALNUMBER,
+    l.accessories                            AS ACCESSORIES,
+    l.purchaseDate                           AS PURCHASEDATE,
+    l.m_productState                         AS PRODUCTSTATE,
+    trim(coalesce(l.description,p.description))    AS DESCRIPTION,
+    l.discount                               AS DISCOUNT,
+    l.created                                AS DEPOSITDATE,
+    p.isStocked                              AS isStocked,
+    o.grandtotal,
+    o.grandtotal - (l.qtyentered  *l.priceentered) as TVA,
+    l.linenetamt,
+    l.priceentered,
+ l.linenetamtttc,
+    l.priceenteredttc,
+    l.linenetamt
+FROM C_OrderLine l
+  INNER JOIN c_order o on o.c_order_id = l.c_order_id
+  INNER JOIN M_Product p ON (p.m_product_id=l.m_product_id)
+  INNER JOIN c_tax t ON (t.c_tax_id=l.c_tax_id)
+WHERE l.c_order_id  = $P{RECORD_ID}
+
+ORDER BY l.line]]>
+	</queryString>
+	<field name="DOCTYPEPREFIX" class="java.lang.String"/>
+	<field name="ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="ORDERLINE_ID" class="java.math.BigDecimal"/>
+	<field name="M_PRODUCT_NAME" class="java.lang.String"/>
+	<field name="M_PRODUCT_VALUE" class="java.lang.String"/>
+	<field name="M_PRODUCT_DESCRIPTION" class="java.lang.String"/>
+	<field name="QTYENTERED" class="java.math.BigDecimal"/>
+	<field name="PRICEENTERED" class="java.math.BigDecimal"/>
+	<field name="QTYDELIVERED" class="java.math.BigDecimal"/>
+	<field name="QTYTODELIVRED" class="java.math.BigDecimal"/>
+	<field name="RATE" class="java.math.BigDecimal"/>
+	<field name="TOTALLINE" class="java.math.BigDecimal"/>
+	<field name="SERIALNUMBER" class="java.lang.String"/>
+	<field name="ACCESSORIES" class="java.lang.String"/>
+	<field name="PURCHASEDATE" class="java.sql.Timestamp"/>
+	<field name="PRODUCTSTATE" class="java.lang.String"/>
+	<field name="DESCRIPTION" class="java.lang.String"/>
+	<field name="DISCOUNT" class="java.math.BigDecimal"/>
+	<field name="DEPOSITDATE" class="java.sql.Timestamp"/>
+	<field name="ISSTOCKED" class="java.lang.String"/>
+	<field name="GRANDTOTAL" class="java.math.BigDecimal"/>
+	<field name="TVA" class="java.math.BigDecimal"/>
+	<field name="LINENETAMT" class="java.math.BigDecimal"/>
+	<field name="LINENETAMTTTC" class="java.math.BigDecimal"/>
+	<field name="PRICEENTEREDTTC" class="java.math.BigDecimal"/>
+	<variable name="variable1" class="java.lang.Double" resetType="Column" incrementType="Column" calculation="Sum"/>
+	<detail>
+		<band height="12" splitType="Stretch">
+			<textField pattern="###0.00€" isBlankWhenNull="true">
+				<reportElement key="textField" stretchType="RelativeToTallestObject" x="325" y="0" width="34" height="12"/>
+				<box topPadding="1"/>
+				<textElement textAlignment="Right" verticalAlignment="Top">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AD_CLIENT_ID}== 1000000 ?$F{PRICEENTEREDTTC}:$F{PRICEENTERED}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.0" isBlankWhenNull="false">
+				<reportElement key="textField" stretchType="RelativeToTallestObject" x="305" y="0" width="20" height="12"/>
+				<box topPadding="1"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{RATE}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="2" y="0" width="60" height="12"/>
+				<box topPadding="1"/>
+				<textElement verticalAlignment="Top">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{M_PRODUCT_VALUE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00€" isBlankWhenNull="true">
+				<reportElement key="textField" stretchType="RelativeToTallestObject" x="359" y="0" width="30" height="12"/>
+				<box topPadding="1"/>
+				<textElement textAlignment="Right" verticalAlignment="Top">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{AD_CLIENT_ID}== 1000000 ? $F{LINENETAMTTTC}:$F{LINENETAMT}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="62" y="0" width="160" height="12" isPrintWhenDetailOverflows="true"/>
+				<box topPadding="1"/>
+				<textElement verticalAlignment="Top">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRIPTION}.trim()]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="222" y="10" width="167" height="1"/>
+				<subreportParameter name="RECORD_ID">
+					<subreportParameterExpression><![CDATA[$F{ORDERLINE_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ORGTO">
+					<subreportParameterExpression><![CDATA[$P{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA["./bonvente_actionsA5.jasper"]]></subreportExpression>
+			</subreport>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" stretchType="RelativeToTallestObject" x="242" y="0" width="30" height="12">
+					<printWhenExpression><![CDATA[!($P{DOCTYPE_ID}==1000095 || $P{DOCTYPE_ID}==1001674 || $P{DOCTYPE_ID}==1002593)]]></printWhenExpression>
+				</reportElement>
+				<box topPadding="1"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{QTYDELIVERED}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" stretchType="RelativeToTallestObject" x="222" y="0" width="20" height="12"/>
+				<box topPadding="1"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{QTYENTERED}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" stretchType="RelativeToTallestObject" x="272" y="0" width="33" height="12">
+					<printWhenExpression><![CDATA[!($P{DOCTYPE_ID}==1000095 || $P{DOCTYPE_ID}==1001674 || $P{DOCTYPE_ID}==1002593)]]></printWhenExpression>
+				</reportElement>
+				<box topPadding="1"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{QTYTODELIVRED}.intValue() == 0) ? "-" : $F{QTYTODELIVRED}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

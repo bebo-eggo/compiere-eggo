@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bonvente_tax_ammount_HT_A5_pos" language="groovy" pageWidth="65" pageHeight="14" columnWidth="65" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="3.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<parameter name="AD_CLIENT_ID" class="java.math.BigDecimal" isForPrompting="false"/>
+	<queryString>
+		<![CDATA[select
+sum(nvl(DECODE(SIGN(ot.qtyentered),-1,0,ot.qtyentered) *ot.priceentered *(100/(100+t.rate)),0)) as TOTALTAX,
+sum(nvl(DECODE(SIGN(ot.qtyentered),-1,0,ot.qtyentered) *ot.priceentered * 1 ,0)) as TOTAL
+from c_ORDERline ot
+inner join c_tax t on t.c_tax_id = ot.c_tax_id
+where ot.c_ORDER_id = $P{RECORD_ID}]]>
+	</queryString>
+	<field name="TOTALTAX" class="java.math.BigDecimal"/>
+	<field name="TOTAL" class="java.math.BigDecimal"/>
+	<detail>
+		<band height="14" splitType="Stretch">
+			<textField pattern="">
+				<reportElement x="0" y="0" width="65" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{AD_CLIENT_ID} == 1000000 ?
+new DecimalFormat($R{pattern.price}).format($F{TOTAL})
+:
+new DecimalFormat($R{pattern.price}).format($F{TOTALTAX})]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

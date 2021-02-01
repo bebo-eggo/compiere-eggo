@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="receipt" language="groovy" pageWidth="226" pageHeight="566" columnWidth="222" leftMargin="2" rightMargin="2" topMargin="2" bottomMargin="13" isIgnorePagination="true" uuid="27355f3b-1f22-4298-978f-c0602f72acf6">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="192"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="CURRENT_PATH" class="java.lang.String"/>
+	<parameter name="ad_client_id" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1000022]]></defaultValueExpression>
+	</parameter>
+	<parameter name="I_POSORDER_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[0]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["C:\\work361\\compiere-core-pos2\\data\\jasper\\"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+	org.name		as nomMagasin,
+	loc.address1		as address1,
+	loc.address2		as address2,
+	loc.postal		as postal,
+	loc.city		as city,
+	o.dateordered		as dateOrder,
+	o.documentno		as noTicket,
+	vendor.name		as vendor,
+	(SELECT sum(t.priceEntered) FROM I_POSORDERLINE t
+	 WHERE t.I_POSORDER_ID=o.I_POSORDER_ID
+	)			as TOTALORDER
+FROM I_POSORDER o
+INNER JOIN ad_user vendor ON vendor.ad_user_id = o.salesrep_id
+INNER JOIN ad_org org ON org.ad_org_id = o.ad_org_id
+INNER JOIN ad_orgInfo orgInfo ON orgInfo.ad_org_id=org.ad_org_id
+INNER JOIN c_location loc ON loc.c_location_id = orgInfo.c_location_id
+WHERE o.ad_client_id=1000022 AND o.I_POSORDER_ID =  $P{I_POSORDER_ID}]]>
+	</queryString>
+	<field name="NOMMAGASIN" class="java.lang.String"/>
+	<field name="ADDRESS1" class="java.lang.String"/>
+	<field name="ADDRESS2" class="java.lang.String"/>
+	<field name="POSTAL" class="java.lang.String"/>
+	<field name="CITY" class="java.lang.String"/>
+	<field name="DATEORDER" class="java.sql.Timestamp"/>
+	<field name="NOTICKET" class="java.lang.String"/>
+	<field name="VENDOR" class="java.lang.String"/>
+	<field name="TOTALORDER" class="java.math.BigDecimal"/>
+	<variable name="DATE" class="java.lang.String" resetType="None">
+		<variableExpression><![CDATA[new java.text.SimpleDateFormat("dd/MM/yyyy").format(java.util.Calendar.getInstance().getTime())]]></variableExpression>
+	</variable>
+	<variable name="TIME" class="java.lang.String" resetType="None">
+		<variableExpression><![CDATA[new java.text.SimpleDateFormat("hh:mm").format(java.util.Calendar.getInstance().getTime())]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band height="192" splitType="Stretch">
+			<staticText>
+				<reportElement uuid="5f9e5980-6b50-4ffe-9fc5-0005a691d982" key="staticText" x="10" y="137" width="53" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Date:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1e685e4c-4973-4108-9a17-b70a79d80f1d" key="staticText" x="10" y="154" width="53" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Vendeur :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="3b2da385-fb7c-4a1a-a532-acf0655faf0f" key="staticText" x="11" y="171" width="52" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Ticket :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="false">
+				<reportElement uuid="1bdca009-2aa3-46b1-b2d1-1fba22a92020" key="textField" x="76" y="137" width="146" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DATEORDER}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement uuid="4409b45f-4ae9-4635-8616-ba123d3b744e" key="textField" x="75" y="154" width="147" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{VENDOR}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement uuid="a8627fdd-a5a5-4f03-a15d-40740e1e24ef" key="textField" x="75" y="171" width="147" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{NOTICKET}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement uuid="69242ba1-fff9-4de9-9b85-4c6c8a3bbd6a" key="textField" x="0" y="83" width="222" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{NOMMAGASIN}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement uuid="0715f0ee-effe-4009-959a-114a9b2dd7b1" key="textField" x="0" y="99" width="222" height="32"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ADDRESS1}+"\n"
++( $F{ADDRESS2}==null ? "":$F{ADDRESS2}+"\n")
++$F{POSTAL}+" "+$F{CITY}]]></textFieldExpression>
+			</textField>
+			<image scaleImage="FillFrame">
+				<reportElement uuid="262cbbfb-330d-47f2-9e76-6f6f52768319" key="image" stretchType="RelativeToTallestObject" x="60" y="0" width="113" height="82"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<imageExpression><![CDATA[$P{CURRENT_PATH} + "\\logo.png"]]></imageExpression>
+			</image>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="18" splitType="Stretch">
+			<subreport>
+				<reportElement uuid="f50ede63-fcc7-41f2-b7f4-89d51a884be1" x="2" y="2" width="220" height="14"/>
+				<subreportParameter name="I_POSORDER_ID">
+					<subreportParameterExpression><![CDATA[$P{I_POSORDER_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{CURRENT_PATH} + "receipt_line.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="203" splitType="Stretch">
+			<staticText>
+				<reportElement uuid="188b847c-8188-473c-84d2-5048c46ced09" key="staticText-1" x="0" y="173" width="221" height="19"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Nous vous donnerons l'envie de revenir]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="dff446c3-7921-4458-b4be-01c954d0d113" key="staticText-2" x="68" y="19" width="33" height="15"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement/>
+				<text><![CDATA[Total :]]></text>
+			</staticText>
+			<textField pattern="##0.00" isBlankWhenNull="false">
+				<reportElement uuid="7391cb32-f877-4662-aadc-54a340769d37" key="textField" x="104" y="19" width="91" height="15"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{TOTALORDER} +" €"]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement uuid="643c3e9e-2a94-41e7-8610-bfb4a0e062ba" x="2" y="34" width="220" height="100"/>
+				<subreportParameter name="I_POSORDER_ID">
+					<subreportParameterExpression><![CDATA[$P{I_POSORDER_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{CURRENT_PATH} + "payment_line.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

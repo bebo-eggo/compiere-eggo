@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_Org" language="groovy" pageWidth="555" pageHeight="842" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.9487171000000014"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="C_Invoice_ID" class="java.lang.Double"/>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[Select cb.Value as client, nvl(cb.taxid,' ')as taxid,ci.dateinvoiced as dateinvoiced, ci.documentno, ci.poreference, nvl(au.name,' ')as name from C_Invoice ci
+inner join c_bpartner cb on (cb.c_bpartner_ID = ci.c_bpartner_ID)
+left join AD_user au on (au.AD_User_ID = ci.salesrep_id)
+where C_Invoice_ID = $P{C_Invoice_ID}]]>
+	</queryString>
+	<field name="CLIENT" class="java.lang.String"/>
+	<field name="TAXID" class="java.lang.String"/>
+	<field name="DATEINVOICED" class="java.sql.Timestamp"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="NAME" class="java.lang.String"/>
+	<detail>
+		<band height="39">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="0" width="277" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Facture N° : </b>" :($P{AD_Language}.equals("nl_NL")? "<b>Factuur Nr :</b> " :"<b>Invoice No : </b>"))+$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="278" y="0" width="277" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Client N° : </b>" :($P{AD_Language}.equals("nl_NL")? "<b>Klant Nr : </b>" :"<b>Client No : </b>"))+$F{CLIENT}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="13" width="277" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Projet N° : </b>" :($P{AD_Language}.equals("nl_NL")? "<b>Project Nr : </b>" :"<b>Project No : </b>"))+$F{POREFERENCE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="278" y="13" width="277" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>TVA N° : </b>" :($P{AD_Language}.equals("nl_NL")? "<b>BTW Nr : </b>" :"<b>VAT No : </b>"))+$F{TAXID}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="26" width="277" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Date : </b>" :($P{AD_Language}.equals("nl_NL")? "<b>Datum </b>" :"<b>Date </b>"))+(new java.text.SimpleDateFormat("dd MMMMM yyyy",new Locale("fr", "FR"))).format($F{DATEINVOICED})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="278" y="26" width="277" height="13"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle" markup="styled">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR")? "<b>Vendeur : </b>" :($P{AD_Language}.equals("nl_NL")? "<b>Verkoper : </b>" :"<b>Seller : </b>"))+$F{TAXID}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

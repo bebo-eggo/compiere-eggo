@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report_invoice_accompte" language="groovy" pageWidth="515" pageHeight="842" columnWidth="515" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="20" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.2100000000000009"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" lineSpacing="Single" fontName="Arial" fontSize="26" isBold="true" pdfFontName="Helvetica-Bold"/>
+	<style name="SubTitle" forecolor="#666666" lineSpacing="Single" fontName="Arial" fontSize="18"/>
+	<style name="Column header" forecolor="#666666" lineSpacing="Single" fontName="Arial" fontSize="12" isBold="true"/>
+	<style name="Detail" lineSpacing="Single" fontName="Arial" fontSize="12"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+rvci.c_doctype_id,
+rvci.AD_Client_ID,
+rvci.ad_org_id,
+rvci.c_bpartner_id,
+rvci.c_bpartner_location_id,
+rvci.c_currency_id,
+rvci.dateinvoiced,
+rvci.poreference,
+coalesce(cb.AD_Language,'xx_XX') as AD_Language,
+(Select Sum(QtyInvoiced) from C_InvoiceLine where C_InvoiceLine.c_invoice_id = rvci.c_invoice_id ) as SUmQtyInvoiced,
+(Select Sum(rvod.qtytodeliver) from rv_orderdetail rvod where rvod.c_Order_id = rvci.c_Order_id and rvod.M_Product_ID in (Select M_Product_ID from M_Product where IsActive='Y' and m_product.isstocked = 'Y') ) as SUmQtytodeliver,
+(Select coalesce(Sum(payamt),0) from C_Payment cpa where rvci.c_invoice_id = cpa.c_invoice_id and cpa.docstatus in ('CO','CL') ) as PAYAMT,
+(Select Z_COM from C_Invoice where C_Invoice.C_Invoice_ID = rvci.C_Invoice_ID) as COM,
+cb.TAXID,
+rvci.c_invoice_id
+from rv_c_invoice rvci
+inner join C_BPartner cb on (cb.C_BPartner_ID = rvci.c_bpartner_id)
+where rvci.c_invoice_id = $P{RECORD_ID}]]>
+	</queryString>
+	<field name="C_DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_ID" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="C_CURRENCY_ID" class="java.math.BigDecimal"/>
+	<field name="DATEINVOICED" class="java.sql.Timestamp"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="AD_LANGUAGE" class="java.lang.String"/>
+	<field name="SUMQTYINVOICED" class="java.math.BigDecimal"/>
+	<field name="SUMQTYTODELIVER" class="java.math.BigDecimal"/>
+	<field name="PAYAMT" class="java.math.BigDecimal"/>
+	<field name="COM" class="java.lang.String"/>
+	<field name="TAXID" class="java.lang.String"/>
+	<field name="C_INVOICE_ID" class="java.math.BigDecimal"/>
+	<group name="InvoiceGroup">
+		<groupExpression><![CDATA[$P{RECORD_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="10">
+				<subreport>
+					<reportElement x="0" y="0" width="515" height="10"/>
+					<subreportParameter name="C_Invoice_ID">
+						<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="AD_Language">
+						<subreportParameterExpression><![CDATA[$F{AD_LANGUAGE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="URL">
+						<subreportParameterExpression><![CDATA[$P{URL}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/SubReport_InvoiceGroup2.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+	</group>
+</jasperReport>

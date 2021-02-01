@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="liste_des_commandes_en_cours" language="groovy" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="0">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="C_BPartner_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+    l.AD_Client_ID                         ,
+    l.AD_Org_ID                            ,
+    l.IsActive                             ,
+    l.Created                              ,
+    l.CreatedBy                            ,
+    l.Updated                              ,
+    l.UpdatedBy                            ,
+    o.C_Order_ID                           ,
+    o.documentno                           ,
+    l.line                                 ,
+    o.DocStatus                            ,
+    o.DocAction                            ,
+    o.C_DocType_ID                         ,
+    o.IsApproved                           ,
+    o.IsCreditApproved                     ,
+    o.SalesRep_ID                          ,
+    o.Bill_BPartner_ID                     ,
+    o.Bill_Location_ID                     ,
+    o.Bill_User_ID                         ,
+    o.IsDropShip                           ,
+    o.POReference                          ,
+    o.C_Currency_ID                        ,
+    o.IsSOTrx                              ,
+    l.C_BPartner_ID                        ,
+    l.C_BPartner_Location_ID               ,
+    o.AD_User_ID                           ,
+    bp.C_BP_Group_ID                       ,
+    l.C_Campaign_ID                        ,
+    l.C_Project_ID                         ,
+    l.C_Activity_ID                        ,
+    l.C_ProjectPhase_ID                    ,
+    l.C_ProjectTask_ID                     ,
+    l.C_OrderLine_ID                       ,
+    l.DateOrdered                          ,
+    l.DatePromised                         ,
+    l.M_Product_ID                         ,
+    l.M_Warehouse_ID                       ,
+    l.M_AttributeSetInstance_ID            ,
+    productAttribute(l.M_AttributeSetInstance_ID) AS ProductAttributeName,
+    pasi.M_AttributeSet_ID                 ,
+    pasi.M_Lot_ID                          ,
+    pasi.GuaranteeDate                     ,
+    pasi.Lot                               ,
+    pasi.SerNo                             ,
+    p.M_Product_Category_ID                ,
+    l.C_UOM_ID                             ,
+    CASE
+      WHEN o.IsReturnTrx='Y'
+      THEN l.QtyEntered*-1
+      ELSE l.QtyEntered
+    END AS QtyEntered,
+    CASE
+      WHEN o.IsReturnTrx='Y'
+      THEN l.QtyOrdered*-1
+      ELSE l.QtyOrdered
+    END AS QtyOrdered,
+    CASE
+      WHEN o.IsReturnTrx='Y'
+      THEN l.QtyReserved*-1
+      ELSE l.QtyReserved
+    END AS QtyReserved,
+    CASE
+      WHEN o.IsReturnTrx='Y'
+      THEN l.QtyDelivered*-1
+      ELSE l.QtyDelivered
+    END AS QtyDelivered,
+    CASE
+      WHEN o.IsReturnTrx='Y'
+      THEN l.QtyInvoiced*-1
+      ELSE l.QtyInvoiced
+    END            AS QtyInvoiced,
+    l.PriceActual  AS PriceActual,
+    l.PriceEntered AS PriceEntered,
+    CASE
+      WHEN o.IsReturnTrx='Y'
+      THEN (l.QtyOrdered-l.QtyDelivered)*-1
+      ELSE l.QtyOrdered -l.QtyDelivered
+    END AS QtyToDeliver,
+    CASE
+      WHEN o.IsReturnTrx='Y'
+      THEN (l.QtyOrdered-l.QtyInvoiced)*-1
+      ELSE l.QtyOrdered -l.QtyInvoiced
+    END AS QtyToInvoice,
+    CASE
+      WHEN o.IsReturnTrx='Y'
+      THEN (l.QtyOrdered-l.QtyInvoiced)*l.PriceActual*-1
+      ELSE (l.QtyOrdered-l.QtyInvoiced)*l.PriceActual
+    END                          AS NetAmtToInvoice,
+    l.QtyLostSales               AS QtyLostSales,
+    l.QtyLostSales*l.PriceActual AS AmtLostSales,
+    CASE
+      WHEN l.PriceList=0
+      THEN 0
+      ELSE ROUND((l.PriceList-l.PriceActual)/l.PriceList*100,2)
+    END AS Discount,
+    CASE
+      WHEN PriceLimit=0
+      THEN 0
+      ELSE ROUND((l.PriceActual-l.PriceLimit)/l.PriceLimit*100,2)
+    END AS Margin,
+    CASE
+      WHEN PriceLimit=0
+      THEN 0
+      ELSE (
+        CASE
+          WHEN o.IsReturnTrx='Y'
+          THEN (l.PriceActual-l.PriceLimit)*l.QtyDelivered*-1
+          ELSE (l.PriceActual-l.PriceLimit)*l.QtyDelivered
+        END)
+    END              AS MarginAmt,
+
+    -- bpartner
+    coalesce(bp.name, bp.value) as bpname,
+    coalesce(loc.address1,loc.address2,loc.address3,loc.address4) as address,
+    loc.City         AS City,
+    loc.Postal       AS Postal,
+    loc.C_Region_ID  AS C_Region_ID,
+    loc.C_Country_ID AS C_Country_ID,
+    o.IsReturnTrx    AS IsReturnTrx,
+    l.LineNetAmt     AS LineNetAmt,
+
+    --organization
+    org.name as orgname,
+    coalesce(orgloc.address1,orgloc.address2,orgloc.address3,orgloc.address4) as orgaddress,
+    orgloc.City         AS orgcity,
+    orgloc.Postal       AS orgpostal,
+    nvl(oi.phone,'N/A')            as orgphone,
+    nvl(oi.fax,'N/A')              as orgfax,
+
+    coalesce(p.value,p.name) as productname,
+    nvl(p.description,'N/A') as productdescription,
+    pp.vendorproductno,
+    nvl(ut.name,' ') as uomsymbol,
+    marq.name as marque,
+    marq.y_marque_id
+
+  FROM C_Order o
+  INNER JOIN C_OrderLine l  ON (o.C_Order_ID=l.C_Order_ID)
+  inner join C_UOM u on u.C_UOM_ID = l.C_UOM_ID
+  inner join C_UOM_trl ut on ut.C_UOM_ID = u.C_UOM_ID and ut.ad_language='fr_FR'
+  LEFT OUTER JOIN M_AttributeSetInstance pasi  ON (l.M_AttributeSetInstance_ID=pasi.M_AttributeSetInstance_ID)
+  INNER JOIN C_BPartner bp  ON (bp.C_BPartner_ID = l.C_BPartner_ID)
+  INNER JOIN C_BPartner_Location bpl  ON (l.C_BPartner_Location_ID = bpl.C_BPartner_Location_ID)
+  INNER JOIN C_Location loc  ON (loc.C_Location_ID = bpl.C_Location_ID)
+  INNER JOIN M_Product p  ON (p.M_Product_ID = l.M_Product_ID)
+  INNER JOIN y_marque marq on (marq.y_marque_id = p.y_marque_id)
+  inner join m_product_po pp ON pp.M_Product_ID = p.M_Product_ID
+  inner join ad_org org     on org.ad_org_id = o.ad_org_id
+  inner join ad_orginfo oi  on oi.ad_org_id = org.ad_org_id
+  inner join c_location orgloc on orgloc.c_location_id = oi.c_location_id
+  where
+      (CASE WHEN o.IsReturnTrx='Y' THEN (l.QtyOrdered-l.QtyDelivered)*-1 ELSE l.QtyOrdered -l.QtyDelivered END <>0
+OR     CASE WHEN o.IsReturnTrx='Y' THEN (l.QtyOrdered-l.QtyInvoiced)*-1  ELSE l.QtyOrdered -l.QtyInvoiced  END <>0)
+  AND o.DocStatus NOT IN ('VO','CL')
+  and o.issotrx='N'
+  and o.c_bpartner_id = $P{C_BPartner_ID}
+  order by bp.c_bpartner_id, o.C_Order_ID, l.line]]>
+	</queryString>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="ISACTIVE" class="java.lang.String"/>
+	<field name="CREATED" class="java.sql.Timestamp"/>
+	<field name="CREATEDBY" class="java.math.BigDecimal"/>
+	<field name="UPDATED" class="java.sql.Timestamp"/>
+	<field name="UPDATEDBY" class="java.math.BigDecimal"/>
+	<field name="C_ORDER_ID" class="java.math.BigDecimal"/>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="LINE" class="java.math.BigDecimal"/>
+	<field name="DOCSTATUS" class="java.lang.String"/>
+	<field name="DOCACTION" class="java.lang.String"/>
+	<field name="C_DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="ISAPPROVED" class="java.lang.String"/>
+	<field name="ISCREDITAPPROVED" class="java.lang.String"/>
+	<field name="SALESREP_ID" class="java.math.BigDecimal"/>
+	<field name="BILL_BPARTNER_ID" class="java.math.BigDecimal"/>
+	<field name="BILL_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="BILL_USER_ID" class="java.math.BigDecimal"/>
+	<field name="ISDROPSHIP" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="C_CURRENCY_ID" class="java.math.BigDecimal"/>
+	<field name="ISSOTRX" class="java.lang.String"/>
+	<field name="C_BPARTNER_ID" class="java.math.BigDecimal"/>
+	<field name="C_BPARTNER_LOCATION_ID" class="java.math.BigDecimal"/>
+	<field name="AD_USER_ID" class="java.math.BigDecimal"/>
+	<field name="C_BP_GROUP_ID" class="java.math.BigDecimal"/>
+	<field name="C_CAMPAIGN_ID" class="java.math.BigDecimal"/>
+	<field name="C_PROJECT_ID" class="java.math.BigDecimal"/>
+	<field name="C_ACTIVITY_ID" class="java.math.BigDecimal"/>
+	<field name="C_PROJECTPHASE_ID" class="java.math.BigDecimal"/>
+	<field name="C_PROJECTTASK_ID" class="java.math.BigDecimal"/>
+	<field name="C_ORDERLINE_ID" class="java.math.BigDecimal"/>
+	<field name="DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="DATEPROMISED" class="java.sql.Timestamp"/>
+	<field name="M_PRODUCT_ID" class="java.math.BigDecimal"/>
+	<field name="M_WAREHOUSE_ID" class="java.math.BigDecimal"/>
+	<field name="M_ATTRIBUTESETINSTANCE_ID" class="java.math.BigDecimal"/>
+	<field name="PRODUCTATTRIBUTENAME" class="java.lang.String"/>
+	<field name="M_ATTRIBUTESET_ID" class="java.math.BigDecimal"/>
+	<field name="M_LOT_ID" class="java.math.BigDecimal"/>
+	<field name="GUARANTEEDATE" class="java.sql.Timestamp"/>
+	<field name="LOT" class="java.lang.String"/>
+	<field name="SERNO" class="java.lang.String"/>
+	<field name="M_PRODUCT_CATEGORY_ID" class="java.math.BigDecimal"/>
+	<field name="C_UOM_ID" class="java.math.BigDecimal"/>
+	<field name="QTYENTERED" class="java.math.BigDecimal"/>
+	<field name="QTYORDERED" class="java.math.BigDecimal"/>
+	<field name="QTYRESERVED" class="java.math.BigDecimal"/>
+	<field name="QTYDELIVERED" class="java.math.BigDecimal"/>
+	<field name="QTYINVOICED" class="java.math.BigDecimal"/>
+	<field name="PRICEACTUAL" class="java.math.BigDecimal"/>
+	<field name="PRICEENTERED" class="java.math.BigDecimal"/>
+	<field name="QTYTODELIVER" class="java.math.BigDecimal"/>
+	<field name="QTYTOINVOICE" class="java.math.BigDecimal"/>
+	<field name="NETAMTTOINVOICE" class="java.math.BigDecimal"/>
+	<field name="QTYLOSTSALES" class="java.math.BigDecimal"/>
+	<field name="AMTLOSTSALES" class="java.math.BigDecimal"/>
+	<field name="DISCOUNT" class="java.math.BigDecimal"/>
+	<field name="MARGIN" class="java.math.BigDecimal"/>
+	<field name="MARGINAMT" class="java.math.BigDecimal"/>
+	<field name="BPNAME" class="java.lang.String"/>
+	<field name="ADDRESS" class="java.lang.String"/>
+	<field name="CITY" class="java.lang.String"/>
+	<field name="POSTAL" class="java.lang.String"/>
+	<field name="C_REGION_ID" class="java.math.BigDecimal"/>
+	<field name="C_COUNTRY_ID" class="java.math.BigDecimal"/>
+	<field name="ISRETURNTRX" class="java.lang.String"/>
+	<field name="LINENETAMT" class="java.math.BigDecimal"/>
+	<field name="ORGNAME" class="java.lang.String"/>
+	<field name="ORGADDRESS" class="java.lang.String"/>
+	<field name="ORGCITY" class="java.lang.String"/>
+	<field name="ORGPOSTAL" class="java.lang.String"/>
+	<field name="ORGPHONE" class="java.lang.String"/>
+	<field name="ORGFAX" class="java.lang.String"/>
+	<field name="PRODUCTNAME" class="java.lang.String"/>
+	<field name="PRODUCTDESCRIPTION" class="java.lang.String"/>
+	<field name="VENDORPRODUCTNO" class="java.lang.String"/>
+	<field name="UOMSYMBOL" class="java.lang.String"/>
+	<field name="MARQUE" class="java.lang.String"/>
+	<field name="Y_MARQUE_ID" class="java.math.BigDecimal"/>
+	<group name="Bpartner_group" isStartNewColumn="true">
+		<groupExpression><![CDATA[$F{C_BPARTNER_ID}]]></groupExpression>
+		<groupHeader>
+			<band height="83" splitType="Stretch">
+				<staticText>
+					<reportElement x="0" y="63" width="100" height="20"/>
+					<box>
+						<topPen lineWidth="1.0"/>
+						<leftPen lineWidth="1.0"/>
+						<bottomPen lineWidth="1.0"/>
+						<rightPen lineWidth="1.0"/>
+					</box>
+					<textElement textAlignment="Center"/>
+					<text><![CDATA[Numéro document]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="100" y="63" width="29" height="20"/>
+					<box>
+						<topPen lineWidth="1.0"/>
+						<leftPen lineWidth="1.0"/>
+						<bottomPen lineWidth="1.0"/>
+						<rightPen lineWidth="1.0"/>
+					</box>
+					<textElement textAlignment="Center"/>
+					<text><![CDATA[Ligne]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="129" y="63" width="82" height="20"/>
+					<box>
+						<topPen lineWidth="1.0"/>
+						<leftPen lineWidth="1.0"/>
+						<bottomPen lineWidth="1.0"/>
+						<rightPen lineWidth="1.0"/>
+					</box>
+					<textElement textAlignment="Center"/>
+					<text><![CDATA[Quantité]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="211" y="63" width="354" height="20"/>
+					<box>
+						<topPen lineWidth="1.0"/>
+						<leftPen lineWidth="1.0"/>
+						<bottomPen lineWidth="1.0"/>
+						<rightPen lineWidth="1.0"/>
+					</box>
+					<textElement textAlignment="Center"/>
+					<text><![CDATA[Description]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="665" y="63" width="100" height="20"/>
+					<box>
+						<topPen lineWidth="1.0"/>
+						<leftPen lineWidth="1.0"/>
+						<bottomPen lineWidth="1.0"/>
+						<rightPen lineWidth="1.0"/>
+					</box>
+					<textElement textAlignment="Center"/>
+					<text><![CDATA[N/Ref]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="565" y="63" width="100" height="20"/>
+					<box>
+						<topPen lineWidth="1.0"/>
+						<leftPen lineWidth="1.0"/>
+						<bottomPen lineWidth="1.0"/>
+						<rightPen lineWidth="1.0"/>
+					</box>
+					<textElement textAlignment="Center"/>
+					<text><![CDATA[V/Ref]]></text>
+				</staticText>
+				<frame>
+					<reportElement x="0" y="1" width="201" height="61"/>
+					<box>
+						<topPen lineWidth="0.0"/>
+						<leftPen lineWidth="0.0"/>
+						<bottomPen lineWidth="0.0"/>
+						<rightPen lineWidth="0.0"/>
+					</box>
+					<textField>
+						<reportElement x="14" y="0" width="186" height="20"/>
+						<textElement/>
+						<textFieldExpression class="java.lang.String"><![CDATA[$F{BPNAME}]]></textFieldExpression>
+					</textField>
+					<textField>
+						<reportElement x="14" y="20" width="186" height="20"/>
+						<textElement/>
+						<textFieldExpression class="java.lang.String"><![CDATA[$F{ADDRESS}]]></textFieldExpression>
+					</textField>
+					<textField>
+						<reportElement x="14" y="40" width="41" height="20"/>
+						<textElement/>
+						<textFieldExpression class="java.lang.String"><![CDATA[$F{POSTAL}]]></textFieldExpression>
+					</textField>
+					<textField>
+						<reportElement x="55" y="40" width="145" height="20"/>
+						<textElement/>
+						<textFieldExpression class="java.lang.String"><![CDATA[$F{CITY}]]></textFieldExpression>
+					</textField>
+				</frame>
+			</band>
+		</groupHeader>
+	</group>
+	<title>
+		<band height="100" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="200" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ORGNAME}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="20" width="200" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ORGADDRESS}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="40" width="41" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ORGPOSTAL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="41" y="40" width="159" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ORGCITY}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="60" width="149" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Tél: "+$F{ORGPHONE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="80" width="149" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Fax: "+$F{ORGFAX}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="21" splitType="Stretch">
+			<textField>
+				<reportElement x="682" y="1" width="80" height="20"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="762" y="1" width="40" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="1" width="201" height="20"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Rappel des commandes en cours]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement isPrintRepeatedValues="false" x="0" y="0" width="100" height="20"/>
+				<box>
+					<leftPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="100" y="0" width="29" height="20"/>
+				<box>
+					<leftPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{LINE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="129" y="0" width="82" height="20"/>
+				<box>
+					<leftPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{QTYTODELIVER}+" "+$F{UOMSYMBOL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="211" y="0" width="354" height="20"/>
+				<box>
+					<leftPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRODUCTDESCRIPTION}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="565" y="0" width="100" height="20"/>
+				<box>
+					<leftPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{VENDORPRODUCTNO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="665" y="0" width="100" height="20"/>
+				<box>
+					<leftPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRODUCTNAME}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

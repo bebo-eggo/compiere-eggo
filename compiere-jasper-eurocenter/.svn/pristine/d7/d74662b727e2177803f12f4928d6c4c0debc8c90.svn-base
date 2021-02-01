@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="RPT_Order_subreport_reference_structuree" language="groovy" pageWidth="555" pageHeight="802" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="DOCUMENTNO" class="java.lang.String"/>
+	<parameter name="RECORD_ID" class="java.lang.Double"/>
+	<parameter name="AD_CLIENT_NAME" class="java.lang.String"/>
+	<parameter name="DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<queryString>
+		<![CDATA[select z_com  from c_invoice where  c_order_id=1210267]]>
+	</queryString>
+	<field name="Z_COM" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<textField evaluationTime="Auto">
+				<reportElement x="0" y="34" width="470" height="16">
+					<printWhenExpression><![CDATA[$P{DOCTYPE_ID}!=1000846]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{AD_CLIENT_NAME}.equals("Eurocenter")?"" : msg($R{invoice.com_struct},$P{DOCUMENTNO})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="418" y="0" width="137" height="16" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$P{DOCTYPE_ID}!=1000846 && $P{AD_CLIENT_NAME}.equals("Eurocenter")]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{Z_COM}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Auto">
+				<reportElement x="0" y="74" width="451" height="16" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$P{DOCTYPE_ID}!=1000846 && $P{AD_CLIENT_NAME}.equals("Eurocenter")]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Référence structurée à rappeler en cas de paiement par virement:"]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="EGGO_DemandeDePose" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" resourceBundle="traduction">
+	<property name="ireport.zoom" value="1.6105100000000008"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="RECORD_ID" class="java.lang.Double">
+		<defaultValueExpression><![CDATA[1094453]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="URL" class="java.lang.String">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select o.documentno, o.poreference, o.dateordered, o.z_datelivrconf, cgtfr.name as Civilitefr, cgtnl.name as Civilitenl, pc.name2 || ' ' || pc.name ClientName,pc.name nomClient, ac.email MAIL, ac.phone TEL, ac.phone2 GSM, lc.address1, lc.address2, lc.postal, lc.city, coc.name as country, datepose,
+o.ad_org_id,o.ad_client_id,o.C_DOCTYPE_ID,
+getTypeOrg(o.ad_org_id) as typeorg, pc.AD_Language
+
+from c_order o
+-- Customer information.
+join c_bpartner pc on (pc.c_bpartner_id = o.c_bpartner_id)
+left join ad_user ac on (ac.c_bpartner_id = pc.c_bpartner_id)
+left join c_greeting_trl cgtfr on (cgtfr.c_greeting_id = pc.c_greeting_id
+and UPPER(cgtfr.AD_Language) = UPPER('fr_FR'))
+left join c_greeting_trl cgtnl on (cgtnl.c_greeting_id = pc.c_greeting_id
+and UPPER(cgtnl.AD_Language) = UPPER('nl_NL'))
+-- Delivery Adresse.
+left join c_bpartner_location blc on (blc.c_bpartner_location_id = o.bill_location_id and blc.isbillto = 'Y')
+left join c_location lc on (lc.c_location_id = blc.c_location_id)
+left join c_country coc on (coc.c_country_id = lc.c_country_id)
+where o.c_order_id = $P{RECORD_ID}]]>
+	</queryString>
+	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="POREFERENCE" class="java.lang.String"/>
+	<field name="DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="Z_DATELIVRCONF" class="java.sql.Timestamp"/>
+	<field name="CIVILITEFR" class="java.lang.String"/>
+	<field name="CIVILITENL" class="java.lang.String"/>
+	<field name="CLIENTNAME" class="java.lang.String"/>
+	<field name="NOMCLIENT" class="java.lang.String"/>
+	<field name="MAIL" class="java.lang.String"/>
+	<field name="TEL" class="java.lang.String"/>
+	<field name="GSM" class="java.lang.String"/>
+	<field name="ADDRESS1" class="java.lang.String"/>
+	<field name="ADDRESS2" class="java.lang.String"/>
+	<field name="POSTAL" class="java.lang.String"/>
+	<field name="CITY" class="java.lang.String"/>
+	<field name="COUNTRY" class="java.lang.String"/>
+	<field name="DATEPOSE" class="java.sql.Timestamp"/>
+	<field name="AD_ORG_ID" class="java.math.BigDecimal"/>
+	<field name="AD_CLIENT_ID" class="java.math.BigDecimal"/>
+	<field name="C_DOCTYPE_ID" class="java.math.BigDecimal"/>
+	<field name="TYPEORG" class="java.lang.String"/>
+	<field name="AD_Language" class="java.lang.String"/>
+	<variable name="CIVILITE" class="java.lang.String">
+		<variableExpression><![CDATA[$F{CIVILITEFR}+$F{CIVILITENL} == null ? "" : ($P{REPORT_LOCALE}.toString().equalsIgnoreCase( "fr_FR" ) ?  $F{CIVILITEFR} : $F{CIVILITENL} )]]></variableExpression>
+		<initialValueExpression><![CDATA[$F{CIVILITEFR}+$F{CIVILITENL} == null ? "" : ($P{REPORT_LOCALE}.toString().equalsIgnoreCase( "fr_FR" ) ?  $F{CIVILITEFR} : $F{CIVILITENL} )]]></initialValueExpression>
+	</variable>
+	<title>
+		<band height="624" splitType="Stretch">
+			<image>
+				<reportElement x="20" y="22" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{AD_CLIENT_ID} == 1000000 || $F{AD_CLIENT_ID} == 1000023]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL} + "/eggo_ico.jpg"]]></imageExpression>
+			</image>
+			<textField isBlankWhenNull="true">
+				<reportElement x="311" y="152" width="229" height="20"/>
+				<textElement>
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{COUNTRY}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="310" y="92" width="230" height="20"/>
+				<textElement>
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$V{CIVILITE} + " " + $F{CLIENTNAME}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="310" y="112" width="230" height="20"/>
+				<textElement>
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{ADDRESS1}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="49" y="492" width="15" height="15"/>
+				<graphicElement>
+					<pen lineWidth="2.0"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="49" y="517" width="15" height="15"/>
+				<graphicElement>
+					<pen lineWidth="2.0"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="49" y="578" width="15" height="15"/>
+				<graphicElement>
+					<pen lineWidth="2.0"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="49" y="604" width="15" height="15"/>
+				<graphicElement>
+					<pen lineWidth="2.0"/>
+				</graphicElement>
+			</rectangle>
+			<textField isBlankWhenNull="true">
+				<reportElement x="163" y="261" width="100" height="14" isRemoveLineWhenBlank="true"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{POREFERENCE}]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="175" y="282" width="80" height="14" isRemoveLineWhenBlank="true"/>
+				<subreportParameter name="XML_GET_PARAM_dossier">
+					<subreportParameterExpression><![CDATA[$F{POREFERENCE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="XML_URL">
+					<subreportParameterExpression><![CDATA["http://mach-talendesb1:8040/services/iway/logistique/getInfo"]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/EGGO_DatePoseXML.jasper"]]></subreportExpression>
+			</subreport>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement x="448" y="282" width="100" height="14"/>
+				<textElement textAlignment="Center">
+					<font isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{DATEPOSE}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement mode="Transparent" x="49" y="207" width="436" height="20"/>
+			</rectangle>
+			<textField>
+				<reportElement x="25" y="261" width="138" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.ref.commande}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="99" y="207" width="389" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.delay}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="310" y="132" width="230" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{POSTAL}+" "+($F{CITY}!= null ?$F{CITY}:"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="25" y="282" width="150" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.ini.delevry.date}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="310" y="282" width="138" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.ini.delevery.install}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="333" width="523" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{req.install.text1},$V{CIVILITE},$F{NOMCLIENT})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="347" width="523" height="47"/>
+				<textElement verticalAlignment="Middle" lineSpacing="1_1_2"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{C_DOCTYPE_ID} == 1005282 || $F{C_DOCTYPE_ID} == 1005180|| $F{C_DOCTYPE_ID} == 1004141) ? $R{req.install.text2.plac}:$R{req.install.text2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="388" y="394" width="138" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{votre.gestionnaire}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="454" width="243" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{req.install.text4},$F{CLIENTNAME})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="70" y="493" width="484" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.request1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="70" y="518" width="484" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.request2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="70" y="579" width="484" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.motif1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="70" y="604" width="484" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.motif2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="550" width="138" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.motif}]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="15" y="101" width="260" height="71"/>
+				<subreportParameter name="AD_ORG_ID">
+					<subreportParameterExpression><![CDATA[$F{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/subreportOrg_Gest.jasper"]]></subreportExpression>
+			</subreport>
+			<line>
+				<reportElement x="25" y="299" width="515" height="1"/>
+			</line>
+			<image>
+				<reportElement x="20" y="31" width="70" height="70">
+					<printWhenExpression><![CDATA[$F{AD_CLIENT_ID} == 1000022]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA[$P{URL} + "/LogoNEC.png"]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<pageFooter>
+		<band height="129" splitType="Stretch">
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="415" y="4" width="100" height="20"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="20" y="0" width="186" height="20"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[msg($R{req.install.doAt},$F{CITY})]]></textFieldExpression>
+			</textField>
+			<subreport runToBottom="true">
+				<reportElement positionType="FixRelativeToBottom" x="0" y="79" width="555" height="50" isPrintWhenDetailOverflows="true"/>
+				<subreportParameter name="Ad_client_id">
+					<subreportParameterExpression><![CDATA[$F{AD_CLIENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="AD_Language">
+					<subreportParameterExpression><![CDATA[$F{AD_Language}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="CAS">
+					<subreportParameterExpression><![CDATA[new BigDecimal(1)]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{URL} + "/subreportfooter.jasper"]]></subreportExpression>
+			</subreport>
+			<textField>
+				<reportElement x="20" y="20" width="138" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{signature}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="400" y="4" width="15" height="20"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{the}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="59" width="554" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Bottom">
+					<font isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$R{req.install.footer1}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

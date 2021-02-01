@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="prepareDocument" language="groovy" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="RECORD_ID" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ID_list" class="java.util.List" isForPrompting="false">
+		<defaultValueExpression><![CDATA[java.util.Arrays.asList($P{RECORD_ID}.split(","))]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+     C_ORDER.DOCUMENTNO AS C_ORDER_DOCUMENTNO,
+     C_ORDER.DATEORDERED AS C_ORDER_DATEORDERED,
+     M_PRODUCT.VALUE AS M_PRODUCT_NAME,
+     C_ORDERLINE.QTYENTERED AS C_ORDERLINE_QTYENTERED,
+     AD_USER.NAME || ' ' || NVL(AD_USER.NAME2,'') AS AD_USER_NAME,
+     AD_ORG.NAME AS AD_ORG_NAME,
+     PREPARATEUR.NAME || ' ' || NVL(PREPARATEUR.NAME2,'') as PREPARATEUR_NAME,
+     C_BPARTNER.NAME || ' ' || NVL(C_BPARTNER.NAME2,'') AS C_BPARTNER_NAME
+FROM C_ORDERLINE C_ORDERLINE
+     INNER JOIN C_ORDER C_ORDER ON C_ORDER.C_ORDER_ID = C_ORDERLINE.C_ORDER_ID
+     INNER JOIN AD_ORG AD_ORG ON C_ORDER.AD_ORG_ID = AD_ORG.AD_ORG_ID
+     INNER JOIN M_PRODUCT M_PRODUCT ON C_ORDERLINE.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID
+     INNER JOIN C_BPARTNER C_BPARTNER ON C_ORDER.C_BPARTNER_ID = C_BPARTNER.C_BPARTNER_ID
+     INNER JOIN AD_USER AD_USER ON AD_USER.AD_USER_ID = C_ORDER.SALESREP_ID
+     INNER JOIN AD_USER PREPARATEUR ON PREPARATEUR.AD_USER_ID = C_ORDERLINE.PREPAREDBY
+WHERE
+     $X{IN,C_ORDERLINE.C_ORDERLINE_ID,ID_list}]]>
+	</queryString>
+	<field name="C_ORDER_DOCUMENTNO" class="java.lang.String"/>
+	<field name="C_ORDER_DATEORDERED" class="java.sql.Timestamp"/>
+	<field name="M_PRODUCT_NAME" class="java.lang.String"/>
+	<field name="C_ORDERLINE_QTYENTERED" class="java.math.BigDecimal"/>
+	<field name="AD_USER_NAME" class="java.lang.String"/>
+	<field name="AD_ORG_NAME" class="java.lang.String"/>
+	<field name="PREPARATEUR_NAME" class="java.lang.String"/>
+	<field name="C_BPARTNER_NAME" class="java.lang.String"/>
+	<variable name="Repa" class="java.lang.String"/>
+	<variable name="list_ID" class="java.util.List"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="76" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="802" height="25"/>
+				<textElement textAlignment="Center">
+					<font size="16" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Liste de préparation des commandes Web]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="1" y="50" width="400" height="20"/>
+				<box rightPadding="10"/>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Préparé par :]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="401" y="50" width="402" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PREPARATEUR_NAME}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="1" y="30" width="400" height="20"/>
+				<box rightPadding="10"/>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Magasin :]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="401" y="30" width="402" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{AD_ORG_NAME}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement x="10" y="0" width="170" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Client]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="180" y="0" width="124" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Numéro de document]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="304" y="0" width="116" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Date de la commande]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="420" y="0" width="218" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Produit]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="638" y="0" width="64" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Quantité]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="702" y="0" width="100" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Vendeur]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="10" y="0" width="170" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{C_BPARTNER_NAME}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="180" y="0" width="124" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{C_ORDER_DOCUMENTNO}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="304" y="0" width="116" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{C_ORDER_DATEORDERED}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="420" y="0" width="218" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{M_PRODUCT_NAME}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="638" y="0" width="64" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{C_ORDERLINE_QTYENTERED}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="702" y="0" width="100" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{AD_USER_NAME}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="29" splitType="Stretch">
+			<textField evaluationTime="Report">
+				<reportElement x="754" y="9" width="48" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="709" y="9" width="40" height="20"/>
+				<box rightPadding="3"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="749" y="9" width="5" height="20"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[/]]></text>
+			</staticText>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

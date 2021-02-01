@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SubReport_Org" language="groovy" pageWidth="555" pageHeight="842" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="3.993000000000001"/>
+	<property name="ireport.x" value="1044"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="C_Order_ID" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Language" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[Select Z_COMID as COMSTRUCTID,Z_Com as COMSTRUCT, Sysdate
+from C_Invoice co where co.C_order_ID = $P{C_Order_ID}]]>
+	</queryString>
+	<field name="COMSTRUCTID" class="java.lang.String"/>
+	<field name="COMSTRUCT" class="java.lang.String"/>
+	<field name="SYSDATE" class="java.sql.Timestamp"/>
+	<title>
+		<band height="93" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="1" width="555" height="20">
+					<printWhenExpression><![CDATA[$F{COMSTRUCT}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR") ? "Référence structurée à rappeler en cas de paiement : "  :($P{AD_Language}.equals("nl_NL")?"Gestructureerde recall als betalingskenmerk : ":"Payment Reference : "))+"<style isBold=\"true\" size=\"14\">"+$F{COMSTRUCT}+"</style>"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="22" width="555" height="1">
+					<printWhenExpression><![CDATA[$F{COMSTRUCT}!=null]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement x="0" y="0" width="555" height="1"/>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="24" width="555" height="69"/>
+				<textElement textAlignment="Center" verticalAlignment="Bottom" markup="styled">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($P{AD_Language}.equals("fr_FR") ? "Tous nos prix incluent les taxes et contributions légales en matière d'environnement et de droits d'auteurs\nSiège social : EGGO S.A. rue Léon François 6-8 5170 Bois-de-Villers\nCBC 193-1216801-54 (CREGBEBB BE42 1931 2168 0154) ING 350-0188870-33 (BBRUBEBB BE79 3500 1888 7033)\nBELFIUS 068-232190-73 (GKCCBEBB BE27 0682 3621 9073) RPM Namur N° d'enregistrement : 122.801"  :($P{AD_Language}.equals("nl_NL")?"Tous nos prix incluent les taxes et contributions légales en matière d'environnement et de droits d'auteurs\nSiège social : EGGO S.A. rue Léon François 6-8 CBC 193-1216801-54 (CREGBEBB BE42 1931 2168 0154) ING 350-0188870-33 (BBRUBEBB BE79 3500 1888 7033)\nBELFIUS 068-232190-73 (GKCCBEBB BE27 0682 3621 9073) RPM Namur N° d'enregistrement : 122.801":"Tous nos prix incluent les taxes et contributions légales en matière d'environnement et de droits d'auteurs\nSiège social : EGGO S.A. rue Léon François 6-8 5170 Bois-de-Villes\nCBC 193-1216801-54 (CREGBEBB BE42 1931 2168 0154) ING 350-0188870-33 (BBRUBEBB BE79 3500 1888 7033)\nBELFIUS 068-232190-73 (GKCCBEBB BE27 0682 3621 9073) RPM Namur N° d'enregistrement : 122.801"))]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+</jasperReport>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="receipt_line" language="groovy" pageWidth="226" pageHeight="200" columnWidth="226" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="207ad780-ddc2-4094-b156-e2b95f8ee32b">
+	<property name="ireport.zoom" value="4.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="I_POSORDER_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[0]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+	line.QtyEntered		AS QTY,
+	line.PriceEntered	AS price,
+	product.name		AS product
+FROM I_POSORDERLINE line
+INNER JOIN m_product product ON product.m_product_id = line.m_product_id
+WHERE line.I_POSORDER_ID = $P{I_POSORDER_ID}]]>
+	</queryString>
+	<field name="QTY" class="java.math.BigDecimal"/>
+	<field name="PRICE" class="java.math.BigDecimal"/>
+	<field name="PRODUCT" class="java.lang.String"/>
+	<variable name="DATE" class="java.lang.String" resetType="None">
+		<variableExpression><![CDATA[new java.text.SimpleDateFormat("yyyy/MMM/dd HH:mm:ss").format(java.util.Calendar.getInstance().getTime())]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="3" splitType="Stretch">
+			<line>
+				<reportElement uuid="0a409d71-802f-4589-9288-f042246978e3" key="line" x="0" y="1" width="226" height="1"/>
+			</line>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="24" splitType="Stretch">
+			<textField>
+				<reportElement uuid="c0b66f61-3a05-4643-ba04-d445403de854" x="2" y="0" width="24" height="14"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{QTY}+" x"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="ef13313f-3b7d-4ed5-9cab-7af0d8d685d3" x="26" y="0" width="116" height="24"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PRODUCT}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="f1f94a9a-c17e-4fde-bda2-2958cb77eb14" x="141" y="0" width="50" height="14"/>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PRICE}+" €"]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="2" splitType="Stretch">
+			<line>
+				<reportElement uuid="739791a7-5e6a-4402-92b7-93260864313c" key="line-1" x="0" y="1" width="226" height="1"/>
+			</line>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>
