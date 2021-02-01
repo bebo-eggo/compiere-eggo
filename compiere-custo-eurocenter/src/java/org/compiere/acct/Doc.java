@@ -306,7 +306,7 @@ public abstract class Doc implements AccountingInterface
 	/** à Nouveau					*/
 	public boolean					m_IsAN = false;
 	
-	public boolean					m_IsAN2 = false;
+	public boolean					m_IsAN3 = false;
 
 
 	public boolean isAN() {
