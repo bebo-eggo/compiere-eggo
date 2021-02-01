@@ -40,8 +40,8 @@
     </properties>  
            
     <modules>
-        <module>compiere-jasper-eggo</module>       
-        <module>compiere-custo-eggo</module>      
+        <module>compiere-jasper-eurocenter</module>       
+        <module>compiere-custo-eurocenter</module>      
     </modules>
 
     <dependencies>
