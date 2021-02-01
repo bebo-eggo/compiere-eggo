@@ -5,7 +5,7 @@
     <artifactId>gwtServer-custo-eurocenter</artifactId>
     <packaging>jar</packaging>
     <version>361.55.0-SNAPSHOT</version>
-    <name>gwtServer-custo-eurocenter - NEC</name>
+    <name>gwtServer-custo-eurocenter</name>
     <description />
     <url>http://www.audaxis.com</url>
     <inceptionYear>2015</inceptionYear>
