@@ -42,11 +42,10 @@
     <modules>
         <module>compiere-jasper-eurocenter</module>       
         <module>compiere-custo-eurocenter</module>  
-		<module>gwt-custo-eurocenter</module> 
-		<module>gwt-custo-eurocenter</module>
-		<module>fatjar-custo-eurocenter</module>
-		<module>fatjar-custo-eurocenter-ws</module>
-		<module>compiere-ws-eurocenter</module>
+	<module>gwt-custo-eurocenter</module>
+	<module>fatjar-custo-eurocenter</module>
+	<module>fatjar-custo-eurocenter-ws</module>
+	<module>compiere-ws-eurocenter</module>
     </modules>
 
     <dependencies>
