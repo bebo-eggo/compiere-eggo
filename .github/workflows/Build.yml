@@ -23,4 +23,12 @@ jobs:
       with:
         java-version: 1.8
     - name: Build Smile
-      run: mvn -B package --file compiere-jasper-eurocenter/pom.xml
+      run: mvn -B package --file fatjar-custo-eurocenter/pom.xml
+#compiere-custo-eurocenter
+#compiere-jasper-eurocenter
+#gwtServer-custo-eurocenter
+#fatjar-custo-eurocenter
+#compiere-ws-eurocenter
+
+#fatjar-custo-eurocenter-ws
+
