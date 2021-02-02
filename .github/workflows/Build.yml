@@ -32,12 +32,13 @@ jobs:
       run: mvn -B package --file pom.xml
     - name: Build Snaposhot
       run: mvn --file pom.xml --batch-mode --update-snapshots verify
-    - run: mkdir downloads && cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-jasper-eurocenter/target/*.jar downloads
+    - run: mkdir downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-jasper-eurocenter/target/*.jar download
     - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-custo-eurocenter/target/*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/gwtServer-custo-eurocentertarget/*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/*.jar downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/gwtServer-custo-eurocenter/target/*.jar downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/target/*.jar downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/target/*.jar downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/*.jar downloads
     - uses: actions/upload-artifact@v2
       with:
         name: compiere-eggo
