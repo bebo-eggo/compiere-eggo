@@ -39,6 +39,7 @@ jobs:
     - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/target/*.jar downloads
     - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/target/*.jar downloads
     - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/*.jar downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/*.war downloads
     - uses: actions/upload-artifact@v2
       with:
         name: compiere-eggo
