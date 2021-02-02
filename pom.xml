@@ -40,11 +40,13 @@
     </properties>  
            
     <modules>
+	<!--     
         <module>compiere-jasper-eurocenter</module>       
         <module>compiere-custo-eurocenter</module>  
 	<module>gwtServer-custo-eurocenter</module>
 	<module>fatjar-custo-eurocenter</module>
 	<module>fatjar-custo-eurocenter-ws</module>
+-->
 	<module>compiere-ws-eurocenter</module>
     </modules>
 
