@@ -35,7 +35,7 @@ jobs:
     - run: mkdir staging && cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-jasper-eurocenter/target/*.jar staging
     - uses: actions/upload-artifact@v2
       with:
-        name: Package
+        name: compiere-jasper-eurocenter
         path: staging
 #compiere-custo-eurocenter
 #compiere-jasper-eurocenter
