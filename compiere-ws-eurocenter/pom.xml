@@ -224,7 +224,6 @@
               <artifactId>maven-war-plugin</artifactId>
               <version>2.4</version>
               <configuration>
-              	<warName>ws</warName>
               	<attachClasses>true</attachClasses>
             	<classesClassifier>classes</classesClassifier>
             	<packagingExcludes>
