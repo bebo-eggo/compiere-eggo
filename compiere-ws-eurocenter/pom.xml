@@ -183,7 +183,6 @@
         </snapshotRepository>
     </distributionManagement>
     <build>
-        <finalName>ws</finalName>
         <extensions>
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
