@@ -26,12 +26,12 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        key: ${{ runner.os }}-m2-${{ hashFiles('compiere-jasper-eurocenter/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build Smile
       run: mvn -B package --file compiere-jasper-eurocenter/pom.xml
     - name: Build Snaposhot
-      run: mvn --batch-mode --update-snapshots verify
+      run: mvn --file compiere-jasper-eurocenter/pom.xml --batch-mode --update-snapshots verify
     - run: mkdir staging && cp target/*.jar staging
     - uses: actions/upload-artifact@v2
       with:
