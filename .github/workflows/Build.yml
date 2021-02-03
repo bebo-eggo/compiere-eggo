@@ -47,12 +47,12 @@ jobs:
         name: compiere-eggo-${{env.no_version}}
         path: downloads/*
     - name: upload compiere-eggo artifact
-      id: ${{env.no_v}}
+      id: compiere-eggo
       uses: actions/upload-release-asset@v1
       env:
        GITHUB_TOKEN: ${{ github.token }}
       with:
-       upload_url: ${{ steps.${{env.no_v}}.outputs.upload_url }}
+       upload_url: ${{ steps.compiere-eggo.outputs.upload_url }}
        asset_path: downloads/compiere-eggo-${{env.no_version}}.zip
        asset_name: compiere-eggo-${{env.no_version}}.zip
        asset_content_type: application/zip
