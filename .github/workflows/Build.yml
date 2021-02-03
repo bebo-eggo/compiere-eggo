@@ -27,22 +27,35 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
+        key: ${{ runner.os }}-m2-${{ hashFiles('compiere-jasper-eurocenter/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build Smile
       run: mvn -B package --file pom.xml
     #- name: Build Snaposhot
      # run: mvn --file compiere-jasper-eurocenter/pom.xml --batch-mode --update-snapshots verify
     - run: mkdir downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-jasper-eurocenter/target/compiere-jasper-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-custo-eurocenter/target/compiere-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/gwtServer-custo-eurocenter/target/gwtServer-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/target/fatjar-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/target/fatjar-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/compiere-ws-eurocenter*.war downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-jasper-eurocenter/target/compiere-jasper-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-custo-eurocenter/target/compiere-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/gwtServer-custo-eurocenter/target/gwtServer-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/target/fatjar-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/target/fatjar-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/compiere-ws-eurocenter*.war downloads
     - uses: actions/upload-artifact@v2
       with:
         name: compiere-eggo-${{env.no_version}}
         path: downloads/*
-
+    - name: Create Release
+      id: v55-SNAPSHOT
+      uses: actions/create-release@v1
+      env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release
+            - First Change
+            - Second Change
+          draft: false
+          prerelease: false
 
