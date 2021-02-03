@@ -46,14 +46,24 @@ jobs:
       with:
         name: compiere-eggo-${{env.no_version}}
         path: downloads/*
-    - name: upload compiere-eggo artifact
-      id: compiere-eggo
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          tag_name: ${{ env.no_v }}
+          release_name: Release ${{ env.no_v }}
+          draft: false
+          prerelease: false
+    - name: Upload Release Asset
+      id: upload-release-asset 
       uses: actions/upload-release-asset@v1
       env:
-       GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-       upload_url: ${{ steps.compiere-eggo.outputs.upload_url }}
-       asset_path: downloads/compiere-eggo-${{env.no_version}}.zip
-       asset_name: compiere-eggo-${{env.no_version}}.zip
-       asset_content_type: application/zip
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./compiere-eggo-${{env.no_version}}.zip
+          asset_name: compiere-eggo-${{env.no_version}}.zip
+          asset_content_type: application/zip
 
