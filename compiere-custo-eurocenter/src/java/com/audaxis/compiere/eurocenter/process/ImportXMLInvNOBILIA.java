@@ -238,7 +238,7 @@ public class ImportXMLInvNOBILIA extends SvrProcessExtended{
         
         String toMail= Msg.getMsg(m_ctx, "EC_INVOICE_IN_MAIL");
         MClient client = MClient.get(getCtx(), m_AD_Client_ID);
-		EMail email = client.createEMail(toMail, "", "Import Factures Nobilia", null);
+		EMail email = client.createEMail(toMail, "", "Import Factures Nobilia ", null);
 		if(email!=null)
 		{
 			String message = "Process terminé \n" +msg_I_invs + "\n" + msg_C_Invs+"\n"+msg_fileNotP;
