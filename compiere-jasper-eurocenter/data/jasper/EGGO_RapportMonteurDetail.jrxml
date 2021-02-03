@@ -12,7 +12,7 @@
 	<parameter name="AD_Language" class="java.lang.String"/>
 	<queryString>
 		<![CDATA[Select ST_REFERENCE, st_commentaire, st_long, st_larg,St_LigneParent, asChild, st_lignedocument,St_LigneParentOrg, st_ep from (
-select ST_REFERENCE, case when length(st_commentaire)>250 then substr(st_commentaire,0,250)||'...' else st_commentaire end as st_commentaire,
+select ST_REFERENCE, case when length(st_commentaire)>150 then substr(st_commentaire,0,150)||'...' else st_commentaire end as st_commentaire,
 replace(st_long,'.0','') as st_long,
 replace(st_larg,'.0','') as st_larg, replace(st_ep,'.0','') as st_ep,
 LPAD(St_LigneParent,2,'0') as St_LigneParent,St_LigneParent as St_LigneParentOrg,
@@ -20,7 +20,7 @@ LEAD (LPAD(St_LigneParent,2,'0'),1) OVER (ORDER BY LPAD(st_lignedocument,2,'0'),
 from XX_ORDERLINEDETAILS
 inner join C_orderLine col on col.C_orderLine_ID = XX_ORDERLINEDETAILS.C_orderLine_ID and col.M_Product_Id in (1099125,1170316,1382933)
 where
-ST_Classe in ('Kitchen Unit', 'Accessory', 'Sanitary Ware','Appliance')
+ST_Classe in ('Kitchen Unit', 'Accessory', 'Sanitary Ware','Appliance', 'Accessoire','Electroménagers','Elément Cuisine')
 and col.C_Order_ID = $P{RECORD_ID}
 --order by LPAD(st_lignedocument,2,'0'), LPAD(St_LigneParent,2,'0')
 )
@@ -275,7 +275,7 @@ order by st_lignedocument, St_LigneParentOrg]]>
 				</graphicElement>
 			</line>
 			<line>
-				<reportElement stretchType="RelativeToBandHeight" x="15" y="0" width="1" height="7"/>
+				<reportElement x="15" y="0" width="1" height="7"/>
 				<graphicElement>
 					<pen lineStyle="Dotted" lineColor="#6E671D"/>
 				</graphicElement>
