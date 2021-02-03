@@ -3,16 +3,14 @@
 
 name: Java CI with Maven
 
-on: 
-#[push]
+on: [push]
 
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+ # push:
+ #   branches: [ main ]
+ # pull_request:
+ #   branches: [ main ]
 env:
   no_version: 361.55.0-SNAPSHOT
-
 jobs:
   build:
 
@@ -28,28 +26,31 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
+        key: ${{ runner.os }}-m2-${{ hashFiles('compiere-jasper-eurocenter/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build Smile
-      run: mvn -B package --file pom.xml
-    - name: Build Snaposhot
-      run: mvn --file pom.xml --batch-mode --update-snapshots verify
+      run: mvn -B package --file compiere-jasper-eurocenter/pom.xml
+    #- name: Build Snaposhot
+     # run: mvn --file compiere-jasper-eurocenter/pom.xml --batch-mode --update-snapshots verify
     - run: mkdir downloads
     - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-jasper-eurocenter/target/compiere-jasper-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-custo-eurocenter/target/compiere-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/gwtServer-custo-eurocenter/target/gwtServer-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/target/fatjar-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/target/fatjar-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/compiere-ws-eurocenter*.war downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-custo-eurocenter/target/compiere-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/gwtServer-custo-eurocenter/target/gwtServer-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/target/fatjar-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/target/fatjar-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/compiere-ws-eurocenter*.war downloads
     - uses: actions/upload-artifact@v2
       with:
         name: compiere-eggo-${{env.no_version}}
         path: downloads/*
-#compiere-custo-eurocenter
-#compiere-jasper-eurocenter
-#gwtServer-custo-eurocenter
-#fatjar-custo-eurocenter
-#compiere-ws-eurocenter
-
-#fatjar-custo-eurocenter-ws
+    - name: upload compiere-eggo artifact
+      id: compiere-eggo-${{env.no_version}}
+      uses: actions/upload-release-asset@v1
+      env:
+       GITHUB_TOKEN: ${{ github.token }}
+      with:
+       upload_url: ${{ steps.compiere-eggo-${{env.no_version}}.outputs.upload_url }}
+       asset_path: downloads/compiere-eggo-${{env.no_version}}.zip
+       asset_name: compiere-eggo-${{env.no_version}}.zip
+       asset_content_type: application/zip
 
