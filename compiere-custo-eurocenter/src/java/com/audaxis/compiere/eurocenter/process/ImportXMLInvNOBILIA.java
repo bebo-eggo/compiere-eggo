@@ -232,7 +232,7 @@ public class ImportXMLInvNOBILIA extends SvrProcessExtended{
 //        	facG = "Facture générée";
 
         String msg_fileNotP = " - Fichiers non traités : "+fileNotP;
-        String msg_I_invs = " - Nombre d'enregistrements I_Invoice créés: " + i_invs ;
+        String msg_I_invs = " - Nombre d'enregistrements I_Invoice créés : " + i_invs ;
         String msg_C_Invs = " - Nombre de factures créées: \n" + processInfo.getLogInfo();
         
         
