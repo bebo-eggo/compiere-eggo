@@ -44,18 +44,13 @@ jobs:
       with:
         name: compiere-eggo-${{env.no_version}}
         path: downloads/*
-    - name: Create Release
-      id: v55-SNAPSHOT
-      uses: actions/create-release@v1
+    - name: upload compiere-eggo artifact
+      uses: actions/upload-release-asset@v1
       env:
-         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+       GITHUB_TOKEN: ${{ github.token }}
       with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            Changes in this Release
-            - First Change
-            - Second Change
-          draft: false
-          prerelease: false
+       upload_url: ${{ steps.create_release.outputs.upload_url }}
+       asset_path: downloads/compiere-eggo-${{env.no_version}}.zip
+       asset_name: compiere-eggo-${{env.no_version}}.zip
+       asset_content_type: application/zip
 
