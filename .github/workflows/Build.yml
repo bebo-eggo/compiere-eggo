@@ -10,6 +10,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+env:
+  no_version: 361.55.0-SNAPSHOT
 
 jobs:
   build:
@@ -41,7 +43,7 @@ jobs:
     - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/compiere-ws-eurocenter*.war downloads
     - uses: actions/upload-artifact@v2
       with:
-        name: compiere-eggo
+        name: compiere-eggo-${{env.no_version}}
         path: downloads/*
 #compiere-custo-eurocenter
 #compiere-jasper-eurocenter
