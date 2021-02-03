@@ -7,11 +7,11 @@ on:
 #[push]
 
   push:
-    branches: [ main ]
+    branches: [ test ]
   pull_request:
-    branches: [ main ]
+    branches: [ test ]
 env:
-  no_version: 361.55.0-SNAPSHOT
+  no_version: 361.55.0
 
 jobs:
   build:
