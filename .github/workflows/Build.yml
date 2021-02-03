@@ -27,23 +27,23 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
+        key: ${{ runner.os }}-m2-${{ hashFiles('compiere-jasper-eurocenter/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build Smile
-      run: mvn -B package --file pom.xml
+      run: mvn -B package --file compiere-jasper-eurocenter/pom.xml
     - name: Build Snaposhot
       run: mvn --file pom.xml --batch-mode --update-snapshots verify
     - run: mkdir downloads
     - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-jasper-eurocenter/target/compiere-jasper-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-custo-eurocenter/target/compiere-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/gwtServer-custo-eurocenter/target/gwtServer-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/target/fatjar-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/target/fatjar-custo-eurocenter*.jar downloads
-    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/compiere-ws-eurocenter*.war downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-custo-eurocenter/target/compiere-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/gwtServer-custo-eurocenter/target/gwtServer-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/target/fatjar-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/target/fatjar-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/compiere-ws-eurocenter*.war downloads
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
-        #repo_token: ${{ secrets.GITHUB_TOKEN }}
+        repo_token: 2019ee0e530466a03bcf820161d3f3f95781ecfd
         file: downloads/*
         asset_name: compiere-eggo-${{env.no_version}}
         tag: compiere-eggo-${{env.no_version}}
