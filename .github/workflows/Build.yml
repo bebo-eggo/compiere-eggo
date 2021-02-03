@@ -43,7 +43,7 @@ jobs:
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
-        repo_token: 2019ee0e530466a03bcf820161d3f3f95781ecfd
+        repo_token: ${{ benbobo55.jade-come }}
         file: downloads/*
         asset_name: compiere-eggo-${{env.no_version}}
         tag: compiere-eggo-${{env.no_version}}
