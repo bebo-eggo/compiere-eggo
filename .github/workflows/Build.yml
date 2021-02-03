@@ -8,7 +8,7 @@ on: [push]
  # push:
  #   branches: [ main ]
  # pull_request:
- #   branches: [ main ] 
+ #   branches: [ main ]
 env:
   no_version: 361.55.0-SNAPSHOT
 
