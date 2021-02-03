@@ -113,9 +113,9 @@ public class ImportXMLInvNOBILIA extends SvrProcessExtended{
 		File folder2 = new File(Msg.getMsg(m_ctx, "EC_INVOICE_IN2"));
 		//File folder = new File("C:\\tmp\\TEST");
 		if(folder == null || !folder.exists())
-			throw new CompiereException("Répertoire d'entrée Nobilia non trouvé  : "+Msg.getMsg(m_ctx, "EC_INVOICE_IN"));
+			throw new CompiereException("Répertoire d'entrée Nobilia non trouvé : "+Msg.getMsg(m_ctx, "EC_INVOICE_IN"));
 		if(folder2 == null || !folder2.exists())
-			throw new CompiereException("Répertoire d'entrée BaseWare non trouvé  : "+Msg.getMsg(m_ctx, "EC_INVOICE_IN2"));
+			throw new CompiereException("Répertoire d'entrée BaseWare non trouvé : "+Msg.getMsg(m_ctx, "EC_INVOICE_IN2"));
 		File folderArchive = new File(Msg.getMsg(m_ctx, "EC_INVOICE_IN_BACKUP"));
 		File folderArchive2 = new File(Msg.getMsg(m_ctx, "EC_INVOICE_IN_BACKUP2"));
 		//File folderArchive = new File("C:\\tmp\\TEST\\BACKUP");
