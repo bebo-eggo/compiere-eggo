@@ -4,11 +4,10 @@
 name: Java CI with Maven
 
 on: 
+ #[push]
+    
  push:
-  tags:
-    - 'V*'
- # push:
- #   branches: [ main ]
+    branches: [ V* ]
  # pull_request:
  #   branches: [ main ]
 
