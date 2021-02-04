@@ -67,4 +67,7 @@ public class OrderDownload extends Base<OrderDownload>{
 
 	@JsonProperty("public_prive")
 	public String public_prive ;
+	
+	@JsonProperty("filesize")
+	public String filesize ;
 }
