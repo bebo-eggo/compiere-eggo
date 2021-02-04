@@ -52,9 +52,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-          release_name: Release ${{ env.no_v }}
-          draft: false
-          prerelease: false
+          tag_name: ${{ env.no_v }}
+          release_name: ${{ env.no_v }}
+          draft: true
+          prerelease: true
     - name: Upload Release Asset
       id: upload-release-asset 
       uses: actions/upload-release-asset@v1
