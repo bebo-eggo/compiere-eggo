@@ -46,7 +46,7 @@ jobs:
       with:
         name: compiere-eggo-${{env.no_version}}
         path: downloads/*
-    - name: Build project # This would actually build your project, using zip for an example artifact
+    - name: Compress JARS
       run: |
           zip -m --junk-paths compiere-eggo-${{env.no_version}} downloads/*
     - name: Create Release
