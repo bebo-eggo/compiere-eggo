@@ -48,7 +48,7 @@ jobs:
         path: downloads/*
     - name: Compress JARS
       run: |
-          zip -m --junk-paths compiere-eggo-${{env.no_version}} downloads/*
+          zip -m --junk-paths compiere-eggo-${{env.no_version}}.zip downloads/*
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
