@@ -60,6 +60,7 @@ jobs:
           release_name: ${{ env.no_v }}
           draft: true
           prerelease: false
+          body: Release ${{ env.no_v }}
     - name: Upload Release Asset
       id: upload-release-asset 
       uses: actions/upload-release-asset@v1
