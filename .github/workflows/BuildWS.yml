@@ -1,0 +1,73 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on: 
+ #[push]
+    
+ push:
+    branches: [ V* ]
+ # pull_request:
+ #   branches: [ main ]
+
+env:
+  no_version: 1.11.0.WS-SNAPSHOT
+  no_v: compiere-eggo-ws-1.11.0.WS-SNAPSHOT
+ 
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Cache Maven packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    - name: Build Smile
+      run: mvn -B package --file pom.xml
+    #- name: Build Snaposhot
+     # run: mvn --file compiere-jasper-eurocenter/pom.xml --batch-mode --update-snapshots verify
+    - run: mkdir downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-jasper-eurocenter/target/compiere-jasper-eurocenter*.jar downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-custo-eurocenter/target/compiere-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/gwtServer-custo-eurocenter/target/gwtServer-custo-eurocenter*.jar downloads
+    #- run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter/target/fatjar-custo-eurocenter*.jar downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/fatjar-custo-eurocenter-ws/target/fatjar-custo-eurocenter*.jar downloads
+    - run: cp /home/runner/work/compiere-eggo/compiere-eggo/compiere-ws-eurocenter/target/compiere-ws-eurocenter*.war downloads
+    - uses: actions/upload-artifact@v2
+      with:
+        name: compiere-eggo-${{env.no_version}}
+        path: downloads/*
+    - name: Compress JARS
+      run: |
+          zip -m --junk-paths compiere-eggo-${{env.no_version}}.zip downloads/*
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          tag_name: ${{ env.no_v }}
+          release_name: ${{ env.no_v }}
+          draft: false
+          prerelease: true
+          body: Release ${{ env.no_v }}
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./compiere-eggo-${{env.no_version}}.zip
+          asset_name: compiere-eggo-${{env.no_version}}.zip
+          asset_content_type: application/zip
