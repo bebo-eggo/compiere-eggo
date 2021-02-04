@@ -30,10 +30,10 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
+        key: ${{ runner.os }}-m2-${{ hashFiles('pomWS.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build Smile
-      run: mvn -B package --file pom.xml
+      run: mvn -B package --file pomWS.xml
     #- name: Build Snaposhot
      # run: mvn --file compiere-jasper-eurocenter/pom.xml --batch-mode --update-snapshots verify
     - run: mkdir downloads
