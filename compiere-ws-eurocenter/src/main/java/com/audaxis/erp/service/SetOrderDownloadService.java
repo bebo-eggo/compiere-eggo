@@ -1,5 +1,6 @@
 package com.audaxis.erp.service;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -184,7 +185,7 @@ public class SetOrderDownloadService extends CompiereSessionFullService implemen
 			mod.set_ValueNoCheck("Z_FromExtSource", ordDown.FROMEXTSOURCE);
 			mod.set_ValueNoCheck("DateCreated",ti);
 			mod.setName(ordDown.NAME);
-			mod.set_ValueNoCheck("FileSize", ordDown.filesize);
+			mod.set_ValueNoCheck("FileSize", ordDown.filesize!=null?new BigDecimal(ordDown.filesize):Env.ZERO);
 			if(!mod.save())
 			{
 				ret.error = SetOrderDownloadResult.E051;
@@ -208,7 +209,7 @@ public class SetOrderDownloadService extends CompiereSessionFullService implemen
 					mod.set_ValueNoCheck("Z_FromExtSource", ordDown.FROMEXTSOURCE);
 					mod.set_ValueNoCheck("DateCreated",ti);
 					mod.setName(ordDown.NAME);
-					mod.set_ValueNoCheck("FileSize", ordDown.filesize);
+					mod.set_ValueNoCheck("FileSize", ordDown.filesize!=null?new BigDecimal(ordDown.filesize):Env.ZERO);
 					if(!mod.save())
 					{
 						ret.error = SetOrderDownloadResult.E051;
